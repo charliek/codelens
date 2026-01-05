@@ -36,6 +36,10 @@ class OutputSettings(BaseSettings):
 class JavaSettings(BaseSettings):
     """Java/JVM configuration."""
 
+    model_config = SettingsConfigDict(
+        env_prefix="CODELENS_JAVA_",
+    )
+
     home: Optional[str] = None
     opts: list[str] = Field(default_factory=list)
 

@@ -112,7 +112,11 @@ async def start_server(
             raise SystemExit(4)
 
         java_home = config["java"]["home"] or os.environ.get("JAVA_HOME")
-        java_cmd = f"{java_home}/bin/java" if java_home else "java"
+        if java_home:
+            java_bin = Path(java_home) / "bin" / "java"
+            java_cmd = str(java_bin) if java_bin.exists() else "java"
+        else:
+            java_cmd = "java"
 
         cmd = [
             java_cmd,
