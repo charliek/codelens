@@ -21,6 +21,17 @@ dependencies {
 
     implementation(libs.kotlinx.cli)
     implementation(libs.logback.classic)
+
+    // Test dependencies
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.mockk)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.content.negotiation)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.shadowJar {

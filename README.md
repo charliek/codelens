@@ -43,6 +43,11 @@ CodeLens consists of two components:
 codelens/
 ├── README.md
 ├── .gitignore
+├── version.txt                      # Single source of truth for version
+│
+├── .github/
+│   └── workflows/
+│       └── build.yml                # CI/CD pipeline
 │
 ├── settings.gradle.kts              # Gradle multi-module config
 ├── build.gradle.kts                 # Root build (shared config)
@@ -67,30 +72,48 @@ codelens/
 │   │
 │   └── app/                         # HTTP server application
 │       ├── build.gradle.kts         # Produces fat JAR via shadowJar
-│       └── src/main/kotlin/
-│           └── codelens/server/
-│               ├── Application.kt   # Main entry point
-│               ├── routes/          # Ktor route definitions
-│               │   ├── AdminRoutes.kt
-│               │   └── ProjectRoutes.kt
-│               └── services/
-│                   └── AnalysisService.kt
+│       └── src/
+│           ├── main/kotlin/
+│           │   └── codelens/server/
+│           │       ├── Application.kt       # Main entry point
+│           │       ├── config/              # Configuration
+│           │       │   ├── ServerConfig.kt
+│           │       │   └── ArgumentParser.kt
+│           │       ├── monitoring/          # Activity tracking
+│           │       │   ├── ActivityTracker.kt
+│           │       │   └── IdleMonitor.kt
+│           │       ├── routes/              # Ktor route definitions
+│           │       │   ├── AdminRoutes.kt
+│           │       │   └── ProjectRoutes.kt
+│           │       └── services/
+│           │           └── AnalysisService.kt
+│           └── test/kotlin/                 # Server tests
 │
 ├── cli/                             # Python CLI
 │   ├── pyproject.toml               # UV/Python project config
+│   ├── tests/                       # CLI tests
+│   │   ├── conftest.py
+│   │   └── test_models.py
 │   └── src/
 │       └── codelens_cli/
 │           ├── __init__.py
 │           ├── main.py              # Typer app entry point
-│           ├── config.py            # Configuration loading
-│           ├── state.py             # State file management
 │           ├── client.py            # HTTP client for server API
-│           ├── server.py            # Server process management
+│           ├── container.py         # Dependency injection container
+│           ├── errors.py            # Exit codes and exceptions
+│           ├── models.py            # Pydantic models
 │           ├── output.py            # Rich formatting utilities
-│           └── commands/
+│           ├── settings.py          # Pydantic Settings configuration
+│           ├── commands/
+│           │   ├── __init__.py
+│           │   ├── lifecycle.py     # start, stop, status, restart, list
+│           │   └── project.py       # project info
+│           ├── repositories/
+│           │   └── server_state_repository.py  # State persistence
+│           └── services/
 │               ├── __init__.py
-│               ├── lifecycle.py     # start, stop, status, restart
-│               └── project.py       # project info (stub)
+│               ├── project_service.py   # Project operations
+│               └── server_service.py    # Server lifecycle management
 │
 └── test-fixtures/                   # Sample Ratpack project for testing
     └── sample-ratpack-app/
@@ -115,12 +138,12 @@ codelens/
 
 | Component | Choice | Version |
 |-----------|--------|---------|
-| Language | Python | 3.11+ |
+| Language | Python | 3.13+ |
 | Package Manager | UV | latest |
 | CLI Framework | Typer | 0.12+ |
 | Terminal UI | Rich | 13+ |
 | HTTP Client | httpx | 0.27+ |
-| Config | PyYAML | 6+ |
+| Config | Pydantic Settings | 2.0+ |
 
 ## Building
 
@@ -297,30 +320,29 @@ codelens project --json | jq '.name'
 
 ## Configuration
 
-Configuration file: `~/.config/codelens/config.yml`
+Configuration is managed via environment variables using Pydantic Settings.
 
-```yaml
-server:
-  mode: auto              # auto, gradle, or jar
-  idle_timeout: 30m       # Auto-shutdown timeout
-  port_range:
-    start: 8080
-    end: 8180
-  host: 127.0.0.1
+### Environment Variables
 
-output:
-  format: auto            # auto, text, or json
-  color: auto             # auto, always, or never
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CODELENS_SERVER_MODE` | `auto` | Server mode: `auto`, `gradle`, or `jar` |
+| `CODELENS_SERVER_IDLE_TIMEOUT` | `30m` | Auto-shutdown timeout |
+| `CODELENS_SERVER_HOST` | `127.0.0.1` | Server bind address |
+| `CODELENS_SERVER_PORT_RANGE_START` | `8080` | Port range start |
+| `CODELENS_SERVER_PORT_RANGE_END` | `8180` | Port range end |
+| `CODELENS_JAVA_HOME` | (system) | JAVA_HOME override |
+| `CODELENS_REPO_PATH` | (auto-detect) | Path to CodeLens repository |
 
-java:
-  home: null              # JAVA_HOME override
-  opts: []                # Additional JVM options
+### Example
+
+```bash
+# Use JAR mode with custom timeout
+export CODELENS_SERVER_MODE=jar
+export CODELENS_SERVER_IDLE_TIMEOUT=1h
+
+codelens start
 ```
-
-Environment variables:
-- `CODELENS_SERVER_MODE` - Override server mode
-- `CODELENS_IDLE_TIMEOUT` - Override idle timeout
-- `CODELENS_REPO_PATH` - Path to CodeLens repository (for development)
 
 ## State Management
 
@@ -410,6 +432,11 @@ This is the bootstrap implementation with:
 ✅ Multiple project support
 ✅ Idle shutdown
 ✅ JSON output support
+✅ CI/CD pipeline (GitHub Actions)
+✅ Test infrastructure (JUnit 5 + pytest)
+✅ Thread-safe server implementation
+✅ Service/Repository architecture
+✅ Dependency injection container
 
 **Stubbed for later phases:**
 - ClassGraph integration (returns mock data)
@@ -417,13 +444,33 @@ This is the bootstrap implementation with:
 - Ratpack-specific analysis endpoints
 - Real complexity scoring
 
+## Development
+
+### Running Tests
+
+**Kotlin:**
+```bash
+./gradlew test
+```
+
+**Python:**
+```bash
+cd cli
+uv run pytest
+```
+
+### Architecture
+
+The codebase follows a service/repository pattern:
+
+- **Services** contain business logic (`ServerService`, `ProjectService`, `AnalysisService`)
+- **Repositories** handle data persistence (`ServerStateRepository`)
+- **Routes/Commands** are thin wrappers that delegate to services
+- **Container** provides dependency injection for the CLI (`ServiceContainer`)
+
 ## Requirements
 
 - JDK 21+
-- Python 3.11+
+- Python 3.13+
 - UV package manager (recommended) or pip
 - Gradle 8.x (included via wrapper)
-
-## License
-
-Copyright © 2026 CodeLens Contributors

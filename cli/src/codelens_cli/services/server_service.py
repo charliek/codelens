@@ -1,16 +1,23 @@
 """Service for server lifecycle management."""
 
 import asyncio
+import logging
 import os
 import re
 import signal
+import socket
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional
+
+import httpx
 
 from codelens_cli.models import ProjectStatus, ServerMode, ServerState
 from codelens_cli.repositories import ServerStateRepository
 from codelens_cli.settings import AppSettings, find_repo_path
+
+logger = logging.getLogger(__name__)
 
 
 class ServerService:
@@ -61,8 +68,6 @@ class ServerService:
 
     def allocate_port(self) -> int:
         """Find an available port."""
-        import socket
-
         start = self.settings.server.port_range.start
         end = self.settings.server.port_range.end
 
@@ -216,8 +221,6 @@ class ServerService:
         # Try graceful shutdown via API first
         if not force:
             try:
-                import httpx
-
                 response = httpx.post(
                     f"http://{state.host}:{state.port}/admin/shutdown",
                     timeout=5,
@@ -227,23 +230,19 @@ class ServerService:
                     for _ in range(50):  # 5 seconds
                         if not self.repository.is_process_running(pid):
                             break
-                        import time
-
                         time.sleep(0.1)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Graceful shutdown failed: %s", e)
 
         # Force kill if still running
         if self.repository.is_process_running(pid):
             try:
                 os.kill(pid, signal.SIGTERM)
-                import time
-
                 time.sleep(0.5)
                 if self.repository.is_process_running(pid):
                     os.kill(pid, signal.SIGKILL)
             except ProcessLookupError:
-                pass
+                logger.debug("Process %d already terminated", pid)
 
         self.repository.delete(project_path)
         return True

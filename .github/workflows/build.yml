@@ -1,0 +1,108 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  kotlin:
+    name: Kotlin Server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and Test
+        run: ./gradlew build
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kotlin-test-results
+          path: server/app/build/reports/tests/
+
+  python:
+    name: Python CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        working-directory: cli
+        run: uv sync --all-extras
+
+      - name: Run tests
+        working-directory: cli
+        run: uv run pytest tests/ -v --cov=src/codelens_cli --cov-report=xml
+
+      - name: Run linting
+        working-directory: cli
+        run: |
+          uv run ruff check src/
+          uv run black --check src/
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: cli/coverage.xml
+          fail_ci_if_error: false
+
+  integration:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [kotlin, python]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '21'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Build server JAR
+        run: ./gradlew :server:app:shadowJar
+
+      - name: Install CLI
+        working-directory: cli
+        run: uv tool install --editable .
+
+      - name: Verify CLI can start server
+        run: |
+          # Start server in background
+          codelens start --project ./test-fixtures/sample-ratpack-app --mode jar &
+          sleep 5
+
+          # Check status
+          codelens status --project ./test-fixtures/sample-ratpack-app
+
+          # Stop server
+          codelens stop --project ./test-fixtures/sample-ratpack-app

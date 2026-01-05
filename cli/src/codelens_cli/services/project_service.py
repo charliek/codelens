@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 
 from codelens_cli.client import CodeLensClient
+from codelens_cli.errors import ExitCode
 from codelens_cli.models import ProjectInfo, ServerState
 from codelens_cli.services.server_service import ServerService
 
@@ -32,7 +33,8 @@ class ProjectService:
 
         # Validate it's a Gradle project
         if not path.exists():
-            raise typer.Exit(code=3)
+            self.console.print(f"[red]Error:[/red] Path does not exist: {path}")
+            raise typer.Exit(code=ExitCode.PROJECT_NOT_FOUND)
 
         has_build_file = (path / "build.gradle").exists() or (
             path / "build.gradle.kts"
@@ -43,7 +45,7 @@ class ProjectService:
             )
             self.console.print("\nCodeLens requires a Gradle project directory.")
             self.console.print(f"\nTry: [cyan]cd /path/to/your/project[/cyan]")
-            raise typer.Exit(code=3)
+            raise typer.Exit(code=ExitCode.PROJECT_NOT_FOUND)
 
         return path
 

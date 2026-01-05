@@ -7,6 +7,8 @@ import typer
 from rich.console import Console
 
 from codelens_cli.client import CodeLensClient
+from codelens_cli.container import ServiceContainer
+from codelens_cli.errors import ExitCode
 from codelens_cli.models import ProjectStatus, ServerMode
 from codelens_cli.output import is_tty, print_json, print_server_status
 from codelens_cli.services import ProjectService, ServerService
@@ -17,10 +19,8 @@ err_console = Console(stderr=True)
 
 
 def _get_services() -> tuple[ServerService, ProjectService]:
-    """Get service instances."""
-    server_service = ServerService()
-    project_service = ProjectService(server_service=server_service)
-    return server_service, project_service
+    """Get service instances from the container."""
+    return ServiceContainer.server_service(), ServiceContainer.project_service()
 
 
 @app.command()
@@ -75,10 +75,10 @@ def start(
     except TimeoutError:
         err_console.print(f"[red]Error:[/red] Server did not start within {timeout}s")
         err_console.print(f"\nCheck logs: [cyan]~/.cache/codelens/logs/[/cyan]")
-        raise typer.Exit(7)
+        raise typer.Exit(ExitCode.TIMEOUT)
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(4)
+        raise typer.Exit(ExitCode.SERVER_ERROR)
 
 
 @app.command()
@@ -180,7 +180,7 @@ def restart(
 
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(4)
+        raise typer.Exit(ExitCode.SERVER_ERROR)
 
 
 @app.command()
@@ -198,7 +198,7 @@ def refresh(
     if server is None:
         err_console.print(f"[red]Error:[/red] No server running for {project_path.name}")
         err_console.print(f"\nStart with: [cyan]codelens start[/cyan]")
-        raise typer.Exit(2)
+        raise typer.Exit(ExitCode.NOT_RUNNING)
 
     if not json_output and is_tty():
         err_console.print("Refreshing...")
@@ -213,7 +213,7 @@ def refresh(
 
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(5)
+        raise typer.Exit(ExitCode.SERVER_ERROR)
 
 
 @app.command(name="list")

@@ -1,8 +1,8 @@
 package codelens.server.routes
 
 import codelens.core.model.*
-import codelens.server.ActivityTracker
-import codelens.server.ServerConfig
+import codelens.server.config.ServerConfig
+import codelens.server.monitoring.ActivityTracker
 import codelens.server.services.AnalysisService
 import io.ktor.http.*
 import io.ktor.server.response.*
