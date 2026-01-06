@@ -3,7 +3,7 @@
 import typer
 from rich.console import Console
 
-from codelens_cli.commands import annotations, classes, lifecycle, methods, project
+from codelens_cli.commands import annotations, classes, lifecycle, lint, methods, project
 
 app = typer.Typer(
     name="codelens",
@@ -17,6 +17,7 @@ app.add_typer(lifecycle.app, name="")  # Lifecycle commands at root level
 app.add_typer(classes.app, name="classes")  # Classes analysis commands
 app.add_typer(annotations.app, name="annotations")  # Annotations analysis commands
 app.add_typer(methods.app, name="methods")  # Methods search commands
+app.add_typer(lint.app, name="lint")  # Lint and format commands
 app.command(name="project")(project.project_info)
 
 

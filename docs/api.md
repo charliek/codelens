@@ -554,6 +554,144 @@ GET /api/v1/methods?returnType=ratpack.exec.Promise&inPackage=com.example.*
 
 ---
 
+## Lint Endpoints
+
+These endpoints provide Kotlin linting and formatting via ktlint.
+
+### POST /api/v1/ktlint/lint/file
+
+Lint a single Kotlin file.
+
+**Request Body:**
+```json
+{
+  "filePath": "/path/to/file.kt"
+}
+```
+
+**Response:**
+```json
+{
+  "filePath": "/path/to/file.kt",
+  "errors": [
+    {
+      "line": 1,
+      "col": 17,
+      "ruleId": "standard:spacing",
+      "detail": "Missing space before '{'",
+      "canBeAutoCorrected": true
+    }
+  ],
+  "errorCount": 1,
+  "durationMs": 45
+}
+```
+
+---
+
+### POST /api/v1/ktlint/lint/project
+
+Lint all Kotlin files in the project.
+
+**Request Body:**
+```json
+{
+  "pattern": "*.kt",
+  "includeTests": true
+}
+```
+
+All fields are optional.
+
+**Response:**
+```json
+{
+  "projectPath": "/path/to/project",
+  "fileResults": [
+    {
+      "filePath": "/path/to/project/src/Bad.kt",
+      "errors": [...],
+      "errorCount": 3
+    }
+  ],
+  "filesScanned": 50,
+  "filesWithErrors": 3,
+  "totalErrorCount": 12,
+  "durationMs": 250
+}
+```
+
+---
+
+### POST /api/v1/ktlint/format/file
+
+Format a single Kotlin file.
+
+**Request Body:**
+```json
+{
+  "filePath": "/path/to/file.kt",
+  "writeToFile": false
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `filePath` | string | required | Absolute path to file |
+| `writeToFile` | boolean | `false` | Whether to write changes to disk |
+
+**Response:**
+```json
+{
+  "filePath": "/path/to/file.kt",
+  "formattedContent": "formatted code here...",
+  "hasChanges": true,
+  "remainingErrors": [],
+  "durationMs": 30
+}
+```
+
+When `writeToFile` is `true`, `formattedContent` will be `null` and the file is modified in place.
+
+---
+
+### POST /api/v1/ktlint/format/project
+
+Format all Kotlin files in the project.
+
+**Request Body:**
+```json
+{
+  "pattern": "*.kt",
+  "includeTests": true,
+  "dryRun": false
+}
+```
+
+All fields are optional.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `pattern` | string | `null` | Glob pattern to filter files |
+| `includeTests` | boolean | `true` | Include test files |
+| `dryRun` | boolean | `false` | If true, don't modify files |
+
+**Response:**
+```json
+{
+  "projectPath": "/path/to/project",
+  "filesFormatted": [
+    "/path/to/project/src/File1.kt",
+    "/path/to/project/src/File2.kt"
+  ],
+  "filesScanned": 50,
+  "filesWithChanges": 2,
+  "durationMs": 500
+}
+```
+
+---
+
 ## Error Responses
 
 All endpoints return consistent error responses:

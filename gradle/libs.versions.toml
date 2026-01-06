@@ -6,6 +6,7 @@ kotlinx-cli = "0.3.6"
 logback = "1.5.12"
 classgraph = "4.8.177"
 gradle-tooling-api = "8.5"
+ktlint = "1.5.0"
 junit = "5.10.0"
 mockk = "1.13.8"
 
@@ -22,6 +23,8 @@ kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kot
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
 gradle-tooling-api = { module = "org.gradle:gradle-tooling-api", version.ref = "gradle-tooling-api" }
+ktlint-rule-engine = { module = "com.pinterest.ktlint:ktlint-rule-engine", version.ref = "ktlint" }
+ktlint-ruleset-standard = { module = "com.pinterest.ktlint:ktlint-ruleset-standard", version.ref = "ktlint" }
 
 # Test dependencies
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }

@@ -9,5 +9,6 @@ rootProject.name = "codelens"
 
 include("server:core")
 include("server:classgraph")
+include("server:ktlint")
 include("server:gradle-resolver")
 include("server:app")

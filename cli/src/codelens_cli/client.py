@@ -159,3 +159,44 @@ class CodeLensClient:
 
         query = "&".join(params)
         return self._get(f"/api/v1/methods?{query}")
+
+    def lint_file(self, file_path: str) -> dict[str, Any]:
+        """Lint a single Kotlin file."""
+        return self._post("/api/v1/ktlint/lint/file", {"filePath": file_path})
+
+    def lint_project(
+        self,
+        pattern: str | None = None,
+        include_tests: bool = True,
+    ) -> dict[str, Any]:
+        """Lint all Kotlin files in the project."""
+        data: dict[str, Any] = {"includeTests": include_tests}
+        if pattern:
+            data["pattern"] = pattern
+        return self._post("/api/v1/ktlint/lint/project", data)
+
+    def format_file(
+        self,
+        file_path: str,
+        write_to_file: bool = False,
+    ) -> dict[str, Any]:
+        """Format a single Kotlin file."""
+        return self._post(
+            "/api/v1/ktlint/format/file",
+            {"filePath": file_path, "writeToFile": write_to_file},
+        )
+
+    def format_project(
+        self,
+        pattern: str | None = None,
+        include_tests: bool = True,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Format all Kotlin files in the project."""
+        data: dict[str, Any] = {
+            "includeTests": include_tests,
+            "dryRun": dry_run,
+        }
+        if pattern:
+            data["pattern"] = pattern
+        return self._post("/api/v1/ktlint/format/project", data)

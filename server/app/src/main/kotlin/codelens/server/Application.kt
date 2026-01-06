@@ -7,8 +7,10 @@ import codelens.server.monitoring.ActivityTracker
 import codelens.server.monitoring.startIdleMonitor
 import codelens.server.routes.adminRoutes
 import codelens.server.routes.analysisRoutes
+import codelens.server.routes.ktlintRoutes
 import codelens.server.routes.projectRoutes
 import codelens.server.services.AnalysisService
+import codelens.server.services.KtlintService
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -44,13 +46,14 @@ fun main(args: Array<String>) {
     }
 
     val analysisService = AnalysisService(projectDir, config.classpathFile)
+    val ktlintService = KtlintService(projectDir)
     val activityTracker = ActivityTracker()
 
     // Find available port
     val port = config.port ?: findAvailablePort(config.portRangeStart, config.portRangeEnd)
 
     val server = embeddedServer(Netty, port = port, host = config.host) {
-        configureServer(analysisService, activityTracker, config)
+        configureServer(analysisService, ktlintService, activityTracker, config)
     }
 
     // Start idle shutdown monitor
@@ -84,6 +87,7 @@ fun main(args: Array<String>) {
  */
 fun Application.configureServer(
     analysisService: AnalysisService,
+    ktlintService: KtlintService,
     activityTracker: ActivityTracker,
     config: ServerConfig
 ) {
@@ -117,5 +121,6 @@ fun Application.configureServer(
         adminRoutes(analysisService, activityTracker, config)
         projectRoutes(analysisService)
         analysisRoutes(analysisService)
+        ktlintRoutes(ktlintService)
     }
 }

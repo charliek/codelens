@@ -74,6 +74,13 @@ codelens/
 │   │       └── codelens/classgraph/
 │   │           └── ClassGraphProvider.kt
 │   │
+│   ├── ktlint/                      # ktlint-based linting (warm server)
+│   │   ├── build.gradle.kts
+│   │   └── src/main/kotlin/
+│   │       └── codelens/ktlint/
+│   │           ├── KtlintProvider.kt
+│   │           └── KtlintProviderImpl.kt
+│   │
 │   └── app/                         # HTTP server application
 │       ├── build.gradle.kts         # Produces fat JAR via shadowJar
 │       └── src/
@@ -114,7 +121,8 @@ codelens/
 │           │   ├── project.py       # project info
 │           │   ├── classes.py       # class analysis commands
 │           │   ├── annotations.py   # annotation commands
-│           │   └── methods.py       # method search commands
+│           │   ├── methods.py       # method search commands
+│           │   └── lint.py          # lint check, lint format
 │           ├── repositories/
 │           │   └── server_state_repository.py  # State persistence
 │           └── services/
@@ -327,6 +335,15 @@ codelens methods search --return-type ratpack.exec.Promise  # Find Promise metho
 codelens methods search --name "get*"                       # Search by name pattern
 ```
 
+#### Linting & Formatting
+
+```bash
+codelens lint check                    # Check all Kotlin files for style issues
+codelens lint check src/Main.kt        # Check a single file
+codelens lint format                   # Format all Kotlin files
+codelens lint format --dry-run         # Preview formatting changes
+```
+
 #### Common Options
 
 All commands support:
@@ -395,6 +412,10 @@ The server exposes a REST API. For complete documentation, see [docs/api.md](doc
 | `GET /api/v1/dependencies/{fqn}` | Class dependencies |
 | `GET /api/v1/annotations/usages/{fqn}` | Annotation usages |
 | `GET /api/v1/methods` | Search methods |
+| `POST /api/v1/ktlint/lint/file` | Lint single file |
+| `POST /api/v1/ktlint/lint/project` | Lint project |
+| `POST /api/v1/ktlint/format/file` | Format single file |
+| `POST /api/v1/ktlint/format/project` | Format project |
 
 ## Development
 

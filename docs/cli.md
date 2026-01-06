@@ -31,6 +31,8 @@ The CLI commands map to server API endpoints as follows:
 | `codelens classes dependencies` | `GET /api/v1/dependencies/{fqn}` | Dependencies |
 | `codelens annotations usages` | `GET /api/v1/annotations/usages/{fqn}` | Annotation usages |
 | `codelens methods search` | `GET /api/v1/methods` | Search methods |
+| `codelens lint check` | `POST /api/v1/ktlint/lint/file` or `lint/project` | Check style issues |
+| `codelens lint format` | `POST /api/v1/ktlint/format/file` or `format/project` | Format files |
 
 ---
 
@@ -698,6 +700,126 @@ Methods (1-45 of 45)
 │ getDevice(String)          │ Promise     │ DeviceService   │ PROJECT │
 │ authenticate(String)       │ Promise     │ AuthService     │ PROJECT │
 └────────────────────────────┴─────────────┴─────────────────┴─────────┘
+```
+
+---
+
+## Lint Commands
+
+Commands for linting and formatting Kotlin code are under `codelens lint`.
+
+### codelens lint check
+
+Check Kotlin files for style issues using ktlint.
+
+```bash
+codelens lint check [FILE] [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FILE` | Optional file to check (checks entire project if omitted) |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--pattern` | Glob pattern to filter files (e.g., `*.kt`) |
+| `--include-tests/--no-tests` | Include test files (default: true) |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# Check all Kotlin files in project
+codelens lint check
+
+# Check a single file
+codelens lint check src/main/kotlin/App.kt
+
+# Check with pattern filter
+codelens lint check --pattern "*.kt"
+
+# Exclude test files
+codelens lint check --no-tests
+```
+
+**Example Output:**
+
+```
+Lint Results for my-project
+
+3 issue(s) in 1 file(s) (10 scanned)
+
+src/main/kotlin/sample/BadFormatting.kt (3 issue(s))
+  1:17 standard:spacing: Missing space before '{'
+  2:10 standard:spacing: Missing space around '='
+  3:7 standard:spacing: Missing space after 'if' (auto-fixable)
+
+Checked in 150ms
+```
+
+**Exit Codes:**
+
+- Exit code 0: No style issues found
+- Exit code 1: Style issues found
+
+---
+
+### codelens lint format
+
+Format Kotlin files using ktlint.
+
+```bash
+codelens lint format [FILE] [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FILE` | Optional file to format (formats entire project if omitted) |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--pattern` | Glob pattern to filter files (e.g., `*.kt`) |
+| `--include-tests/--no-tests` | Include test files (default: true) |
+| `--dry-run`, `-n` | Preview changes without modifying files |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# Format all Kotlin files in project
+codelens lint format
+
+# Format a single file
+codelens lint format src/main/kotlin/App.kt
+
+# Preview what would be changed (dry run)
+codelens lint format --dry-run
+
+# Format excluding test files
+codelens lint format --no-tests
+```
+
+**Example Output:**
+
+```
+Format Results for my-project
+
+Formatted 2 file(s) (10 scanned)
+
+  src/main/kotlin/sample/BadFormatting.kt
+  src/main/kotlin/sample/AnotherFile.kt
+
+Processed in 200ms
 ```
 
 ---
