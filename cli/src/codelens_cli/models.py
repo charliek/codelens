@@ -398,3 +398,84 @@ class AnnotationUsagesResponse(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+# ============================================================================
+# Ktlint Models
+# ============================================================================
+
+
+class LintError(BaseModel):
+    """A single lint error found in a file."""
+
+    line: int
+    col: int
+    rule_id: str = Field(alias="ruleId")
+    detail: str
+    can_be_auto_corrected: bool = Field(alias="canBeAutoCorrected")
+
+    class Config:
+        populate_by_name = True
+
+
+class FileLintResult(BaseModel):
+    """Lint results for a single file."""
+
+    file_path: str = Field(alias="filePath")
+    errors: list[LintError]
+    error_count: int = Field(alias="errorCount")
+
+    class Config:
+        populate_by_name = True
+
+
+class LintFileResponse(BaseModel):
+    """Response for linting a single file."""
+
+    file_path: str = Field(alias="filePath")
+    errors: list[LintError]
+    error_count: int = Field(alias="errorCount")
+    duration_ms: int = Field(alias="durationMs")
+
+    class Config:
+        populate_by_name = True
+
+
+class LintProjectResponse(BaseModel):
+    """Response for linting a project."""
+
+    project_path: str = Field(alias="projectPath")
+    file_results: list[FileLintResult] = Field(alias="fileResults")
+    files_scanned: int = Field(alias="filesScanned")
+    files_with_errors: int = Field(alias="filesWithErrors")
+    total_error_count: int = Field(alias="totalErrorCount")
+    duration_ms: int = Field(alias="durationMs")
+
+    class Config:
+        populate_by_name = True
+
+
+class FormatFileResponse(BaseModel):
+    """Response for formatting a single file."""
+
+    file_path: str = Field(alias="filePath")
+    formatted_content: Optional[str] = Field(None, alias="formattedContent")
+    has_changes: bool = Field(alias="hasChanges")
+    remaining_errors: list[LintError] = Field(alias="remainingErrors")
+    duration_ms: int = Field(alias="durationMs")
+
+    class Config:
+        populate_by_name = True
+
+
+class FormatProjectResponse(BaseModel):
+    """Response for formatting a project."""
+
+    project_path: str = Field(alias="projectPath")
+    files_formatted: list[str] = Field(alias="filesFormatted")
+    files_scanned: int = Field(alias="filesScanned")
+    files_with_changes: int = Field(alias="filesWithChanges")
+    duration_ms: int = Field(alias="durationMs")
+
+    class Config:
+        populate_by_name = True

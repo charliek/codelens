@@ -298,6 +298,299 @@ class ClassGraphProviderImplTest {
         assertNull(hierarchy.parent, "Interface should have no parent")
     }
 
+    // ============== Dependency Tests ==============
+
+    @Test
+    fun `getDependencies should find outgoing superclass dependency`() {
+        val parentFqn = "com.example.ParentClass"
+        val childFqn = "com.example.ChildClass"
+
+        classesMap[parentFqn] = createClassInfo(
+            fqn = parentFqn,
+            simpleName = "ParentClass",
+            packageName = "com.example"
+        )
+
+        classesMap[childFqn] = createClassInfo(
+            fqn = childFqn,
+            simpleName = "ChildClass",
+            packageName = "com.example",
+            superclass = parentFqn
+        )
+
+        val (outgoing, _) = provider.getDependencies(childFqn, false)
+
+        assertEquals(1, outgoing.size, "Should have 1 outgoing dependency")
+        assertEquals(parentFqn, outgoing[0].classFqn)
+        assertEquals(DependencyType.EXTENDS, outgoing[0].dependencyType)
+    }
+
+    @Test
+    fun `getDependencies should find outgoing interface dependencies`() {
+        val interface1Fqn = "com.example.Interface1"
+        val interface2Fqn = "com.example.Interface2"
+        val implFqn = "com.example.ImplClass"
+
+        classesMap[interface1Fqn] = createClassInfo(
+            fqn = interface1Fqn,
+            simpleName = "Interface1",
+            packageName = "com.example",
+            isInterface = true
+        )
+        classesMap[interface2Fqn] = createClassInfo(
+            fqn = interface2Fqn,
+            simpleName = "Interface2",
+            packageName = "com.example",
+            isInterface = true
+        )
+        classesMap[implFqn] = createClassInfo(
+            fqn = implFqn,
+            simpleName = "ImplClass",
+            packageName = "com.example",
+            interfaces = listOf(interface1Fqn, interface2Fqn)
+        )
+
+        val (outgoing, _) = provider.getDependencies(implFqn, false)
+
+        val implementsDeps = outgoing.filter { it.dependencyType == DependencyType.IMPLEMENTS }
+        assertEquals(2, implementsDeps.size, "Should have 2 IMPLEMENTS dependencies")
+        assertTrue(implementsDeps.any { it.classFqn == interface1Fqn })
+        assertTrue(implementsDeps.any { it.classFqn == interface2Fqn })
+    }
+
+    @Test
+    fun `getDependencies should find outgoing field type dependencies`() {
+        val serviceFqn = "com.example.ServiceA"
+        val consumerFqn = "com.example.Consumer"
+
+        classesMap[serviceFqn] = createClassInfo(
+            fqn = serviceFqn,
+            simpleName = "ServiceA",
+            packageName = "com.example"
+        )
+        classesMap[consumerFqn] = createClassInfo(
+            fqn = consumerFqn,
+            simpleName = "Consumer",
+            packageName = "com.example",
+            fields = listOf(
+                FieldInfo(name = "service", type = serviceFqn, visibility = Visibility.PRIVATE)
+            )
+        )
+
+        val (outgoing, _) = provider.getDependencies(consumerFqn, false)
+
+        val fieldDeps = outgoing.filter { it.dependencyType == DependencyType.FIELD_TYPE }
+        assertEquals(1, fieldDeps.size, "Should have 1 FIELD_TYPE dependency")
+        assertEquals(serviceFqn, fieldDeps[0].classFqn)
+        assertEquals("service", fieldDeps[0].location)
+    }
+
+    @Test
+    fun `getDependencies should find outgoing method return type dependencies`() {
+        val returnTypeFqn = "com.example.Result"
+        val serviceFqn = "com.example.MyService"
+
+        classesMap[returnTypeFqn] = createClassInfo(
+            fqn = returnTypeFqn,
+            simpleName = "Result",
+            packageName = "com.example"
+        )
+        classesMap[serviceFqn] = createClassInfo(
+            fqn = serviceFqn,
+            simpleName = "MyService",
+            packageName = "com.example",
+            methods = listOf(
+                MethodInfo(
+                    name = "getResult",
+                    visibility = Visibility.PUBLIC,
+                    returnType = returnTypeFqn,
+                    parameters = emptyList()
+                )
+            )
+        )
+
+        val (outgoing, _) = provider.getDependencies(serviceFqn, false)
+
+        val returnTypeDeps = outgoing.filter { it.dependencyType == DependencyType.METHOD_RETURN_TYPE }
+        assertEquals(1, returnTypeDeps.size, "Should have 1 METHOD_RETURN_TYPE dependency")
+        assertEquals(returnTypeFqn, returnTypeDeps[0].classFqn)
+        assertEquals("getResult()", returnTypeDeps[0].location)
+    }
+
+    @Test
+    fun `getDependencies should find outgoing method parameter dependencies`() {
+        val requestFqn = "com.example.Request"
+        val handlerFqn = "com.example.Handler"
+
+        classesMap[requestFqn] = createClassInfo(
+            fqn = requestFqn,
+            simpleName = "Request",
+            packageName = "com.example"
+        )
+        classesMap[handlerFqn] = createClassInfo(
+            fqn = handlerFqn,
+            simpleName = "Handler",
+            packageName = "com.example",
+            methods = listOf(
+                MethodInfo(
+                    name = "handle",
+                    visibility = Visibility.PUBLIC,
+                    returnType = "void",
+                    parameters = listOf(
+                        ParameterInfo(name = "request", type = requestFqn)
+                    )
+                )
+            )
+        )
+
+        val (outgoing, _) = provider.getDependencies(handlerFqn, false)
+
+        val paramDeps = outgoing.filter { it.dependencyType == DependencyType.METHOD_PARAMETER }
+        assertEquals(1, paramDeps.size, "Should have 1 METHOD_PARAMETER dependency")
+        assertEquals(requestFqn, paramDeps[0].classFqn)
+        assertEquals("handle()", paramDeps[0].location)
+    }
+
+    @Test
+    fun `getDependencies should find incoming dependencies from classes that extend target`() {
+        val baseFqn = "com.example.BaseClass"
+        val childFqn = "com.example.ChildClass"
+
+        classesMap[baseFqn] = createClassInfo(
+            fqn = baseFqn,
+            simpleName = "BaseClass",
+            packageName = "com.example"
+        )
+        classesMap[childFqn] = createClassInfo(
+            fqn = childFqn,
+            simpleName = "ChildClass",
+            packageName = "com.example",
+            superclass = baseFqn
+        )
+
+        val (_, incoming) = provider.getDependencies(baseFqn, false)
+
+        assertEquals(1, incoming.size, "Should have 1 incoming dependency")
+        assertEquals(childFqn, incoming[0].classFqn)
+        assertEquals(DependencyType.EXTENDS, incoming[0].dependencyType)
+    }
+
+    @Test
+    fun `getDependencies should find incoming dependencies from classes that use target as field`() {
+        val targetFqn = "com.example.TargetService"
+        val userFqn = "com.example.ServiceUser"
+
+        classesMap[targetFqn] = createClassInfo(
+            fqn = targetFqn,
+            simpleName = "TargetService",
+            packageName = "com.example"
+        )
+        classesMap[userFqn] = createClassInfo(
+            fqn = userFqn,
+            simpleName = "ServiceUser",
+            packageName = "com.example",
+            fields = listOf(
+                FieldInfo(name = "target", type = targetFqn, visibility = Visibility.PRIVATE)
+            )
+        )
+
+        val (_, incoming) = provider.getDependencies(targetFqn, false)
+
+        assertEquals(1, incoming.size, "Should have 1 incoming dependency")
+        assertEquals(userFqn, incoming[0].classFqn)
+        assertEquals(DependencyType.FIELD_TYPE, incoming[0].dependencyType)
+        assertEquals("target", incoming[0].location)
+    }
+
+    @Test
+    fun `getDependencies should filter by includeLibraries flag`() {
+        val libraryFqn = "com.library.LibraryClass"
+        val projectFqn = "com.example.ProjectClass"
+
+        classesMap[libraryFqn] = createClassInfo(
+            fqn = libraryFqn,
+            simpleName = "LibraryClass",
+            packageName = "com.library",
+            source = ClassSource.LIBRARY
+        )
+        classesMap[projectFqn] = createClassInfo(
+            fqn = projectFqn,
+            simpleName = "ProjectClass",
+            packageName = "com.example",
+            source = ClassSource.PROJECT,
+            fields = listOf(
+                FieldInfo(name = "lib", type = libraryFqn, visibility = Visibility.PRIVATE)
+            )
+        )
+
+        // Without libraries
+        val (outgoingNoLib, _) = provider.getDependencies(projectFqn, includeLibraries = false)
+        assertTrue(outgoingNoLib.none { it.classFqn == libraryFqn },
+            "Should not include library dependency when includeLibraries=false")
+
+        // With libraries
+        val (outgoingWithLib, _) = provider.getDependencies(projectFqn, includeLibraries = true)
+        assertTrue(outgoingWithLib.any { it.classFqn == libraryFqn },
+            "Should include library dependency when includeLibraries=true")
+    }
+
+    @Test
+    fun `getDependencies should not return duplicates`() {
+        val sharedTypeFqn = "com.example.SharedType"
+        val consumerFqn = "com.example.Consumer"
+
+        classesMap[sharedTypeFqn] = createClassInfo(
+            fqn = sharedTypeFqn,
+            simpleName = "SharedType",
+            packageName = "com.example"
+        )
+        // Class uses SharedType in field AND as method parameter
+        classesMap[consumerFqn] = createClassInfo(
+            fqn = consumerFqn,
+            simpleName = "Consumer",
+            packageName = "com.example",
+            fields = listOf(
+                FieldInfo(name = "shared", type = sharedTypeFqn, visibility = Visibility.PRIVATE)
+            ),
+            methods = listOf(
+                MethodInfo(
+                    name = "process",
+                    visibility = Visibility.PUBLIC,
+                    returnType = "void",
+                    parameters = listOf(
+                        ParameterInfo(name = "input", type = sharedTypeFqn)
+                    )
+                )
+            )
+        )
+
+        val (outgoing, _) = provider.getDependencies(consumerFqn, false)
+
+        // Should have 2 distinct entries: field and method param (different locations)
+        val sharedTypeDeps = outgoing.filter { it.classFqn == sharedTypeFqn }
+        assertEquals(2, sharedTypeDeps.size, "Should have 2 distinct dependencies to SharedType")
+        assertTrue(sharedTypeDeps.any { it.dependencyType == DependencyType.FIELD_TYPE })
+        assertTrue(sharedTypeDeps.any { it.dependencyType == DependencyType.METHOD_PARAMETER })
+    }
+
+    @Test
+    fun `getDependencies should handle class with no dependencies`() {
+        val simpleFqn = "com.example.SimpleClass"
+
+        classesMap[simpleFqn] = createClassInfo(
+            fqn = simpleFqn,
+            simpleName = "SimpleClass",
+            packageName = "com.example"
+            // No fields, methods, or custom superclass
+        )
+
+        val (outgoing, incoming) = provider.getDependencies(simpleFqn, false)
+
+        // Should have no outgoing (java.lang.Object is excluded)
+        assertTrue(outgoing.isEmpty(), "Should have no outgoing dependencies")
+        assertTrue(incoming.isEmpty(), "Should have no incoming dependencies")
+    }
+
     /**
      * Helper function to create ClassInfo for testing.
      */
@@ -309,7 +602,9 @@ class ClassGraphProviderImplTest {
         isInterface: Boolean = false,
         isAbstract: Boolean = false,
         superclass: String? = "java.lang.Object",
-        interfaces: List<String> = emptyList()
+        interfaces: List<String> = emptyList(),
+        fields: List<FieldInfo> = emptyList(),
+        methods: List<MethodInfo> = emptyList()
     ): ClassInfo {
         return ClassInfo(
             name = ClassName(
@@ -322,7 +617,9 @@ class ClassGraphProviderImplTest {
             isInterface = isInterface,
             isAbstract = isAbstract,
             superclass = if (isInterface) null else superclass,
-            interfaces = interfaces
+            interfaces = interfaces,
+            fields = fields,
+            methods = methods
         )
     }
 }

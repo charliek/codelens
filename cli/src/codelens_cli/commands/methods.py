@@ -1,20 +1,14 @@
 """Method search commands."""
 
-import asyncio
 from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.client import CodeLensClient
-from codelens_cli.container import ServiceContainer
-from codelens_cli.errors import ExitCode
-from codelens_cli.models import (
-    MethodSearchResponse,
-    ProjectStatus,
-)
-from codelens_cli.output import is_tty, print_json
+from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.models import MethodSearchResponse
+from codelens_cli.output import get_source_color, is_tty, print_json
 
 app = typer.Typer(
     name="methods",
@@ -23,33 +17,6 @@ app = typer.Typer(
 )
 
 console = Console()
-err_console = Console(stderr=True)
-
-
-def _ensure_server_running(project: Optional[str], json_output: bool):
-    """Ensure a server is running for the project."""
-    server_service = ServiceContainer.server_service()
-    project_service = ServiceContainer.project_service()
-    project_path = project_service.get_project_path(project)
-
-    server = server_service.find_server(project_path)
-    if server is None or server.status != ProjectStatus.READY:
-        if not json_output and is_tty():
-            err_console.print(
-                f"Starting server for [cyan]{project_path.name}[/cyan]..."
-            )
-        try:
-            server = asyncio.run(server_service.start_server(project_path))
-        except Exception as e:
-            err_console.print(f"[red]Error:[/red] {e}")
-            raise typer.Exit(ExitCode.SERVER_ERROR)
-
-    return server, project_path
-
-
-def _get_client(server) -> CodeLensClient:
-    """Create a client for the server."""
-    return CodeLensClient(server.host, server.port)
 
 
 @app.command(name="search")
@@ -80,10 +47,10 @@ def search_methods(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Search methods across all classes."""
-    server, project_path = _ensure_server_running(project, json_output)
-    client = _get_client(server)
+    server, project_path = ensure_server_running(project, json_output)
+    client = get_client(server)
 
-    try:
+    with handle_api_errors():
         result = client.search_methods(
             name=name,
             return_type=return_type,
@@ -100,10 +67,6 @@ def search_methods(
         else:
             response = MethodSearchResponse.model_validate(result)
             _print_method_search(response)
-
-    except Exception as e:
-        err_console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(ExitCode.CONNECTION_ERROR)
 
 
 def _print_method_search(response: MethodSearchResponse) -> None:
@@ -131,9 +94,7 @@ def _print_method_search(response: MethodSearchResponse) -> None:
         )
         signature = f"{method.name}({params})"
 
-        source_color = {"PROJECT": "green", "LIBRARY": "yellow", "JDK": "dim"}.get(
-            result.class_source.value, ""
-        )
+        source_color = get_source_color(result.class_source.value)
         table.add_row(
             signature,
             method.return_type.split(".")[-1],

@@ -7,6 +7,29 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 /**
+ * Helper to extract FQN from path parameters and respond with error if missing.
+ * Returns null if FQN is missing (and responds with 400), otherwise returns the FQN.
+ */
+private suspend fun RoutingContext.getFqnOrRespond(
+    paramName: String = "fqn",
+    errorMessage: String = "Class FQN is required"
+): String? {
+    val fqn = call.parameters.getAll(paramName)?.joinToString(".")
+    if (fqn.isNullOrBlank()) {
+        call.respond(
+            HttpStatusCode.BadRequest,
+            ErrorResponse(
+                code = 400,
+                type = "BadRequest",
+                message = errorMessage
+            )
+        )
+        return null
+    }
+    return fqn
+}
+
+/**
  * Routes for bytecode analysis endpoints.
  */
 fun Route.analysisRoutes(analysisService: AnalysisService) {
@@ -104,18 +127,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
          * Get full details for a specific class.
          */
         get("/classes/{fqn...}") {
-            val fqn = call.parameters.getAll("fqn")?.joinToString(".")
-            if (fqn.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        code = 400,
-                        type = "BadRequest",
-                        message = "Class FQN is required"
-                    )
-                )
-                return@get
-            }
+            val fqn = getFqnOrRespond() ?: return@get
 
             val classInfo = analysisService.getClass(fqn)
             if (classInfo != null) {
@@ -140,18 +152,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
          * - includeLibraries: Include library classes (default: false)
          */
         get("/implementations/{fqn...}") {
-            val fqn = call.parameters.getAll("fqn")?.joinToString(".")
-            if (fqn.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        code = 400,
-                        type = "BadRequest",
-                        message = "Class FQN is required"
-                    )
-                )
-                return@get
-            }
+            val fqn = getFqnOrRespond() ?: return@get
 
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
 
@@ -172,18 +173,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
          * Get the class hierarchy for a given class.
          */
         get("/hierarchy/{fqn...}") {
-            val fqn = call.parameters.getAll("fqn")?.joinToString(".")
-            if (fqn.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        code = 400,
-                        type = "BadRequest",
-                        message = "Class FQN is required"
-                    )
-                )
-                return@get
-            }
+            val fqn = getFqnOrRespond() ?: return@get
 
             val hierarchy = analysisService.getHierarchy(fqn)
             if (hierarchy != null) {
@@ -208,18 +198,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
          * - includeLibraries: Include library classes (default: false)
          */
         get("/dependencies/{fqn...}") {
-            val fqn = call.parameters.getAll("fqn")?.joinToString(".")
-            if (fqn.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        code = 400,
-                        type = "BadRequest",
-                        message = "Class FQN is required"
-                    )
-                )
-                return@get
-            }
+            val fqn = getFqnOrRespond() ?: return@get
 
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
 
@@ -242,18 +221,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
          * - includeLibraries: Include library classes (default: false)
          */
         get("/annotations/usages/{fqn...}") {
-            val fqn = call.parameters.getAll("fqn")?.joinToString(".")
-            if (fqn.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        code = 400,
-                        type = "BadRequest",
-                        message = "Annotation FQN is required"
-                    )
-                )
-                return@get
-            }
+            val fqn = getFqnOrRespond(errorMessage = "Annotation FQN is required") ?: return@get
 
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
 

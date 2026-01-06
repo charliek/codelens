@@ -170,32 +170,35 @@ class KtlintProviderImpl : KtlintProvider {
     private fun findKotlinFiles(pattern: String?, includeTests: Boolean): List<Path> {
         val dir = projectDir!!.toPath()
 
-        return Files.walk(dir)
-            .filter { it.isRegularFile() }
-            .filter { it.extension == "kt" || it.extension == "kts" }
-            .filter { path ->
-                // Exclude build directories
-                !path.pathString.contains("/build/") &&
-                    !path.pathString.contains("\\build\\")
-            }
-            .filter { path ->
-                if (!includeTests) {
-                    !path.pathString.contains("/test/") &&
-                        !path.pathString.contains("\\test\\") &&
-                        !path.pathString.contains("/testFixtures/") &&
-                        !path.pathString.contains("\\testFixtures\\")
-                } else {
-                    true
+        // Use use {} to ensure the stream is properly closed
+        return Files.walk(dir).use { stream ->
+            stream
+                .filter { it.isRegularFile() }
+                .filter { it.extension == "kt" || it.extension == "kts" }
+                .filter { path ->
+                    // Exclude build directories
+                    !path.pathString.contains("/build/") &&
+                        !path.pathString.contains("\\build\\")
                 }
-            }
-            .filter { path ->
-                if (pattern != null) {
-                    matchesGlob(path, pattern)
-                } else {
-                    true
+                .filter { path ->
+                    if (!includeTests) {
+                        !path.pathString.contains("/test/") &&
+                            !path.pathString.contains("\\test\\") &&
+                            !path.pathString.contains("/testFixtures/") &&
+                            !path.pathString.contains("\\testFixtures\\")
+                    } else {
+                        true
+                    }
                 }
-            }
-            .toList()
+                .filter { path ->
+                    if (pattern != null) {
+                        matchesGlob(path, pattern)
+                    } else {
+                        true
+                    }
+                }
+                .toList()
+        }
     }
 
     private fun matchesGlob(path: Path, pattern: String): Boolean {

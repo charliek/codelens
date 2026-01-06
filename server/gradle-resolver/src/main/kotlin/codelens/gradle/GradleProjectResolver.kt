@@ -30,10 +30,10 @@ class GradleProjectResolver : ClasspathResolver {
             .forProjectDirectory(projectDir)
             .useBuildDistribution()
 
+        var outputFile: File? = null
         try {
             connector.connect().use { connection ->
-                val outputFile = File.createTempFile("codelens-classpath", ".txt")
-                outputFile.deleteOnExit()
+                outputFile = File.createTempFile("codelens-classpath", ".txt")
 
                 val stdout = ByteArrayOutputStream()
                 val stderr = ByteArrayOutputStream()
@@ -43,7 +43,7 @@ class GradleProjectResolver : ClasspathResolver {
                     val buildLauncher = connection.newBuild()
                         .withArguments(
                             "--init-script", initScript.absolutePath,
-                            "-PcodelensOutputFile=${outputFile.absolutePath}",
+                            "-PcodelensOutputFile=${outputFile!!.absolutePath}",
                             "codelensWriteClasspath",
                             "--quiet"
                         )
@@ -76,7 +76,7 @@ class GradleProjectResolver : ClasspathResolver {
                 }
 
                 // Parse the output file
-                return parseClasspathOutput(outputFile, projectDir)
+                return parseClasspathOutput(outputFile!!, projectDir)
             }
         } catch (e: ClasspathResolutionException) {
             throw e
@@ -89,6 +89,7 @@ class GradleProjectResolver : ClasspathResolver {
         } finally {
             connector.disconnect()
             initScript.delete()
+            outputFile?.delete()
         }
     }
 
@@ -179,7 +180,7 @@ class GradleProjectResolver : ClasspathResolver {
 
         val initScript = File.createTempFile("codelens-init", ".gradle")
         initScript.writeText(script)
-        initScript.deleteOnExit()
+        // Note: initScript is deleted in the finally block of resolve()
         return initScript
     }
 

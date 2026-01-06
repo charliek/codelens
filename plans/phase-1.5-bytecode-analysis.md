@@ -1,8 +1,8 @@
 # CodeLens Phase 1.5: Generic Bytecode Analysis Features
 
-## Status: Phase A Complete
+## Status: Phase A + B Complete
 
-**Last Updated:** 2026-01-05
+**Last Updated:** 2026-01-06
 
 ### Phase A Completion Summary
 
@@ -14,6 +14,18 @@ Phase A (Core Scanning + Classes MVP) has been completed with the following deli
 - Real class/library counts (replacing stub data)
 
 Validated against CodeLens server project itself (24 project classes, 11,651 library classes scanned in ~1 second).
+
+### Phase B Completion Summary
+
+Phase B (Implementations + Dependencies + Remaining Features) has been completed with:
+
+- Full hierarchy traversal with parent/child/interface relationships
+- Bidirectional dependency analysis (incoming and outgoing)
+- Interface/class implementations discovery (direct and indirect)
+- Annotation usage search across codebase
+- Method search with multiple filters (name, return type, annotation, class, package)
+- ktlint integration for warm Kotlin linting and formatting
+- Java version compatibility detection and helpful error messages for Gradle
 
 ---
 
@@ -30,11 +42,11 @@ Build a solid foundation of generic ClassGraph-based analysis features that are 
 | Class List/Search | `GET /api/v1/classes` | `codelens classes list` | Find handlers by package | **Done** |
 | Class Details | `GET /api/v1/classes/{fqn}` | `codelens classes show <fqn>` | Inspect handler structure | **Done** |
 | Scan Statistics | `GET /api/v1/stats` | `codelens classes stats` | Overview metrics | **Done** |
-| Implementations | `GET /api/v1/classes/{fqn}/implementations` | `codelens classes implementations <fqn>` | **Find all Handler impls** | Phase B |
-| Dependencies | `GET /api/v1/classes/{fqn}/dependencies` | `codelens classes dependencies <fqn>` | Map service graph | Phase B |
-| Hierarchy | `GET /api/v1/classes/{fqn}/hierarchy` | `codelens classes hierarchy <fqn>` | Understand inheritance | Phase B |
-| Annotations | `GET /api/v1/annotations/{fqn}/usages` | `codelens annotations usages <fqn>` | Find @Singleton, @Inject | Phase B |
-| Method Search | `GET /api/v1/methods` | `codelens methods search` | Find Promise-returning methods | Phase B |
+| Implementations | `GET /api/v1/implementations/{fqn}` | `codelens classes implementations <fqn>` | **Find all Handler impls** | **Done** |
+| Dependencies | `GET /api/v1/dependencies/{fqn}` | `codelens classes dependencies <fqn>` | Map service graph | **Done** |
+| Hierarchy | `GET /api/v1/hierarchy/{fqn}` | `codelens classes hierarchy <fqn>` | Understand inheritance | **Done** |
+| Annotations | `GET /api/v1/annotations/usages/{fqn}` | `codelens annotations usages <fqn>` | Find @Singleton, @Inject | **Done** |
+| Method Search | `GET /api/v1/methods` | `codelens methods search` | Find Promise-returning methods | **Done** |
 
 ---
 
@@ -116,24 +128,24 @@ tasks.register("writeClasspath") {
 
 ---
 
-## Phase B: Implementations + Dependencies + Remaining Features - TODO
+## Phase B: Implementations + Dependencies + Remaining Features - COMPLETE
 
 **Goal**: Complete analysis capabilities with full test coverage.
 
 **Server:**
-1. [ ] Add `getImplementations()`, `getHierarchy()`, `getDependencies()` to ClassGraphProvider
-2. [ ] Add annotation and method search queries
-3. [ ] Add routes: `/implementations`, `/hierarchy`, `/dependencies`, `/annotations/*`, `/methods`
+1. [x] Add `getImplementations()`, `getHierarchy()`, `getDependencies()` to ClassGraphProvider
+2. [x] Add annotation and method search queries
+3. [x] Add routes: `/implementations`, `/hierarchy`, `/dependencies`, `/annotations/*`, `/methods`
 
 **CLI:**
-1. [ ] Add `codelens classes implementations <fqn>` command
-2. [ ] Add `codelens classes dependencies <fqn>` command
-3. [ ] Add `codelens classes hierarchy <fqn>` command
-4. [ ] Add `codelens annotations` subcommand group
-5. [ ] Add `codelens methods search` command
+1. [x] Add `codelens classes implementations <fqn>` command
+2. [x] Add `codelens classes dependencies <fqn>` command
+3. [x] Add `codelens classes hierarchy <fqn>` command
+4. [x] Add `codelens annotations` subcommand group
+5. [x] Add `codelens methods search` command
 
 **Tests:**
-- [ ] Unit tests for each new query type
+- [x] Unit tests for ClassGraphProviderImpl
 - [ ] Integration test: Find all Handler implementations in moonracer
 - [ ] Integration test: Map dependencies for a specific handler
 

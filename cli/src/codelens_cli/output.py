@@ -13,6 +13,31 @@ def is_tty() -> bool:
     return sys.stdout.isatty()
 
 
+# Color mappings for consistent styling across commands
+SOURCE_COLORS: dict[str, str] = {
+    "PROJECT": "green",
+    "LIBRARY": "yellow",
+    "JDK": "dim",
+}
+
+STATUS_COLORS: dict[str, str] = {
+    "READY": "green",
+    "STARTING": "yellow",
+    "LOADING": "yellow",
+    "ERROR": "red",
+}
+
+
+def get_source_color(source: str) -> str:
+    """Get Rich color for a source type (PROJECT, LIBRARY, JDK)."""
+    return SOURCE_COLORS.get(source, "")
+
+
+def get_status_color(status: str) -> str:
+    """Get Rich color for a status value (READY, LOADING, ERROR, etc.)."""
+    return STATUS_COLORS.get(status, "white")
+
+
 def get_console() -> Console:
     """Get a Rich console for output."""
     return Console()
@@ -26,13 +51,7 @@ def print_json(data: Any) -> None:
 def print_server_status(server: dict, console: Console | None = None) -> None:
     """Print server status in a nice format."""
     console = console or get_console()
-
-    status_color = {
-        "READY": "green",
-        "STARTING": "yellow",
-        "LOADING": "yellow",
-        "ERROR": "red",
-    }.get(server.get("status", ""), "white")
+    status_color = get_status_color(server.get("status", ""))
 
     console.print(f"\n[bold]CodeLens Server[/bold]")
     console.print()
@@ -61,12 +80,7 @@ def print_server_status(server: dict, console: Console | None = None) -> None:
 def print_project_info(project: dict, console: Console | None = None) -> None:
     """Print project info in a nice format."""
     console = console or get_console()
-
-    status_color = {
-        "READY": "green",
-        "LOADING": "yellow",
-        "ERROR": "red",
-    }.get(project.get("status", ""), "white")
+    status_color = get_status_color(project.get("status", ""))
 
     console.print(f"\n[bold]{project.get('name', 'unknown')}[/bold]")
     console.print()

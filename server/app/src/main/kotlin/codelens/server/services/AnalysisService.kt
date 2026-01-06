@@ -11,6 +11,8 @@ import codelens.gradle.ResolvedClasspath
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Instant
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -30,6 +32,9 @@ class AnalysisService(
     private val classpathResolver: ClasspathResolver
     private val projectJavaHomeFile: File? = projectJavaHome?.let { File(it) }
     private val classGraphProvider: ClassGraphProvider = ClassGraphProviderImpl()
+    private val scanExecutor: ExecutorService = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "codelens-scan-${projectDir.name}").apply { isDaemon = true }
+    }
 
     private val projectInfo: AtomicReference<ProjectInfo>
     private var resolvedClasspath: ResolvedClasspath? = null
@@ -54,9 +59,7 @@ class AnalysisService(
         ))
 
         // Start initial scan in background
-        Thread {
-            performScan()
-        }.start()
+        scanExecutor.submit { performScan() }
     }
 
     /**
@@ -114,9 +117,14 @@ class AnalysisService(
      */
     fun refresh() {
         projectInfo.updateAndGet { it.copy(status = ProjectStatus.LOADING) }
-        Thread {
-            performScan()
-        }.start()
+        scanExecutor.submit { performScan() }
+    }
+
+    /**
+     * Shuts down the background scan executor.
+     */
+    fun shutdown() {
+        scanExecutor.shutdown()
     }
 
     /**
