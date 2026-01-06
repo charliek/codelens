@@ -15,7 +15,12 @@ import httpx
 
 from codelens_cli.models import ProjectStatus, ServerMode, ServerState
 from codelens_cli.repositories import ServerStateRepository
-from codelens_cli.settings import AppSettings, find_repo_path
+from codelens_cli.settings import (
+    AppSettings,
+    find_repo_path,
+    get_codelens_java_version,
+    resolve_codelens_java_home,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -122,12 +127,52 @@ class ServerService:
                     f"Or use: codelens start --mode gradle"
                 )
 
-            java_home = self.settings.java.home or os.environ.get("JAVA_HOME")
-            if java_home:
-                java_bin = Path(java_home) / "bin" / "java"
-                java_cmd = str(java_bin) if java_bin.exists() else "java"
+            # Priority order for Java resolution:
+            # 1. Explicit setting (CODELENS_JAVA_HOME env var or config)
+            # 2. SDKMAN detection (read codelens .sdkmanrc, find in ~/.sdkman)
+            # 3. JAVA_HOME environment variable
+            # 4. System PATH
+            java_home: Optional[Path] = None
+            java_source: Optional[str] = None
+
+            # 1. Check explicit setting
+            if self.settings.java.home:
+                java_home = Path(self.settings.java.home)
+                java_source = "CODELENS_JAVA_HOME setting"
+
+            # 2. Try SDKMAN detection
+            if java_home is None:
+                sdkman_java = resolve_codelens_java_home()
+                if sdkman_java:
+                    java_home = sdkman_java
+                    java_source = f"SDKMAN ({sdkman_java.name})"
+
+            # 3. Fall back to JAVA_HOME
+            if java_home is None:
+                env_java_home = os.environ.get("JAVA_HOME")
+                if env_java_home:
+                    java_home = Path(env_java_home)
+                    java_source = "JAVA_HOME environment variable"
+
+            # Resolve java binary
+            if java_home and (java_home / "bin" / "java").exists():
+                java_cmd = str(java_home / "bin" / "java")
+                logger.debug("Using Java from %s: %s", java_source, java_cmd)
             else:
+                # 4. Fall back to PATH
                 java_cmd = "java"
+                java_source = "system PATH"
+                logger.debug("Using Java from %s", java_source)
+
+                # Warn if we couldn't find the required version
+                required_version = get_codelens_java_version()
+                if required_version:
+                    logger.warning(
+                        "Could not find Java %s in SDKMAN. "
+                        "Install with: sdk install java %s",
+                        required_version,
+                        required_version,
+                    )
 
             cmd = [
                 java_cmd,
@@ -161,7 +206,7 @@ class ServerService:
 
         # Wait for ready signal
         try:
-            ready_info = await self._wait_for_ready(process, timeout)
+            ready_info = await self._wait_for_ready(process, timeout, log_file)
             self.repository.update_status(project_path, ProjectStatus.READY)
 
             # Reload state with updated port from server
@@ -176,7 +221,7 @@ class ServerService:
             raise
 
     async def _wait_for_ready(
-        self, process: subprocess.Popen, timeout: int
+        self, process: subprocess.Popen, timeout: int, log_file: Path
     ) -> dict[str, int | str]:
         """Wait for server to print CODELENS_READY."""
         ready_pattern = re.compile(r"CODELENS_READY port=(\d+) host=(\S+) version=(\S+)")
@@ -187,6 +232,7 @@ class ServerService:
         while loop.time() - start_time < timeout:
             # Check if process died
             if process.poll() is not None:
+                self._check_for_java_version_error(log_file)
                 raise RuntimeError(
                     f"Server process exited with code {process.returncode}"
                 )
@@ -209,6 +255,30 @@ class ServerService:
             await asyncio.sleep(0.1)
 
         raise TimeoutError(f"Server did not become ready within {timeout}s")
+
+    def _check_for_java_version_error(self, log_file: Path) -> None:
+        """Check if the server failed due to Java version mismatch.
+
+        Reads the log file to detect UnsupportedClassVersionError and raises
+        a helpful error message with solutions.
+        """
+        try:
+            if log_file.exists():
+                log_content = log_file.read_text()
+                if "UnsupportedClassVersionError" in log_content:
+                    required_version = get_codelens_java_version() or "21"
+                    raise RuntimeError(
+                        f"Java version mismatch: The codelens server requires Java {required_version}.\n"
+                        f"Your current Java is too old to run the compiled server JAR.\n\n"
+                        f"Solutions:\n"
+                        f"  1. Install the required Java: sdk install java {required_version}\n"
+                        f"  2. Set CODELENS_JAVA_HOME to point to a Java 21+ installation\n"
+                        f"  3. Use gradle mode instead: codelens start --mode gradle"
+                    )
+        except RuntimeError:
+            raise
+        except Exception:
+            pass  # Ignore read errors
 
     def stop_server(self, project_path: Path, force: bool = False) -> bool:
         """Stop the server for a project."""

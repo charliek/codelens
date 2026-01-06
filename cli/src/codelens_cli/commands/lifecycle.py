@@ -51,7 +51,7 @@ def start(
             console.print(
                 f"[yellow]Server already running for {project_path.name}[/yellow]"
             )
-            print_server_status(existing.model_dump(by_alias=True), console)
+            print_server_status(existing.model_dump(by_alias=True, mode="json"), console)
         return
 
     if not json_output and is_tty():
@@ -70,7 +70,7 @@ def start(
             print_json(server.model_dump(by_alias=True))
         else:
             console.print(f"[green]✓[/green] Server ready")
-            print_server_status(server.model_dump(by_alias=True), console)
+            print_server_status(server.model_dump(by_alias=True, mode="json"), console)
 
     except TimeoutError:
         err_console.print(f"[red]Error:[/red] Server did not start within {timeout}s")
@@ -134,10 +134,10 @@ def status(
         client = CodeLensClient(server.host, server.port)
         info = client.info()
         # Merge live info into server state
-        server_dict = server.model_dump(by_alias=True)
+        server_dict = server.model_dump(by_alias=True, mode="json")
         server_dict.update(info)
     except Exception:
-        server_dict = server.model_dump(by_alias=True)
+        server_dict = server.model_dump(by_alias=True, mode="json")
 
     if json_output or not is_tty():
         print_json(server_dict)
@@ -176,7 +176,7 @@ def restart(
             print_json(server.model_dump(by_alias=True))
         else:
             console.print(f"[green]✓[/green] Server restarted")
-            print_server_status(server.model_dump(by_alias=True), console)
+            print_server_status(server.model_dump(by_alias=True, mode="json"), console)
 
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")
