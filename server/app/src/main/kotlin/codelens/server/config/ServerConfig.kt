@@ -9,6 +9,7 @@ package codelens.server.config
  * @property portRangeStart Start of port range for auto-assignment
  * @property portRangeEnd End of port range for auto-assignment
  * @property idleTimeoutMinutes Minutes of inactivity before auto-shutdown (0 to disable)
+ * @property classpathFile Path to a pre-generated classpath file (fallback mode), or null to use Gradle Tooling API
  */
 data class ServerConfig(
     val projectPath: String,
@@ -16,5 +17,6 @@ data class ServerConfig(
     val host: String,
     val portRangeStart: Int,
     val portRangeEnd: Int,
-    val idleTimeoutMinutes: Int
+    val idleTimeoutMinutes: Int,
+    val classpathFile: String? = null
 )

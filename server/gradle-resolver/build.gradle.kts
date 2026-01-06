@@ -2,15 +2,19 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
+repositories {
+    maven {
+        url = uri("https://repo.gradle.org/gradle/libs-releases")
+    }
+}
+
 dependencies {
-    implementation(project(":server:core"))
-    implementation(libs.classgraph)
+    implementation(libs.gradle.tooling.api)
     implementation(libs.logback.classic)
 
     // Test dependencies
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
-    testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.mockk)
 }
 

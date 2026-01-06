@@ -6,6 +6,7 @@ import codelens.server.config.parseArgs
 import codelens.server.monitoring.ActivityTracker
 import codelens.server.monitoring.startIdleMonitor
 import codelens.server.routes.adminRoutes
+import codelens.server.routes.analysisRoutes
 import codelens.server.routes.projectRoutes
 import codelens.server.services.AnalysisService
 import io.ktor.http.*
@@ -42,7 +43,7 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
 
-    val analysisService = AnalysisService(projectDir)
+    val analysisService = AnalysisService(projectDir, config.classpathFile)
     val activityTracker = ActivityTracker()
 
     // Find available port
@@ -115,5 +116,6 @@ fun Application.configureServer(
     routing {
         adminRoutes(analysisService, activityTracker, config)
         projectRoutes(analysisService)
+        analysisRoutes(analysisService)
     }
 }

@@ -36,6 +36,12 @@ fun parseArgs(args: Array<String>): ServerConfig {
         description = "Idle timeout (e.g., 30m, 1h, 0 to disable)"
     ).default("30m")
 
+    val classpathFile by parser.option(
+        ArgType.String,
+        fullName = "classpath-file",
+        description = "Path to a pre-generated classpath file (fallback mode). If not specified, uses Gradle Tooling API."
+    )
+
     parser.parse(args)
 
     return ServerConfig(
@@ -44,7 +50,8 @@ fun parseArgs(args: Array<String>): ServerConfig {
         host = host,
         portRangeStart = 8080,
         portRangeEnd = 8180,
-        idleTimeoutMinutes = parseTimeoutMinutes(idleTimeout)
+        idleTimeoutMinutes = parseTimeoutMinutes(idleTimeout),
+        classpathFile = classpathFile
     )
 }
 

@@ -128,3 +128,273 @@ class ProjectInfoRequest(BaseModel):
 
     project_path: Path
     once: bool = False
+
+
+class ClassSource(str, Enum):
+    """Source classification for a class."""
+
+    PROJECT = "PROJECT"
+    LIBRARY = "LIBRARY"
+    JDK = "JDK"
+
+
+class ClassSummary(BaseModel):
+    """Summary information about a class."""
+
+    fqn: str
+    simple_name: str = Field(alias="simpleName")
+    package_name: str = Field(alias="packageName")
+    source: ClassSource
+    is_interface: bool = Field(alias="isInterface")
+    is_abstract: bool = Field(alias="isAbstract")
+    is_enum: bool = Field(alias="isEnum")
+    is_annotation: bool = Field(alias="isAnnotation")
+    method_count: int = Field(alias="methodCount")
+    field_count: int = Field(alias="fieldCount")
+
+    class Config:
+        populate_by_name = True
+
+
+class ClassFilterSummary(BaseModel):
+    """Summary of the filter that was applied."""
+
+    package_pattern: Optional[str] = Field(None, alias="packagePattern")
+    name_pattern: Optional[str] = Field(None, alias="namePattern")
+    source: Optional[str] = None
+    has_annotation: Optional[str] = Field(None, alias="hasAnnotation")
+    extends_class: Optional[str] = Field(None, alias="extendsClass")
+    implements_interface: Optional[str] = Field(None, alias="implementsInterface")
+
+    class Config:
+        populate_by_name = True
+
+
+class ClassListResponse(BaseModel):
+    """Response for class list endpoint."""
+
+    classes: list[ClassSummary]
+    total_count: int = Field(alias="totalCount")
+    page: int
+    page_size: int = Field(alias="pageSize")
+    total_pages: int = Field(alias="totalPages")
+    applied_filter: ClassFilterSummary = Field(alias="appliedFilter")
+
+    class Config:
+        populate_by_name = True
+
+
+class AnnotationInfo(BaseModel):
+    """Information about an annotation."""
+
+    type: str
+    parameters: dict[str, str] = {}
+
+
+class ParameterInfo(BaseModel):
+    """Information about a method parameter."""
+
+    name: str
+    type: str
+    annotations: list[AnnotationInfo] = []
+
+
+class MethodInfo(BaseModel):
+    """Information about a method."""
+
+    name: str
+    visibility: str
+    return_type: str = Field(alias="returnType")
+    parameters: list[ParameterInfo] = []
+    annotations: list[AnnotationInfo] = []
+    is_static: bool = Field(False, alias="isStatic")
+    is_abstract: bool = Field(False, alias="isAbstract")
+    is_final: bool = Field(False, alias="isFinal")
+    is_synthetic: bool = Field(False, alias="isSynthetic")
+
+    class Config:
+        populate_by_name = True
+
+
+class FieldInfo(BaseModel):
+    """Information about a field."""
+
+    name: str
+    visibility: str
+    type: str
+    annotations: list[AnnotationInfo] = []
+    is_static: bool = Field(False, alias="isStatic")
+    is_final: bool = Field(False, alias="isFinal")
+
+    class Config:
+        populate_by_name = True
+
+
+class ClassName(BaseModel):
+    """Class name components."""
+
+    fqn: str
+    simple_name: str = Field(alias="simpleName")
+    package_name: str = Field(alias="packageName")
+
+    class Config:
+        populate_by_name = True
+
+
+class ClassInfo(BaseModel):
+    """Full detailed information about a class."""
+
+    name: ClassName
+    source: ClassSource
+    visibility: str
+    is_interface: bool = Field(False, alias="isInterface")
+    is_abstract: bool = Field(False, alias="isAbstract")
+    is_final: bool = Field(False, alias="isFinal")
+    is_enum: bool = Field(False, alias="isEnum")
+    is_annotation: bool = Field(False, alias="isAnnotation")
+    is_synthetic: bool = Field(False, alias="isSynthetic")
+    superclass: Optional[str] = None
+    interfaces: list[str] = []
+    annotations: list[AnnotationInfo] = []
+    methods: list[MethodInfo] = []
+    fields: list[FieldInfo] = []
+
+    class Config:
+        populate_by_name = True
+
+
+class ClassDetailResponse(BaseModel):
+    """Response for class details endpoint."""
+
+    class_info: ClassInfo = Field(alias="classInfo")
+
+    class Config:
+        populate_by_name = True
+
+
+class ScanStatistics(BaseModel):
+    """Statistics about the scanned codebase."""
+
+    project_class_count: int = Field(alias="projectClassCount")
+    library_class_count: int = Field(alias="libraryClassCount")
+    jdk_class_count: int = Field(alias="jdkClassCount")
+    project_interface_count: int = Field(alias="projectInterfaceCount")
+    project_abstract_class_count: int = Field(alias="projectAbstractClassCount")
+    project_enum_count: int = Field(alias="projectEnumCount")
+    project_annotation_count: int = Field(alias="projectAnnotationCount")
+    project_method_count: int = Field(alias="projectMethodCount")
+    project_field_count: int = Field(alias="projectFieldCount")
+    classpath_resolved_by: str = Field(alias="classpathResolvedBy")
+    classpath_entry_count: int = Field(alias="classpathEntryCount")
+    scan_duration_ms: int = Field(alias="scanDurationMs")
+    scanned_at: str = Field(alias="scannedAt")
+
+    class Config:
+        populate_by_name = True
+
+
+class DependencyType(str, Enum):
+    """Type of dependency relationship."""
+
+    EXTENDS = "EXTENDS"
+    IMPLEMENTS = "IMPLEMENTS"
+    FIELD_TYPE = "FIELD_TYPE"
+    METHOD_RETURN_TYPE = "METHOD_RETURN_TYPE"
+    METHOD_PARAMETER = "METHOD_PARAMETER"
+    TYPE_REFERENCE = "TYPE_REFERENCE"
+
+
+class DependencyInfo(BaseModel):
+    """Information about a single dependency."""
+
+    class_fqn: str = Field(alias="classFqn")
+    dependency_type: DependencyType = Field(alias="dependencyType")
+    source: ClassSource
+    location: Optional[str] = None
+
+    class Config:
+        populate_by_name = True
+
+
+class DependenciesResponse(BaseModel):
+    """Response for dependencies endpoint."""
+
+    target_class: str = Field(alias="targetClass")
+    outgoing: list[DependencyInfo]
+    incoming: list[DependencyInfo]
+
+    class Config:
+        populate_by_name = True
+
+
+class HierarchyNode(BaseModel):
+    """Node in a class hierarchy tree."""
+
+    class_fqn: str = Field(alias="classFqn")
+    simple_name: str = Field(alias="simpleName")
+    source: ClassSource
+    is_interface: bool = Field(alias="isInterface")
+    parent: Optional["HierarchyNode"] = None
+    interfaces: list["HierarchyNode"] = []
+    children: list["HierarchyNode"] = []
+
+    class Config:
+        populate_by_name = True
+
+
+class HierarchyResponse(BaseModel):
+    """Response for hierarchy endpoint."""
+
+    target_class: str = Field(alias="targetClass")
+    hierarchy: HierarchyNode
+
+    class Config:
+        populate_by_name = True
+
+
+class ImplementationsResponse(BaseModel):
+    """Response for implementations endpoint."""
+
+    target_class: str = Field(alias="targetClass")
+    direct_implementations: list[ClassSummary] = Field(alias="directImplementations")
+    indirect_implementations: list[ClassSummary] = Field(alias="indirectImplementations")
+    total_count: int = Field(alias="totalCount")
+
+    class Config:
+        populate_by_name = True
+
+
+class MethodSearchResult(BaseModel):
+    """Result of a method search."""
+
+    class_fqn: str = Field(alias="classFqn")
+    class_simple_name: str = Field(alias="classSimpleName")
+    class_source: ClassSource = Field(alias="classSource")
+    method: MethodInfo
+
+    class Config:
+        populate_by_name = True
+
+
+class MethodSearchResponse(BaseModel):
+    """Response for method search endpoint."""
+
+    methods: list[MethodSearchResult]
+    total_count: int = Field(alias="totalCount")
+    page: int
+    page_size: int = Field(alias="pageSize")
+    total_pages: int = Field(alias="totalPages")
+
+    class Config:
+        populate_by_name = True
+
+
+class AnnotationUsagesResponse(BaseModel):
+    """Response for annotation usages endpoint."""
+
+    annotation_fqn: str = Field(alias="annotationFqn")
+    usages: list[ClassSummary]
+    total_count: int = Field(alias="totalCount")
+
+    class Config:
+        populate_by_name = True

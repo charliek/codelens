@@ -12,6 +12,7 @@ application {
 dependencies {
     implementation(project(":server:core"))
     implementation(project(":server:classgraph"))
+    implementation(project(":server:gradle-resolver"))
 
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)

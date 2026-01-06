@@ -5,6 +5,7 @@ kotlinx-serialization = "1.7.3"
 kotlinx-cli = "0.3.6"
 logback = "1.5.12"
 classgraph = "4.8.177"
+gradle-tooling-api = "8.5"
 junit = "5.10.0"
 mockk = "1.13.8"
 
@@ -20,10 +21,12 @@ kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kot
 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
+gradle-tooling-api = { module = "org.gradle:gradle-tooling-api", version.ref = "gradle-tooling-api" }
 
 # Test dependencies
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }

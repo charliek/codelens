@@ -45,6 +45,10 @@ codelens/
 ├── .gitignore
 ├── version.txt                      # Single source of truth for version
 │
+├── docs/
+│   ├── api.md                       # API endpoint documentation
+│   └── cli.md                       # CLI command documentation
+│
 ├── .github/
 │   └── workflows/
 │       └── build.yml                # CI/CD pipeline
@@ -107,7 +111,10 @@ codelens/
 │           ├── commands/
 │           │   ├── __init__.py
 │           │   ├── lifecycle.py     # start, stop, status, restart, list
-│           │   └── project.py       # project info
+│           │   ├── project.py       # project info
+│           │   ├── classes.py       # class analysis commands
+│           │   ├── annotations.py   # annotation commands
+│           │   └── methods.py       # method search commands
 │           ├── repositories/
 │           │   └── server_state_repository.py  # State persistence
 │           └── services/
@@ -277,46 +284,55 @@ codelens project --json | jq '.name'
 # "user-service"
 ```
 
-### Command Reference
+### Quick Command Reference
 
-#### Lifecycle Commands
+For complete documentation, see [docs/cli.md](docs/cli.md).
 
-- `codelens start` - Start the server for the current project
-  - `--project PATH` - Specify project directory
-  - `--port PORT` - Use specific port
-  - `--mode gradle|jar` - Server mode
-  - `--timeout SECS` - Startup timeout (default: 60)
-  - `--json` - JSON output
+#### Server Lifecycle
 
-- `codelens stop` - Stop the server
-  - `--project PATH` - Specify project directory
-  - `--force` - Force kill if graceful shutdown fails
-  - `--json` - JSON output
+```bash
+codelens start                # Start server for current project
+codelens stop                 # Stop server
+codelens status               # Show server status
+codelens list                 # List all running servers
+codelens refresh              # Refresh after code changes
+```
 
-- `codelens status` - Show server status
-  - `--project PATH` - Specify project directory
-  - `--json` - JSON output
+#### Class Analysis
 
-- `codelens restart` - Restart the server
-  - `--project PATH` - Specify project directory
-  - `--mode gradle|jar` - Server mode
-  - `--json` - JSON output
+```bash
+# List and search classes
+codelens classes list                                    # List all project classes
+codelens classes list --package "com.example.api.*"      # Filter by package
+codelens classes list --implements ratpack.handling.Handler  # Find implementations
+codelens classes show com.example.UserHandler            # Show class details
 
-- `codelens refresh` - Refresh project scan
-  - `--project PATH` - Specify project directory
-  - `--json` - JSON output
+# Analyze relationships
+codelens classes implementations ratpack.handling.Handler  # Find all implementations
+codelens classes hierarchy com.example.UserHandler         # Show class hierarchy
+codelens classes dependencies com.example.UserHandler      # Show dependencies
 
-- `codelens list` - List all running servers
-  - `--json` - JSON output
+# Statistics
+codelens classes stats                                   # Show scan statistics
+```
 
-#### Analysis Commands
+#### Annotation & Method Search
 
-- `codelens project` - Show project information
-  - `--project PATH` - Specify project directory
-  - `--json` - JSON output
-  - `--once` - Start server, query, then stop
+```bash
+# Find annotation usages
+codelens annotations usages javax.inject.Singleton       # Find @Singleton classes
 
-- `codelens version` - Show version information
+# Search methods
+codelens methods search --return-type ratpack.exec.Promise  # Find Promise methods
+codelens methods search --name "get*"                       # Search by name pattern
+```
+
+#### Common Options
+
+All commands support:
+- `--project`, `-p` - Specify project directory
+- `--json` - Output as JSON
+- `--include-libraries`, `-L` - Include library classes (analysis commands)
 
 ## Configuration
 
@@ -360,20 +376,25 @@ State files are automatically cleaned up when processes exit.
 
 ## API Endpoints
 
-The server exposes the following endpoints:
+The server exposes a REST API. For complete documentation, see [docs/api.md](docs/api.md).
 
-### Admin Endpoints
+### Quick Reference
 
-- `GET /admin/health` - Health check
-- `GET /admin/ready` - Readiness check
-- `GET /admin/info` - Server information
-- `POST /admin/activity` - Touch activity (reset idle timer)
-- `POST /admin/shutdown` - Graceful shutdown (localhost only)
-
-### Project Endpoints (v1)
-
-- `GET /api/v1/project` - Get project information
-- `POST /api/v1/project/refresh` - Refresh project scan
+| Endpoint | Description |
+|----------|-------------|
+| `GET /admin/health` | Health check |
+| `GET /admin/ready` | Readiness check |
+| `GET /admin/info` | Server information |
+| `GET /api/v1/project` | Project information |
+| `POST /api/v1/project/refresh` | Refresh scan |
+| `GET /api/v1/stats` | Scan statistics |
+| `GET /api/v1/classes` | List/search classes |
+| `GET /api/v1/classes/{fqn}` | Class details |
+| `GET /api/v1/implementations/{fqn}` | Find implementations |
+| `GET /api/v1/hierarchy/{fqn}` | Class hierarchy |
+| `GET /api/v1/dependencies/{fqn}` | Class dependencies |
+| `GET /api/v1/annotations/usages/{fqn}` | Annotation usages |
+| `GET /api/v1/methods` | Search methods |
 
 ## Development
 
@@ -421,28 +442,29 @@ codelens project
 codelens stop
 ```
 
-## Current Status (Bootstrap Phase)
+## Current Status
 
-This is the bootstrap implementation with:
+**Phase A & B Complete** - Full bytecode analysis is now available:
 
 ✅ Full server implementation with Ktor
 ✅ Complete CLI with lifecycle management
-✅ End-to-end connectivity between CLI and server
+✅ ClassGraph bytecode scanning
+✅ Gradle Tooling API for classpath resolution
+✅ Class listing, filtering, and search
+✅ Implementation/subclass discovery
+✅ Class hierarchy analysis
+✅ Dependency mapping (incoming/outgoing)
+✅ Annotation usage search
+✅ Method search across codebase
 ✅ Auto-start capability
 ✅ Multiple project support
 ✅ Idle shutdown
 ✅ JSON output support
-✅ CI/CD pipeline (GitHub Actions)
-✅ Test infrastructure (JUnit 5 + pytest)
-✅ Thread-safe server implementation
-✅ Service/Repository architecture
-✅ Dependency injection container
 
-**Stubbed for later phases:**
-- ClassGraph integration (returns mock data)
-- Gradle Tooling API integration
+**Planned for future phases:**
 - Ratpack-specific analysis endpoints
-- Real complexity scoring
+- Migration complexity scoring
+- Handler migration recommendations
 
 ## Development
 
