@@ -45,7 +45,7 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
 
-    val analysisService = AnalysisService(projectDir, config.classpathFile)
+    val analysisService = AnalysisService(projectDir, config.classpathFile, config.projectJavaHome)
     val ktlintService = KtlintService(projectDir)
     val activityTracker = ActivityTracker()
 

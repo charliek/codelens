@@ -35,7 +35,8 @@ class ClasspathFileResolver(
 ) : ClasspathResolver {
     private val logger = LoggerFactory.getLogger(ClasspathFileResolver::class.java)
 
-    override fun resolve(projectDir: File): ResolvedClasspath {
+    override fun resolve(projectDir: File, javaHome: File?): ResolvedClasspath {
+        // javaHome is not used for file-based resolution (Gradle already ran with the correct Java)
         logger.info("Resolving classpath from file: ${classpathFile.absolutePath}")
 
         if (!classpathFile.exists()) {

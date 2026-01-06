@@ -1,6 +1,7 @@
 """Server lifecycle commands: start, stop, status, restart, refresh."""
 
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -32,6 +33,11 @@ def start(
     mode: Optional[str] = typer.Option(
         None, "--mode", help="Server mode: gradle or jar"
     ),
+    project_java: Optional[str] = typer.Option(
+        None,
+        "--project-java",
+        help="Java home for target project's Gradle (auto-detected if not specified)",
+    ),
     timeout: int = typer.Option(60, "--timeout", help="Startup timeout in seconds"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
@@ -41,6 +47,9 @@ def start(
 
     # Parse mode
     server_mode = ServerMode(mode) if mode else None
+
+    # Parse project Java home
+    project_java_home = Path(project_java) if project_java else None
 
     # Check if already running
     existing = server_service.find_server(project_path)
@@ -62,7 +71,11 @@ def start(
     try:
         server = asyncio.run(
             server_service.start_server(
-                project_path, mode=server_mode, port=port, timeout=timeout
+                project_path,
+                mode=server_mode,
+                port=port,
+                timeout=timeout,
+                project_java_home=project_java_home,
             )
         )
 
@@ -153,6 +166,11 @@ def restart(
     mode: Optional[str] = typer.Option(
         None, "--mode", help="Server mode: gradle or jar"
     ),
+    project_java: Optional[str] = typer.Option(
+        None,
+        "--project-java",
+        help="Java home for target project's Gradle (auto-detected if not specified)",
+    ),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Restart the CodeLens server for a project."""
@@ -162,6 +180,9 @@ def restart(
     # Parse mode
     server_mode = ServerMode(mode) if mode else None
 
+    # Parse project Java home
+    project_java_home = Path(project_java) if project_java else None
+
     if not json_output and is_tty():
         err_console.print("Restarting server...")
 
@@ -169,7 +190,11 @@ def restart(
 
     try:
         server = asyncio.run(
-            server_service.start_server(project_path, mode=server_mode)
+            server_service.start_server(
+                project_path,
+                mode=server_mode,
+                project_java_home=project_java_home,
+            )
         )
 
         if json_output or not is_tty():

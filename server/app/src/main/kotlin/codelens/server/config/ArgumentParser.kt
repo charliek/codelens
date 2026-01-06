@@ -42,6 +42,12 @@ fun parseArgs(args: Array<String>): ServerConfig {
         description = "Path to a pre-generated classpath file (fallback mode). If not specified, uses Gradle Tooling API."
     )
 
+    val projectJavaHome by parser.option(
+        ArgType.String,
+        fullName = "project-java-home",
+        description = "Path to Java home for target project's Gradle. Required when project uses Gradle < 8.5 and server runs on Java 21."
+    )
+
     parser.parse(args)
 
     return ServerConfig(
@@ -51,7 +57,8 @@ fun parseArgs(args: Array<String>): ServerConfig {
         portRangeStart = 8080,
         portRangeEnd = 8180,
         idleTimeoutMinutes = parseTimeoutMinutes(idleTimeout),
-        classpathFile = classpathFile
+        classpathFile = classpathFile,
+        projectJavaHome = projectJavaHome
     )
 }
 

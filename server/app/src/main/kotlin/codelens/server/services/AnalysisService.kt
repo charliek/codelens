@@ -22,11 +22,13 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class AnalysisService(
     private val projectDir: File,
-    classpathFile: String? = null
+    classpathFile: String? = null,
+    projectJavaHome: String? = null
 ) {
     private val logger = LoggerFactory.getLogger(AnalysisService::class.java)
 
     private val classpathResolver: ClasspathResolver
+    private val projectJavaHomeFile: File? = projectJavaHome?.let { File(it) }
     private val classGraphProvider: ClassGraphProvider = ClassGraphProviderImpl()
 
     private val projectInfo: AtomicReference<ProjectInfo>
@@ -39,6 +41,9 @@ class AnalysisService(
             ClasspathFileResolver(File(classpathFile))
         } else {
             logger.info("Using Gradle Tooling API resolver")
+            if (projectJavaHomeFile != null) {
+                logger.info("Will use project Java home: ${projectJavaHomeFile.absolutePath}")
+            }
             GradleProjectResolver()
         }
 
@@ -61,8 +66,8 @@ class AnalysisService(
         try {
             logger.info("Starting scan for project: ${projectDir.name}")
 
-            // Resolve classpath
-            val classpath = classpathResolver.resolve(projectDir)
+            // Resolve classpath (pass project Java home for Gradle Tooling API)
+            val classpath = classpathResolver.resolve(projectDir, projectJavaHomeFile)
             resolvedClasspath = classpath
             logger.info("Resolved ${classpath.entries.size} classpath entries using ${classpath.resolvedBy}")
 

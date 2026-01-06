@@ -17,8 +17,11 @@ import java.io.File
 class GradleProjectResolver : ClasspathResolver {
     private val logger = LoggerFactory.getLogger(GradleProjectResolver::class.java)
 
-    override fun resolve(projectDir: File): ResolvedClasspath {
+    override fun resolve(projectDir: File, javaHome: File?): ResolvedClasspath {
         logger.info("Resolving classpath via Gradle Tooling API for: ${projectDir.absolutePath}")
+        if (javaHome != null) {
+            logger.info("Using Java home for Gradle: ${javaHome.absolutePath}")
+        }
 
         // Create a temp file for the init script
         val initScript = createTempInitScript()
@@ -37,7 +40,7 @@ class GradleProjectResolver : ClasspathResolver {
 
                 // Run the classpath-extracting task via init script
                 try {
-                    connection.newBuild()
+                    val buildLauncher = connection.newBuild()
                         .withArguments(
                             "--init-script", initScript.absolutePath,
                             "-PcodelensOutputFile=${outputFile.absolutePath}",
@@ -46,10 +49,26 @@ class GradleProjectResolver : ClasspathResolver {
                         )
                         .setStandardOutput(stdout)
                         .setStandardError(stderr)
-                        .run()
+
+                    // Set Java home if provided (for older Gradle versions)
+                    if (javaHome != null) {
+                        buildLauncher.setJavaHome(javaHome)
+                    }
+
+                    buildLauncher.run()
                 } catch (e: Exception) {
                     val stderrStr = stderr.toString()
                     logger.error("Gradle task failed. Stderr: $stderrStr", e)
+
+                    // Provide helpful error message for Java version incompatibility
+                    if (stderrStr.contains("Unsupported class file major version") ||
+                        e.message?.contains("Unsupported class file major version") == true) {
+                        throw ClasspathResolutionException(
+                            buildJavaVersionErrorMessage(e.message),
+                            e
+                        )
+                    }
+
                     throw ClasspathResolutionException(
                         "Failed to run Gradle classpath resolution task: ${e.message}\nStderr: $stderrStr",
                         e
@@ -71,6 +90,28 @@ class GradleProjectResolver : ClasspathResolver {
             connector.disconnect()
             initScript.delete()
         }
+    }
+
+    /**
+     * Builds a helpful error message for Java version incompatibility errors.
+     */
+    private fun buildJavaVersionErrorMessage(originalMessage: String?): String {
+        return """
+            |Java version incompatibility: The target project's Gradle version cannot run with Java 21.
+            |
+            |This typically occurs when analyzing projects using Gradle < 8.5 while running on Java 21.
+            |
+            |Solutions:
+            |  1. Pass --project-java-home to specify a compatible Java installation:
+            |     codelens start --project-java-home ~/.sdkman/candidates/java/11.0.28-tem
+            |
+            |  2. Use --classpath-file with a pre-generated classpath file:
+            |     codelens start --classpath-file ./build/codelens-classpath.txt
+            |
+            |  3. Upgrade the target project's Gradle to 8.5+ (supports Java 21)
+            |
+            |Original error: $originalMessage
+        """.trimMargin()
     }
 
     /**

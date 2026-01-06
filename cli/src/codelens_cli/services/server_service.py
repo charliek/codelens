@@ -17,9 +17,13 @@ from codelens_cli.models import ProjectStatus, ServerMode, ServerState
 from codelens_cli.repositories import ServerStateRepository
 from codelens_cli.settings import (
     AppSettings,
+    detect_project_java_version,
     find_repo_path,
     get_codelens_java_version,
+    get_gradle_version,
+    needs_older_java_for_gradle,
     resolve_codelens_java_home,
+    resolve_project_java_home,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,8 +96,17 @@ class ServerService:
         mode: Optional[ServerMode] = None,
         port: Optional[int] = None,
         timeout: int = 60,
+        project_java_home: Optional[Path] = None,
     ) -> ServerState:
-        """Start the CodeLens server for a project."""
+        """Start the CodeLens server for a project.
+
+        Args:
+            project_path: Path to the target project
+            mode: Server mode (gradle or jar)
+            port: Port to use (auto-allocated if not specified)
+            timeout: Startup timeout in seconds
+            project_java_home: Java home for target project's Gradle (auto-detected if not specified)
+        """
         # Check if already running
         existing = self.find_server(project_path)
         if existing and existing.status == ProjectStatus.READY:
@@ -107,6 +120,48 @@ class ServerService:
 
         repo_path = find_repo_path()
         log_file = self.repository.get_log_file(project_path)
+
+        # Determine project Java home for Gradle operations (for older Gradle versions)
+        effective_project_java: Optional[Path] = None
+        project_java_source: Optional[str] = None
+
+        if project_java_home:
+            # 1. Explicit override takes priority
+            effective_project_java = project_java_home
+            project_java_source = "explicit --project-java argument"
+        elif needs_older_java_for_gradle(project_path):
+            # 2. Auto-detect if project needs older Java
+            detected = resolve_project_java_home(project_path)
+            if detected:
+                effective_project_java = detected
+                project_java_version = detect_project_java_version(project_path)
+                project_java_source = f"auto-detected from project ({project_java_version})"
+            else:
+                # Warn user that they may need to provide Java home
+                project_java_version = detect_project_java_version(project_path)
+                gradle_version = get_gradle_version(project_path)
+                if project_java_version:
+                    logger.warning(
+                        "Project uses Gradle %s which requires an older Java. "
+                        "Detected version %s but could not find it in SDKMAN. "
+                        "Install with: sdk install java %s",
+                        gradle_version,
+                        project_java_version,
+                        project_java_version,
+                    )
+                elif gradle_version:
+                    logger.warning(
+                        "Project uses Gradle %s which may require an older Java. "
+                        "If startup fails, specify --project-java or add a .sdkmanrc file.",
+                        gradle_version,
+                    )
+
+        if effective_project_java:
+            logger.info(
+                "Using %s for Gradle operations: %s",
+                project_java_source,
+                effective_project_java,
+            )
 
         # Build command
         if server_mode == ServerMode.GRADLE:
@@ -186,6 +241,11 @@ class ServerService:
                 "--idle-timeout",
                 idle_timeout,
             ]
+
+            # Add project Java home if detected/specified (for older Gradle versions)
+            if effective_project_java:
+                cmd.extend(["--project-java-home", str(effective_project_java)])
+
             cwd = None
 
         # Start process
@@ -206,7 +266,7 @@ class ServerService:
 
         # Wait for ready signal
         try:
-            ready_info = await self._wait_for_ready(process, timeout, log_file)
+            ready_info = await self._wait_for_ready(process, timeout, log_file, project_path)
             self.repository.update_status(project_path, ProjectStatus.READY)
 
             # Reload state with updated port from server
@@ -221,7 +281,7 @@ class ServerService:
             raise
 
     async def _wait_for_ready(
-        self, process: subprocess.Popen, timeout: int, log_file: Path
+        self, process: subprocess.Popen, timeout: int, log_file: Path, project_path: Optional[Path] = None
     ) -> dict[str, int | str]:
         """Wait for server to print CODELENS_READY."""
         ready_pattern = re.compile(r"CODELENS_READY port=(\d+) host=(\S+) version=(\S+)")
@@ -232,7 +292,7 @@ class ServerService:
         while loop.time() - start_time < timeout:
             # Check if process died
             if process.poll() is not None:
-                self._check_for_java_version_error(log_file)
+                self._check_for_java_version_error(log_file, project_path)
                 raise RuntimeError(
                     f"Server process exited with code {process.returncode}"
                 )
@@ -256,25 +316,58 @@ class ServerService:
 
         raise TimeoutError(f"Server did not become ready within {timeout}s")
 
-    def _check_for_java_version_error(self, log_file: Path) -> None:
+    def _check_for_java_version_error(self, log_file: Path, project_path: Optional[Path] = None) -> None:
         """Check if the server failed due to Java version mismatch.
 
-        Reads the log file to detect UnsupportedClassVersionError and raises
+        Reads the log file to detect Java version errors and raises
         a helpful error message with solutions.
         """
         try:
-            if log_file.exists():
-                log_content = log_file.read_text()
-                if "UnsupportedClassVersionError" in log_content:
-                    required_version = get_codelens_java_version() or "21"
-                    raise RuntimeError(
-                        f"Java version mismatch: The codelens server requires Java {required_version}.\n"
-                        f"Your current Java is too old to run the compiled server JAR.\n\n"
+            if not log_file.exists():
+                return
+
+            log_content = log_file.read_text()
+
+            # Check for Gradle Tooling API Java version error
+            if "Unsupported class file major version" in log_content:
+                gradle_version = get_gradle_version(project_path) if project_path else None
+                project_java = detect_project_java_version(project_path) if project_path else None
+
+                error_msg = "Gradle version incompatibility detected.\n\n"
+                if gradle_version:
+                    error_msg += f"The target project uses Gradle {gradle_version}, which cannot run with Java 21.\n"
+                else:
+                    error_msg += "The target project's Gradle version cannot run with Java 21.\n"
+
+                if project_java:
+                    error_msg += (
+                        f"\nThe project specifies Java {project_java}.\n\n"
                         f"Solutions:\n"
-                        f"  1. Install the required Java: sdk install java {required_version}\n"
-                        f"  2. Set CODELENS_JAVA_HOME to point to a Java 21+ installation\n"
-                        f"  3. Use gradle mode instead: codelens start --mode gradle"
+                        f"  1. Install the required Java: sdk install java {project_java}\n"
+                        f"  2. Retry - CodeLens will auto-detect and use the project's Java\n"
+                        f"  3. Or specify explicitly: codelens start --project-java ~/.sdkman/candidates/java/{project_java}\n"
                     )
+                else:
+                    error_msg += (
+                        "\nSolutions:\n"
+                        "  1. Add a .sdkmanrc file to the project with: java=11.0.28-tem (or appropriate version)\n"
+                        "  2. Specify Java explicitly: codelens start --project-java /path/to/java/home\n"
+                        "  3. Use classpath file mode: codelens start --classpath-file <path>\n"
+                    )
+
+                raise RuntimeError(error_msg)
+
+            # Check for server JAR Java version error
+            if "UnsupportedClassVersionError" in log_content:
+                required_version = get_codelens_java_version() or "21"
+                raise RuntimeError(
+                    f"Java version mismatch: The codelens server requires Java {required_version}.\n"
+                    f"Your current Java is too old to run the compiled server JAR.\n\n"
+                    f"Solutions:\n"
+                    f"  1. Install the required Java: sdk install java {required_version}\n"
+                    f"  2. Set CODELENS_JAVA_HOME to point to a Java 21+ installation\n"
+                    f"  3. Use gradle mode instead: codelens start --mode gradle"
+                )
         except RuntimeError:
             raise
         except Exception:
