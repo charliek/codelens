@@ -82,12 +82,12 @@ def start(
         if json_output or not is_tty():
             print_json(server.model_dump(by_alias=True))
         else:
-            console.print(f"[green]✓[/green] Server ready")
+            console.print("[green]✓[/green] Server ready")
             print_server_status(server.model_dump(by_alias=True, mode="json"), console)
 
     except TimeoutError:
         err_console.print(f"[red]Error:[/red] Server did not start within {timeout}s")
-        err_console.print(f"\nCheck logs: [cyan]~/.cache/codelens/logs/[/cyan]")
+        err_console.print("\nCheck logs: [cyan]~/.cache/codelens/logs/[/cyan]")
         raise typer.Exit(ExitCode.TIMEOUT)
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")
@@ -116,7 +116,7 @@ def stop(
         print_json(result)
     else:
         if stopped:
-            console.print(f"[green]✓[/green] Server stopped")
+            console.print("[green]✓[/green] Server stopped")
         else:
             console.print(f"[yellow]No server running for {project_path.name}[/yellow]")
 
@@ -139,7 +139,7 @@ def status(
             print_json({"running": False, "project": str(project_path)})
         else:
             console.print(f"[yellow]No server running for {project_path.name}[/yellow]")
-            console.print(f"\nStart with: [cyan]codelens start[/cyan]")
+            console.print("\nStart with: [cyan]codelens start[/cyan]")
         return
 
     # Get live info from server
@@ -202,12 +202,12 @@ def restart(
         if json_output or not is_tty():
             print_json(server.model_dump(by_alias=True))
         else:
-            console.print(f"[green]✓[/green] Server restarted")
+            console.print("[green]✓[/green] Server restarted")
             print_server_status(server.model_dump(by_alias=True, mode="json"), console)
 
     except TimeoutError:
         err_console.print(f"[red]Error:[/red] Server did not start within {timeout}s")
-        err_console.print(f"\nCheck logs: [cyan]~/.cache/codelens/logs/[/cyan]")
+        err_console.print("\nCheck logs: [cyan]~/.cache/codelens/logs/[/cyan]")
         raise typer.Exit(ExitCode.TIMEOUT)
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")
@@ -228,7 +228,7 @@ def refresh(
     server = server_service.find_server(project_path)
     if server is None:
         err_console.print(f"[red]Error:[/red] No server running for {project_path.name}")
-        err_console.print(f"\nStart with: [cyan]codelens start[/cyan]")
+        err_console.print("\nStart with: [cyan]codelens start[/cyan]")
         raise typer.Exit(ExitCode.NOT_RUNNING)
 
     if not json_output and is_tty():
@@ -240,7 +240,7 @@ def refresh(
         if json_output or not is_tty():
             print_json(result.model_dump(by_alias=True))
         else:
-            console.print(f"[green]✓[/green] Refreshed")
+            console.print("[green]✓[/green] Refreshed")
 
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")

@@ -714,6 +714,333 @@ All endpoints return consistent error responses:
 
 ---
 
+## Ratpack Analysis Endpoints
+
+These endpoints provide Ratpack-specific analysis for migration planning.
+
+### GET /api/v1/ratpack/handlers
+
+List all Ratpack handlers.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `type` | string | - | Filter by handler type (HANDLER, CHAIN_ACTION, INLINE_HANDLER, GROOVY_HANDLER) |
+| `tier` | string | - | Filter by complexity tier (LOW, MEDIUM, HIGH, CRITICAL) |
+| `includeLibraries` | boolean | `false` | Include library handlers |
+
+**Response:**
+```json
+{
+  "handlers": [
+    {
+      "fqn": "com.example.UserHandler",
+      "simpleName": "UserHandler",
+      "packageName": "com.example",
+      "handlerType": "HANDLER",
+      "source": "PROJECT",
+      "complexityScore": 35,
+      "complexityTier": "MEDIUM",
+      "promiseOperationCount": 5,
+      "usesBlocking": true
+    }
+  ],
+  "totalCount": 24,
+  "appliedFilters": {
+    "handlerType": null,
+    "tier": null
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/handlers/{fqn}
+
+Get detailed information about a handler.
+
+**Response:**
+```json
+{
+  "handler": {
+    "fqn": "com.example.UserHandler",
+    "simpleName": "UserHandler",
+    "packageName": "com.example",
+    "handlerType": "HANDLER",
+    "source": "PROJECT",
+    "superclass": "java.lang.Object",
+    "interfaces": ["ratpack.handling.Handler"],
+    "handlerMethods": [...],
+    "allMethods": [...],
+    "promiseAnalysis": {
+      "classFqn": "com.example.UserHandler",
+      "totalOperationCount": 5,
+      "usesBlocking": true,
+      "usesAsync": false,
+      "usesFork": false,
+      "usesParallelBatch": false,
+      "maxChainDepth": 3,
+      "promiseReturningMethods": ["getUser"]
+    },
+    "complexity": {
+      "classFqn": "com.example.UserHandler",
+      "score": 35,
+      "tier": "MEDIUM",
+      "estimatedHours": 4.0,
+      "factors": [...],
+      "migrationNotes": ["Contains Blocking.get()"]
+    },
+    "injectedDependencies": [
+      {
+        "name": "userService",
+        "typeFqn": "com.example.UserService",
+        "injectionType": "CONSTRUCTOR"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/promises
+
+Get project-wide Promise usage summary.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `includeLibraries` | boolean | `false` | Include library classes |
+
+**Response:**
+```json
+{
+  "summary": {
+    "classesUsingPromises": 15,
+    "blockingGetCount": 23,
+    "promiseAsyncCount": 8,
+    "executionForkCount": 3,
+    "parallelBatchCount": 1,
+    "operatorCount": 45,
+    "operationBreakdown": {
+      "BLOCKING_GET": 23,
+      "PROMISE_MAP": 15,
+      "PROMISE_FLAT_MAP": 10
+    },
+    "topComplexClasses": [...]
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/promises/search
+
+Search for classes with specific Promise usage patterns.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `usesBlocking` | boolean | - | Filter by Blocking usage |
+| `usesAsync` | boolean | - | Filter by async usage |
+| `usesFork` | boolean | - | Filter by fork usage |
+| `minOperations` | int | `0` | Minimum operation count |
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "classFqn": "com.example.UserService",
+      "totalOperationCount": 8,
+      "usesBlocking": true,
+      "usesAsync": false,
+      "usesFork": false,
+      "usesParallelBatch": false,
+      "maxChainDepth": 3
+    }
+  ],
+  "totalCount": 5
+}
+```
+
+---
+
+### GET /api/v1/ratpack/promises/{fqn}
+
+Get Promise usage for a specific class.
+
+---
+
+### GET /api/v1/ratpack/complexity
+
+Get project-wide complexity summary.
+
+**Response:**
+```json
+{
+  "summary": {
+    "totalHandlers": 24,
+    "tierBreakdown": {
+      "LOW": 10,
+      "MEDIUM": 8,
+      "HIGH": 4,
+      "CRITICAL": 2
+    },
+    "totalEstimatedHours": 120.5,
+    "averageScore": 42.3,
+    "migrationOrder": [...]
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/complexity/{fqn}
+
+Get complexity score for a specific class.
+
+**Response:**
+```json
+{
+  "complexity": {
+    "classFqn": "com.example.UserHandler",
+    "score": 35,
+    "tier": "MEDIUM",
+    "estimatedHours": 4.0,
+    "factors": [
+      {
+        "name": "Blocking Usage",
+        "description": "Uses Blocking.get() which needs careful migration",
+        "points": 15,
+        "maxPoints": 15,
+        "details": "Blocking operations need conversion to coroutines"
+      }
+    ],
+    "migrationNotes": [
+      "Contains Blocking.get() - requires conversion to non-blocking pattern"
+    ],
+    "migrationPriority": 2,
+    "blockedBy": []
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/migration-order
+
+Get suggested migration order.
+
+**Response:**
+```json
+{
+  "order": [
+    {
+      "classFqn": "com.example.SimpleHandler",
+      "simpleName": "SimpleHandler",
+      "tier": "LOW",
+      "estimatedHours": 1.0,
+      "order": 1,
+      "reason": "Quick win - simple migration"
+    }
+  ],
+  "totalCount": 24,
+  "totalEstimatedHours": 120.5
+}
+```
+
+---
+
+### GET /api/v1/ratpack/modules
+
+List all Guice modules.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `includeLibraries` | boolean | `false` | Include library modules |
+
+**Response:**
+```json
+{
+  "modules": [
+    {
+      "fqn": "com.example.AppModule",
+      "simpleName": "AppModule",
+      "packageName": "com.example",
+      "moduleType": "ABSTRACT_MODULE",
+      "bindingCount": 5,
+      "providesMethodCount": 3
+    }
+  ],
+  "totalCount": 4
+}
+```
+
+---
+
+### GET /api/v1/ratpack/modules/{fqn}
+
+Get detailed information about a Guice module.
+
+**Response:**
+```json
+{
+  "module": {
+    "fqn": "com.example.AppModule",
+    "simpleName": "AppModule",
+    "packageName": "com.example",
+    "moduleType": "ABSTRACT_MODULE",
+    "configType": null,
+    "bindings": [...],
+    "providesMethods": [
+      {
+        "methodName": "provideUserService",
+        "providesType": "com.example.UserService",
+        "scope": "com.google.inject.Singleton",
+        "intoSet": false,
+        "intoMap": false,
+        "dependencies": []
+      }
+    ],
+    "installedModules": []
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/bindings/{fqn}
+
+Find all bindings for a specific type.
+
+**Response:**
+```json
+{
+  "typeFqn": "com.example.UserService",
+  "bindings": [
+    {
+      "moduleFqn": "com.example.AppModule",
+      "binding": {
+        "boundType": "com.example.UserService",
+        "toType": null,
+        "scope": "com.google.inject.Singleton",
+        "isMultibinding": false,
+        "bindingSource": "PROVIDES"
+      }
+    }
+  ],
+  "totalCount": 1
+}
+```
+
+---
+
 ## Source Classification
 
 Classes are classified by source:

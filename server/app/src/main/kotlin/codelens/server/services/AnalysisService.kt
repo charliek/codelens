@@ -32,6 +32,11 @@ class AnalysisService(
     private val classpathResolver: ClasspathResolver
     private val projectJavaHomeFile: File? = projectJavaHome?.let { File(it) }
     private val classGraphProvider: ClassGraphProvider = ClassGraphProviderImpl()
+
+    /**
+     * Gets the ClassGraphProvider for use by other services (e.g., RatpackAnalysisService).
+     */
+    fun getClassGraphProvider(): ClassGraphProvider = classGraphProvider
     private val scanExecutor: ExecutorService = Executors.newSingleThreadExecutor { r ->
         Thread(r, "codelens-scan-${projectDir.name}").apply { isDaemon = true }
     }

@@ -1,6 +1,5 @@
 """Application settings using Pydantic Settings."""
 
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -250,7 +249,6 @@ def resolve_project_java_home(project_path: Path) -> Optional[Path]:
     Returns:
         Path to Java home directory if found, None otherwise
     """
-    import re
 
     # First, try to detect version from project files and find in SDKMAN
     version = detect_project_java_version(project_path)

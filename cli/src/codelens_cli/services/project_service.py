@@ -44,7 +44,7 @@ class ProjectService:
                 f"[red]Error:[/red] No build.gradle or build.gradle.kts found in {path}"
             )
             self.console.print("\nCodeLens requires a Gradle project directory.")
-            self.console.print(f"\nTry: [cyan]cd /path/to/your/project[/cyan]")
+            self.console.print("\nTry: [cyan]cd /path/to/your/project[/cyan]")
             raise typer.Exit(code=ExitCode.PROJECT_NOT_FOUND)
 
         return path

@@ -222,3 +222,84 @@ class CodeLensClient:
             data["pattern"] = pattern
         response = self._post("/api/v1/ktlint/format/project", data)
         return FormatProjectResponse.model_validate(response)
+
+    # =========================================================================
+    # Ratpack Analysis API
+    # =========================================================================
+
+    def list_handlers(
+        self,
+        handler_type: str | None = None,
+        tier: str | None = None,
+        include_libraries: bool = False,
+    ) -> dict[str, Any]:
+        """List Ratpack handlers."""
+        params: dict[str, Any] = {}
+        if handler_type:
+            params["type"] = handler_type
+        if tier:
+            params["tier"] = tier
+        if include_libraries:
+            params["includeLibraries"] = "true"
+        return self._get("/api/v1/ratpack/handlers", params=params or None)
+
+    def get_handler(self, fqn: str) -> dict[str, Any]:
+        """Get detailed information about a handler."""
+        return self._get(f"/api/v1/ratpack/handlers/{fqn}")
+
+    def get_promise_summary(self, include_libraries: bool = False) -> dict[str, Any]:
+        """Get project-wide Promise usage summary."""
+        params: dict[str, Any] = {}
+        if include_libraries:
+            params["includeLibraries"] = "true"
+        return self._get("/api/v1/ratpack/promises", params=params or None)
+
+    def get_promise_usage(self, fqn: str) -> dict[str, Any]:
+        """Get Promise usage for a specific class."""
+        return self._get(f"/api/v1/ratpack/promises/{fqn}")
+
+    def search_promises(
+        self,
+        uses_blocking: bool | None = None,
+        uses_async: bool | None = None,
+        uses_fork: bool | None = None,
+        min_operations: int = 0,
+    ) -> dict[str, Any]:
+        """Search for classes with specific Promise usage patterns."""
+        params: dict[str, Any] = {}
+        if uses_blocking is not None:
+            params["usesBlocking"] = str(uses_blocking).lower()
+        if uses_async is not None:
+            params["usesAsync"] = str(uses_async).lower()
+        if uses_fork is not None:
+            params["usesFork"] = str(uses_fork).lower()
+        if min_operations > 0:
+            params["minOperations"] = min_operations
+        return self._get("/api/v1/ratpack/promises/search", params=params or None)
+
+    def get_complexity_summary(self) -> dict[str, Any]:
+        """Get project-wide complexity summary."""
+        return self._get("/api/v1/ratpack/complexity")
+
+    def get_complexity(self, fqn: str) -> dict[str, Any]:
+        """Get complexity score for a specific class."""
+        return self._get(f"/api/v1/ratpack/complexity/{fqn}")
+
+    def get_migration_order(self) -> dict[str, Any]:
+        """Get suggested migration order."""
+        return self._get("/api/v1/ratpack/migration-order")
+
+    def list_modules(self, include_libraries: bool = False) -> dict[str, Any]:
+        """List Guice modules."""
+        params: dict[str, Any] = {}
+        if include_libraries:
+            params["includeLibraries"] = "true"
+        return self._get("/api/v1/ratpack/modules", params=params or None)
+
+    def get_module(self, fqn: str) -> dict[str, Any]:
+        """Get detailed information about a Guice module."""
+        return self._get(f"/api/v1/ratpack/modules/{fqn}")
+
+    def get_bindings(self, fqn: str) -> dict[str, Any]:
+        """Find all bindings for a specific type."""
+        return self._get(f"/api/v1/ratpack/bindings/{fqn}")

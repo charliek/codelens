@@ -9,8 +9,10 @@ import codelens.server.routes.adminRoutes
 import codelens.server.routes.analysisRoutes
 import codelens.server.routes.ktlintRoutes
 import codelens.server.routes.projectRoutes
+import codelens.server.routes.ratpackRoutes
 import codelens.server.services.AnalysisService
 import codelens.server.services.KtlintService
+import codelens.server.services.RatpackAnalysisService
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -46,6 +48,7 @@ fun main(args: Array<String>) {
     }
 
     val analysisService = AnalysisService(projectDir, config.classpathFile, config.projectJavaHome)
+    val ratpackAnalysisService = RatpackAnalysisService(analysisService.getClassGraphProvider())
     val ktlintService = KtlintService(projectDir)
     val activityTracker = ActivityTracker()
 
@@ -53,7 +56,7 @@ fun main(args: Array<String>) {
     val port = config.port ?: findAvailablePort(config.portRangeStart, config.portRangeEnd)
 
     val server = embeddedServer(Netty, port = port, host = config.host) {
-        configureServer(analysisService, ktlintService, activityTracker, config)
+        configureServer(analysisService, ratpackAnalysisService, ktlintService, activityTracker, config)
     }
 
     // Start idle shutdown monitor
@@ -87,6 +90,7 @@ fun main(args: Array<String>) {
  */
 fun Application.configureServer(
     analysisService: AnalysisService,
+    ratpackAnalysisService: RatpackAnalysisService,
     ktlintService: KtlintService,
     activityTracker: ActivityTracker,
     config: ServerConfig
@@ -121,6 +125,7 @@ fun Application.configureServer(
         adminRoutes(analysisService, activityTracker, config)
         projectRoutes(analysisService)
         analysisRoutes(analysisService)
+        ratpackRoutes(ratpackAnalysisService)
         ktlintRoutes(ktlintService)
     }
 }

@@ -3,7 +3,18 @@
 import typer
 from rich.console import Console
 
-from codelens_cli.commands import annotations, classes, lifecycle, lint, methods, project
+from codelens_cli.commands import (
+    annotations,
+    classes,
+    handlers,
+    lifecycle,
+    lint,
+    methods,
+    migration,
+    modules,
+    project,
+    promises,
+)
 
 app = typer.Typer(
     name="codelens",
@@ -18,6 +29,10 @@ app.add_typer(classes.app, name="classes")  # Classes analysis commands
 app.add_typer(annotations.app, name="annotations")  # Annotations analysis commands
 app.add_typer(methods.app, name="methods")  # Methods search commands
 app.add_typer(lint.app, name="lint")  # Lint and format commands
+app.add_typer(handlers.app, name="handlers")  # Ratpack handlers analysis
+app.add_typer(promises.app, name="promises")  # Promise usage analysis
+app.add_typer(migration.app, name="migration")  # Migration complexity analysis
+app.add_typer(modules.app, name="modules")  # Guice modules analysis
 app.command(name="project")(project.project_info)
 
 

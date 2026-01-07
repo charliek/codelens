@@ -53,7 +53,7 @@ def print_server_status(server: dict, console: Console | None = None) -> None:
     console = console or get_console()
     status_color = get_status_color(server.get("status", ""))
 
-    console.print(f"\n[bold]CodeLens Server[/bold]")
+    console.print("\n[bold]CodeLens Server[/bold]")
     console.print()
 
     table = Table(show_header=False, box=None, padding=(0, 2))

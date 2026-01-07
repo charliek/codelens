@@ -4,25 +4,25 @@ This document provides a comprehensive catalog of all planned CodeLens features 
 
 ## Feature Summary
 
-| # | Feature | Priority | Phase | Description |
-|---|---------|----------|-------|-------------|
-| 1 | Handler Discovery & Classification | P0 | 2A | Find all Handler implementations, classify by type |
-| 2 | Promise Usage Detection | P0 | 2A | Identify Promise patterns, operations, sources |
-| 3 | Migration Complexity Scoring | P0 | 2A | Rate handlers by migration difficulty |
-| 4 | Guice DI Analysis | P0 | 2A | Map modules, bindings, providers |
-| 5 | Source Code Retrieval | P1 | 2B | Return actual source for classes/methods |
-| 6 | External Service Detection | P1 | 2B | HTTP clients, databases, queues |
-| 7 | Registry Access Analysis | P1 | 2B | ctx.get() usage patterns |
-| 8 | API Versioning Detection | P1 | 2C | Version routing patterns |
-| 9 | Pattern-Based Migration Hints | P2 | 2C | Pattern-specific recommendations |
-| 10 | Route/Chain Analysis | P2 | 2C | URL structure and middleware |
-| 11 | Anti-pattern Detection | P2 | 2C | Blocking code, Thread.sleep, etc. |
-| 12 | Full Migration Report | P2 | 2D | Comprehensive planning document |
-| 13 | Dependency Migration Graph | P2 | 2D | Migration ordering |
-| 14 | OpenRewrite Recipe Generation | P3 | 3 | Auto-generate refactoring recipes |
-| 15 | Test Migration Analysis | P3 | 3 | Test coverage and migration approach |
-| 16 | MCP Server Wrapper | P3 | 3 | Direct Claude Desktop integration |
-| 17 | Source-Level Parsing | P3 | 3 | Kotlin Analysis API / JavaParser |
+| # | Feature | Priority | Phase | Status | Description |
+|---|---------|----------|-------|--------|-------------|
+| 1 | Handler Discovery & Classification | P0 | 2A | Complete | Find all Handler implementations, classify by type |
+| 2 | Promise Usage Detection | P0 | 2A | Complete | Identify Promise patterns, operations, sources |
+| 3 | Migration Complexity Scoring | P0 | 2A | Complete | Rate handlers by migration difficulty |
+| 4 | Guice DI Analysis | P0 | 2A | Complete | Map modules, bindings, providers |
+| 5 | Source Code Retrieval | P1 | 2B | Not Started | Return actual source for classes/methods |
+| 6 | External Service Detection | P1 | 2B | Not Started | HTTP clients, databases, queues |
+| 7 | Registry Access Analysis | P1 | 2B | Not Started | ctx.get() usage patterns |
+| 8 | API Versioning Detection | P1 | 2C | Not Started | Version routing patterns |
+| 9 | Pattern-Based Migration Hints | P2 | 2C | Not Started | Pattern-specific recommendations |
+| 10 | Route/Chain Analysis | P2 | 2C | Not Started | URL structure and middleware |
+| 11 | Anti-pattern Detection | P2 | 2C | Not Started | Blocking code, Thread.sleep, etc. |
+| 12 | Full Migration Report | P2 | 2D | Not Started | Comprehensive planning document |
+| 13 | Dependency Migration Graph | P2 | 2D | Not Started | Migration ordering |
+| 14 | OpenRewrite Recipe Generation | P3 | 3 | Not Started | Auto-generate refactoring recipes |
+| 15 | Test Migration Analysis | P3 | 3 | Not Started | Test coverage and migration approach |
+| 16 | MCP Server Wrapper | P3 | 3 | Not Started | Direct Claude Desktop integration |
+| 17 | Source-Level Parsing | P3 | 3 | Not Started | Kotlin Analysis API / JavaParser |
 
 ---
 

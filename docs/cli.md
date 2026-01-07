@@ -31,6 +31,16 @@ The CLI commands map to server API endpoints as follows:
 | `codelens classes dependencies` | `GET /api/v1/dependencies/{fqn}` | Dependencies |
 | `codelens annotations usages` | `GET /api/v1/annotations/usages/{fqn}` | Annotation usages |
 | `codelens methods search` | `GET /api/v1/methods` | Search methods |
+| `codelens handlers list` | `GET /api/v1/ratpack/handlers` | List Ratpack handlers |
+| `codelens handlers show` | `GET /api/v1/ratpack/handlers/{fqn}` | Handler details |
+| `codelens promises summary` | `GET /api/v1/ratpack/promises` | Promise usage summary |
+| `codelens promises show` | `GET /api/v1/ratpack/promises/{fqn}` | Class Promise usage |
+| `codelens promises search` | `GET /api/v1/ratpack/promises/search` | Search Promise usage |
+| `codelens migration complexity` | `GET /api/v1/ratpack/complexity` | Complexity summary |
+| `codelens migration order` | `GET /api/v1/ratpack/migration-order` | Migration order |
+| `codelens modules list` | `GET /api/v1/ratpack/modules` | List Guice modules |
+| `codelens modules show` | `GET /api/v1/ratpack/modules/{fqn}` | Module details |
+| `codelens modules bindings` | `GET /api/v1/ratpack/bindings/{fqn}` | Find bindings |
 | `codelens lint check` | `POST /api/v1/ktlint/lint/file` or `lint/project` | Check style issues |
 | `codelens lint format` | `POST /api/v1/ktlint/format/file` or `format/project` | Format files |
 
@@ -820,6 +830,395 @@ Formatted 2 file(s) (10 scanned)
   src/main/kotlin/sample/AnotherFile.kt
 
 Processed in 200ms
+```
+
+---
+
+## Handler Commands
+
+Commands for Ratpack handler analysis are under `codelens handlers`.
+
+### codelens handlers list
+
+List all Ratpack handlers in the codebase.
+
+```bash
+codelens handlers list [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--type`, `-t` | Filter by handler type (HANDLER, CHAIN_ACTION, INLINE_HANDLER, GROOVY_HANDLER) |
+| `--tier` | Filter by complexity tier (LOW, MEDIUM, HIGH, CRITICAL) |
+| `--include-libraries`, `-L` | Include library handlers |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# List all handlers
+codelens handlers list
+
+# Find only high-complexity handlers
+codelens handlers list --tier HIGH
+
+# Find Chain Action implementations
+codelens handlers list --type CHAIN_ACTION
+```
+
+**Example Output:**
+
+```
+Ratpack Handlers (24 total)
+
+┌─────────────────────┬──────────────┬────────┬───────┬─────────────┬──────────┐
+│ Class               │ Type         │ Tier   │ Score │ Promise Ops │ Blocking │
+├─────────────────────┼──────────────┼────────┼───────┼─────────────┼──────────┤
+│ SimpleHandler       │ HANDLER      │ LOW    │    10 │           0 │ No       │
+│ UserHandler         │ HANDLER      │ MEDIUM │    35 │           5 │ Yes      │
+│ AsyncHandler        │ HANDLER      │ HIGH   │    65 │          12 │ Yes      │
+└─────────────────────┴──────────────┴────────┴───────┴─────────────┴──────────┘
+```
+
+---
+
+### codelens handlers show
+
+Show detailed information about a Ratpack handler.
+
+```bash
+codelens handlers show FQN [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified handler class name |
+
+**Examples:**
+
+```bash
+codelens handlers show com.example.UserHandler
+```
+
+**Example Output:**
+
+```
+com.example.UserHandler
+  Package: com.example
+  Type: HANDLER
+
+Complexity Analysis
+  Score: 35/100 (MEDIUM)
+  Estimated Hours: 4.0
+  Factors:
+    - Blocking Usage: +15 pts (Blocking operations need conversion)
+    - Promise Chain Depth: +9 pts (Chain depth: 3)
+  Migration Notes:
+    ! Contains Blocking.get() - requires conversion to non-blocking pattern
+
+Promise Usage
+  Total Operations: 5
+  Max Chain Depth: 3
+  Uses Blocking: Yes
+  Uses Async: No
+  Uses Fork: No
+
+Injected Dependencies
+  - userService: com.example.UserService (CONSTRUCTOR)
+```
+
+---
+
+## Promise Commands
+
+Commands for Promise usage analysis are under `codelens promises`.
+
+### codelens promises summary
+
+Show project-wide Promise usage summary.
+
+```bash
+codelens promises summary [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--include-libraries`, `-L` | Include library classes |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+codelens promises summary
+```
+
+**Example Output:**
+
+```
+Promise Usage Summary
+  Classes Using Promises: 15
+
+Promise Operation Counts
+┌────────────────────┬───────┐
+│ Operation          │ Count │
+├────────────────────┼───────┤
+│ Blocking.get()     │    23 │
+│ Promise.async()    │     8 │
+│ Execution.fork()   │     3 │
+│ ParallelBatch      │     1 │
+│ Promise Operators  │    45 │
+└────────────────────┴───────┘
+
+Top Classes by Promise Complexity
+┌─────────────────┬─────┬───────────┬──────────┐
+│ Class           │ Ops │ Max Depth │ Blocking │
+├─────────────────┼─────┼───────────┼──────────┤
+│ AsyncHandler    │  12 │         5 │ Yes      │
+│ UserService     │   8 │         3 │ Yes      │
+│ DeviceService   │   5 │         2 │ No       │
+└─────────────────┴─────┴───────────┴──────────┘
+```
+
+---
+
+### codelens promises show
+
+Show Promise usage for a specific class.
+
+```bash
+codelens promises show FQN [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified class name |
+
+---
+
+### codelens promises search
+
+Search for classes with specific Promise usage patterns.
+
+```bash
+codelens promises search [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--blocking/--no-blocking` | Filter by Blocking usage |
+| `--async/--no-async` | Filter by async usage |
+| `--fork/--no-fork` | Filter by fork usage |
+| `--min-ops` | Minimum operation count |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# Find all classes using Blocking
+codelens promises search --blocking
+
+# Find classes with high Promise complexity
+codelens promises search --min-ops 5
+
+# Find classes using fork but not Blocking
+codelens promises search --fork --no-blocking
+```
+
+---
+
+## Migration Commands
+
+Commands for migration complexity analysis are under `codelens migration`.
+
+### codelens migration complexity
+
+Show complexity analysis for a class or project summary.
+
+```bash
+codelens migration complexity [FQN] [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Optional fully qualified class name (shows summary if omitted) |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# Show project-wide complexity summary
+codelens migration complexity
+
+# Show complexity for specific class
+codelens migration complexity com.example.UserHandler
+```
+
+**Example Output (Summary):**
+
+```
+Migration Complexity Summary
+  Total Handlers: 24
+  Total Estimated Hours: 120.5
+  Average Score: 42.3
+
+Complexity Tier Breakdown
+┌──────────┬───────┐
+│ Tier     │ Count │
+├──────────┼───────┤
+│ LOW      │    10 │
+│ MEDIUM   │     8 │
+│ HIGH     │     4 │
+│ CRITICAL │     2 │
+└──────────┴───────┘
+```
+
+---
+
+### codelens migration order
+
+Show suggested migration order for handlers.
+
+```bash
+codelens migration order [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Example Output:**
+
+```
+Suggested Migration Order
+Total Estimated Hours: 120.5
+
+Migration Order (24 handlers)
+┌───┬─────────────────┬────────┬───────┬─────────────────────────────────┐
+│ # │ Class           │ Tier   │ Hours │ Reason                          │
+├───┼─────────────────┼────────┼───────┼─────────────────────────────────┤
+│ 1 │ SimpleHandler   │ LOW    │   1.0 │ Quick win - simple migration    │
+│ 2 │ BasicHandler    │ LOW    │   1.5 │ Quick win - simple migration    │
+│ 3 │ UserHandler     │ MEDIUM │   4.0 │ Moderate complexity             │
+│ 4 │ AsyncHandler    │ HIGH   │   8.0 │ Complex - allocate dedicated    │
+└───┴─────────────────┴────────┴───────┴─────────────────────────────────┘
+
+Cumulative time: 120.5 hours
+```
+
+---
+
+## Module Commands
+
+Commands for Guice module analysis are under `codelens modules`.
+
+### codelens modules list
+
+List all Guice modules in the codebase.
+
+```bash
+codelens modules list [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--include-libraries`, `-L` | Include library modules |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+codelens modules list
+```
+
+**Example Output:**
+
+```
+Guice Modules (4 total)
+┌─────────────────┬─────────────────────┬──────────┬───────────┐
+│ Class           │ Type                │ Bindings │ @Provides │
+├─────────────────┼─────────────────────┼──────────┼───────────┤
+│ AppModule       │ ABSTRACT_MODULE     │        5 │         3 │
+│ ServiceModule   │ ABSTRACT_MODULE     │        3 │         2 │
+│ ConfigModule    │ CONFIGURABLE_MODULE │        1 │         0 │
+└─────────────────┴─────────────────────┴──────────┴───────────┘
+```
+
+---
+
+### codelens modules show
+
+Show detailed information about a Guice module.
+
+```bash
+codelens modules show FQN [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified module class name |
+
+---
+
+### codelens modules bindings
+
+Find all bindings for a specific type.
+
+```bash
+codelens modules bindings FQN [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified type name to find bindings for |
+
+**Examples:**
+
+```bash
+codelens modules bindings com.example.UserService
+```
+
+**Example Output:**
+
+```
+Bindings for com.example.UserService
+
+1 binding(s) found
+┌──────────────┬─────────────┬──────────┬───────────┐
+│ Module       │ Bound Type  │ Source   │ Scope     │
+├──────────────┼─────────────┼──────────┼───────────┤
+│ AppModule    │ UserService │ PROVIDES │ Singleton │
+└──────────────┴─────────────┴──────────┴───────────┘
 ```
 
 ---
