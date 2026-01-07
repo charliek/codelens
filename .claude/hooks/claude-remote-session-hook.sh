@@ -19,7 +19,7 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
 fi
 
 # Ensure standard system paths are in PATH
-export PATH="$HOME/.local/bin:$HOME/.bun/bin:$HOME/.sdkman/candidates/java/current/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
 
 # Store the project root
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -92,35 +92,6 @@ else
     else
         echo "ERROR: Bun installation failed - binary not found" >&2
         exit 1
-    fi
-fi
-
-# -----------------------------------------------------------------------------
-# SDKMAN Setup
-# -----------------------------------------------------------------------------
-if [ ! -d "$HOME/.sdkman" ]; then
-    echo "Installing SDKMAN..."
-    curl -fsSL --connect-timeout 10 --max-time 60 "https://get.sdkman.io?rcupdate=false" | bash > /dev/null 2>&1
-    echo "SDKMAN installed"
-fi
-
-# Source SDKMAN
-if [ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]; then
-    export SDKMAN_DIR="$HOME/.sdkman"
-    source "$HOME/.sdkman/bin/sdkman-init.sh"
-fi
-
-# -----------------------------------------------------------------------------
-# Java Setup via SDKMAN
-# -----------------------------------------------------------------------------
-if [ -f "$PROJECT_ROOT/.sdkmanrc" ] && command -v sdk > /dev/null 2>&1; then
-    JAVA_VERSION=$(grep "^java=" "$PROJECT_ROOT/.sdkmanrc" | cut -d'=' -f2)
-    if [ -n "$JAVA_VERSION" ]; then
-        if ! sdk list java 2>/dev/null | grep -q "$JAVA_VERSION.*installed"; then
-            echo "Installing Java $JAVA_VERSION..."
-            timeout 120 sdk install java "$JAVA_VERSION" < /dev/null > /dev/null 2>&1 || true
-        fi
-        sdk use java "$JAVA_VERSION" < /dev/null > /dev/null 2>&1 || true
     fi
 fi
 
