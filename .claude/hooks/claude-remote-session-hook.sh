@@ -136,6 +136,16 @@ if [ ! -d "$HOME/.local/gradle-cc-proxy" ]; then
     fi
 fi
 
+# Preserve upstream proxy reference
+export UPSTREAM_HTTP_PROXY="${HTTP_PROXY:-${GLOBAL_AGENT_HTTP_PROXY:-}}"
+export UPSTREAM_HTTPS_PROXY="${HTTPS_PROXY:-${GLOBAL_AGENT_HTTPS_PROXY:-}}"
+
+# Redirect to local adapter
+export http_proxy="http://localhost:8899"
+export https_proxy="http://localhost:8899"
+export HTTP_PROXY="http://localhost:8899"
+export HTTPS_PROXY="http://localhost:8899"
+
 # Start the proxy
 if [ -x "$HOME/.local/gradle-cc-proxy/scripts/start-proxy.sh" ]; then
     "$HOME/.local/gradle-cc-proxy/scripts/start-proxy.sh"
