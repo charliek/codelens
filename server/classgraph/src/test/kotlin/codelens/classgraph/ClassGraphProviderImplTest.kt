@@ -591,6 +591,119 @@ class ClassGraphProviderImplTest {
         assertTrue(incoming.isEmpty(), "Should have no incoming dependencies")
     }
 
+    // ============== Annotation Serialization Tests ==============
+
+    @Test
+    fun `formatAnnotationValue should handle primitive arrays`() {
+        // Access the private formatAnnotationValue method via reflection
+        val method = ClassGraphProviderImpl::class.java.getDeclaredMethod(
+            "formatAnnotationValue",
+            Any::class.java
+        )
+        method.isAccessible = true
+
+        // Test IntArray
+        val intArray = intArrayOf(1, 2, 3)
+        val intResult = method.invoke(provider, intArray) as String
+        assertEquals("[1, 2, 3]", intResult, "IntArray should be formatted correctly")
+
+        // Test LongArray
+        val longArray = longArrayOf(100L, 200L)
+        val longResult = method.invoke(provider, longArray) as String
+        assertEquals("[100, 200]", longResult, "LongArray should be formatted correctly")
+
+        // Test ByteArray
+        val byteArray = byteArrayOf(1, 2)
+        val byteResult = method.invoke(provider, byteArray) as String
+        assertEquals("[1, 2]", byteResult, "ByteArray should be formatted correctly")
+    }
+
+    @Test
+    fun `formatAnnotationValue should handle object arrays`() {
+        val method = ClassGraphProviderImpl::class.java.getDeclaredMethod(
+            "formatAnnotationValue",
+            Any::class.java
+        )
+        method.isAccessible = true
+
+        // Test String Array
+        val stringArray = arrayOf("a", "b", "c")
+        val stringResult = method.invoke(provider, stringArray) as String
+        assertEquals("[a, b, c]", stringResult, "String Array should be formatted correctly")
+
+        // Test null value
+        val nullResult = method.invoke(provider, null) as String
+        assertEquals("null", nullResult, "Null should be formatted as 'null'")
+
+        // Test simple value
+        val simpleResult = method.invoke(provider, "hello") as String
+        assertEquals("hello", simpleResult, "Simple string should be passed through")
+    }
+
+    @Test
+    fun `formatAnnotationValue should handle Class references`() {
+        val method = ClassGraphProviderImpl::class.java.getDeclaredMethod(
+            "formatAnnotationValue",
+            Any::class.java
+        )
+        method.isAccessible = true
+
+        val classRef = String::class.java
+        val result = method.invoke(provider, classRef) as String
+        assertEquals("java.lang.String", result, "Class reference should show full name")
+    }
+
+    // ============== Issue #002/#003: Superclass defaults to Object tests ==============
+
+    @Test
+    fun `getHierarchy should return Object parent for class with null superclass`() {
+        // This test documents the expected behavior after fixing Issue #002/#003
+        // When a non-interface class has superclass = null (because ClassGraph didn't scan Object),
+        // the hierarchy should still show java.lang.Object as the parent
+
+        val classFqn = "com.example.SimpleHandler"
+
+        // Simulate what happens when ClassGraph returns null for superclass
+        // because java.lang.Object wasn't in the scan
+        classesMap[classFqn] = createClassInfo(
+            fqn = classFqn,
+            simpleName = "SimpleHandler",
+            packageName = "com.example",
+            superclass = null  // ClassGraph returned null
+        )
+
+        val hierarchy = provider.getHierarchy(classFqn)
+
+        assertNotNull(hierarchy, "Hierarchy should not be null")
+        // Currently fails: parent is null when superclass is null
+        // After fix: parent should be java.lang.Object
+        assertNotNull(hierarchy.parent, "Parent should not be null for non-interface class")
+        assertEquals("java.lang.Object", hierarchy.parent?.classFqn,
+            "Default parent should be java.lang.Object")
+        assertEquals(ClassSource.JDK, hierarchy.parent?.source,
+            "Object should have JDK source")
+    }
+
+    @Test
+    fun `getHierarchy should NOT add Object parent for interfaces`() {
+        // Interfaces don't extend Object in the same way classes do
+        val interfaceFqn = "com.example.MyInterface"
+
+        classesMap[interfaceFqn] = createClassInfo(
+            fqn = interfaceFqn,
+            simpleName = "MyInterface",
+            packageName = "com.example",
+            isInterface = true,
+            superclass = null  // Interfaces have null superclass
+        )
+
+        val hierarchy = provider.getHierarchy(interfaceFqn)
+
+        assertNotNull(hierarchy, "Hierarchy should not be null")
+        assertTrue(hierarchy.isInterface, "Should be marked as interface")
+        assertNull(hierarchy.parent, "Interface should NOT have Object as parent")
+    }
+
     /**
      * Helper function to create ClassInfo for testing.
      */

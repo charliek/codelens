@@ -74,8 +74,8 @@ class AnalysisService(
             resolvedClasspath = classpath
             logger.info("Resolved ${classpath.entries.size} classpath entries using ${classpath.resolvedBy}")
 
-            // Scan with ClassGraph
-            val scanResult = classGraphProvider.scan(classpath.entries, classpath.projectOutputDirs)
+            // Scan with ClassGraph, passing the resolver name for accurate stats reporting
+            val scanResult = classGraphProvider.scan(classpath.entries, classpath.projectOutputDirs, classpath.resolvedBy)
             val stats = scanResult.statistics
 
             val now = Instant.now()

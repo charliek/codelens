@@ -24,9 +24,10 @@ interface ClassGraphProvider {
      *
      * @param classpathEntries List of JAR files and directories to scan
      * @param projectOutputDirs Directories containing project output (used to classify PROJECT vs LIBRARY)
+     * @param resolvedBy Name of the resolver that produced the classpath (e.g., "Gradle Tooling API")
      * @return Scan result with all class information
      */
-    fun scan(classpathEntries: List<File>, projectOutputDirs: Set<File>): ScanResult
+    fun scan(classpathEntries: List<File>, projectOutputDirs: Set<File>, resolvedBy: String = "ClassGraph"): ScanResult
 
     /**
      * List classes matching the given filter.

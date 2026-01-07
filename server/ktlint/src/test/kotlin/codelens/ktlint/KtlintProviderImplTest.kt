@@ -326,4 +326,71 @@ class KtlintProviderImplTest {
         assertTrue(error.col > 0, "Column number should be positive")
         assertTrue(error.ruleId.isNotBlank(), "Rule ID should not be blank")
     }
+
+    @Test
+    fun `formatFile remaining errors should not contain duplicates`() {
+        // Create a file with multiple wildcard imports that cannot be auto-corrected
+        // This is the scenario that was causing duplicate errors
+        val code = """
+            import java.util.*
+            import java.io.*
+            import java.net.*
+
+            fun test() {
+                println("test")
+            }
+        """.trimIndent()
+
+        val testFile = tempDir.resolve("WildcardImports.kt")
+        Files.writeString(testFile, code)
+
+        // Format the file (wildcard imports are not auto-correctable)
+        val result = provider.formatFile(testFile, writeToFile = false)
+
+        // Check for duplicates by comparing size with distinct
+        val errorKeys = result.remainingErrors.map { "${it.line}:${it.col}:${it.ruleId}" }
+        assertEquals(
+            errorKeys.distinct().size,
+            errorKeys.size,
+            "Remaining errors should not contain duplicates. Found: ${result.remainingErrors.map { "${it.line}:${it.col}:${it.ruleId}" }}"
+        )
+
+        // Additionally verify we have the expected number of unique errors
+        // Each wildcard import should be reported once
+        val wildcardErrors = result.remainingErrors.filter { it.ruleId.contains("no-wildcard-imports") }
+        assertEquals(
+            3,
+            wildcardErrors.size,
+            "Should have exactly 3 wildcard import errors (one per import)"
+        )
+    }
+
+    @Test
+    fun `formatFile should not duplicate errors even when callback is invoked multiple times`() {
+        // Create a file with code that triggers multiple violations
+        val code = """
+            import java.util.*
+
+            fun messyFunction( x:Int,y:Int ){
+                val z=x+y
+                println(z)
+            }
+        """.trimIndent()
+
+        val testFile = tempDir.resolve("MultiErrors.kt")
+        Files.writeString(testFile, code)
+
+        // Format the file
+        val result = provider.formatFile(testFile, writeToFile = false)
+
+        // Verify no duplicates in remaining errors
+        val errorKeys = result.remainingErrors.map { "${it.line}:${it.col}:${it.ruleId}" }
+        val uniqueKeys = errorKeys.distinct()
+
+        assertEquals(
+            uniqueKeys.size,
+            errorKeys.size,
+            "Should have no duplicate errors. Duplicates: ${errorKeys.groupBy { it }.filter { it.value.size > 1 }}"
+        )
+    }
 }

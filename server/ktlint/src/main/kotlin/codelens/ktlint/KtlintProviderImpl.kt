@@ -112,6 +112,8 @@ class KtlintProviderImpl : KtlintProvider {
         val startTime = System.currentTimeMillis()
 
         val originalContent = Files.readString(filePath)
+        // Use a set to track seen errors and prevent duplicates
+        val seenErrors = mutableSetOf<String>()
         val remainingErrors = mutableListOf<LintError>()
 
         val code = Code.fromFile(filePath.toFile())
@@ -119,7 +121,11 @@ class KtlintProviderImpl : KtlintProvider {
             if (error.canBeAutoCorrected) {
                 AutocorrectDecision.ALLOW_AUTOCORRECT
             } else {
-                remainingErrors.add(error.toModel())
+                // Create a unique key for deduplication
+                val errorKey = "${error.line}:${error.col}:${error.ruleId.value}"
+                if (seenErrors.add(errorKey)) {
+                    remainingErrors.add(error.toModel())
+                }
                 AutocorrectDecision.NO_AUTOCORRECT
             }
         }

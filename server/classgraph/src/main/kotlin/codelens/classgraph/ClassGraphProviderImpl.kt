@@ -22,8 +22,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     private var statistics: ScanStatistics? = null
     private var projectOutputDirs: Set<File> = emptySet()
 
-    override fun scan(classpathEntries: List<File>, projectOutputDirs: Set<File>): ScanResult {
-        logger.info("Starting ClassGraph scan with ${classpathEntries.size} classpath entries")
+    override fun scan(classpathEntries: List<File>, projectOutputDirs: Set<File>, resolvedBy: String): ScanResult {
+        logger.info("Starting ClassGraph scan with ${classpathEntries.size} classpath entries (resolved by: $resolvedBy)")
         val startTime = System.currentTimeMillis()
 
         this.projectOutputDirs = projectOutputDirs
@@ -36,7 +36,7 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 
         if (classpathStr.isEmpty()) {
             logger.warn("No valid classpath entries found")
-            val stats = createEmptyStatistics(startTime, "No classpath")
+            val stats = createEmptyStatistics(startTime, resolvedBy)
             this.statistics = stats
             return ScanResult(emptyMap(), stats, projectOutputDirs)
         }
@@ -62,8 +62,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                 }
             }
 
-            // Build statistics
-            val stats = buildStatistics(startTime, classpathEntries.size, "ClassGraph")
+            // Build statistics - use the resolver name, not "ClassGraph"
+            val stats = buildStatistics(startTime, classpathEntries.size, resolvedBy)
             this.statistics = stats
 
             logger.info("Scan complete. ${classes.size} classes processed in ${System.currentTimeMillis() - startTime}ms")
@@ -184,7 +184,14 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     }
 
     private fun buildParentChain(classInfo: ClassInfo): HierarchyNode? {
-        val superclassFqn = classInfo.superclass ?: return null
+        // If superclass is null but this is not an interface/annotation, default to java.lang.Object
+        // This handles the case where ClassGraph doesn't return Object because it wasn't scanned
+        val superclassFqn = classInfo.superclass
+            ?: if (!classInfo.isInterface && !classInfo.isAnnotation) {
+                "java.lang.Object"  // Default for regular classes
+            } else {
+                return null  // Interfaces and annotations have no superclass
+            }
 
         // Handle java.lang.Object explicitly - it's the root of the hierarchy
         if (superclassFqn == "java.lang.Object") {
@@ -411,12 +418,34 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     private fun convertAnnotation(ann: CGAnnotationInfo): AnnotationInfo {
         val params = mutableMapOf<String, String>()
         ann.parameterValues.forEach { param ->
-            params[param.name] = param.value?.toString() ?: "null"
+            params[param.name] = formatAnnotationValue(param.value)
         }
         return AnnotationInfo(
             type = ann.name,
             parameters = params
         )
+    }
+
+    /**
+     * Formats an annotation parameter value to a human-readable string.
+     * Handles arrays properly instead of showing Java object references.
+     */
+    private fun formatAnnotationValue(value: Any?): String {
+        return when (value) {
+            null -> "null"
+            is BooleanArray -> value.contentToString()
+            is ByteArray -> value.contentToString()
+            is CharArray -> value.contentToString()
+            is ShortArray -> value.contentToString()
+            is IntArray -> value.contentToString()
+            is LongArray -> value.contentToString()
+            is FloatArray -> value.contentToString()
+            is DoubleArray -> value.contentToString()
+            is Array<*> -> value.map { formatAnnotationValue(it) }.toString()
+            is Enum<*> -> "${value.javaClass.name}.${value.name}"
+            is Class<*> -> value.name
+            else -> value.toString()
+        }
     }
 
     /**

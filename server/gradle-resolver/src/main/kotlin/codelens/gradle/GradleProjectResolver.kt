@@ -117,53 +117,70 @@ class GradleProjectResolver : ClasspathResolver {
 
     /**
      * Creates a temporary Gradle init script that defines a task to write the classpath.
+     * This aggregates classpath from ALL subprojects in a multi-module build.
      */
     private fun createTempInitScript(): File {
         val script = """
+            // Initialize shared collections on rootProject during configuration phase
+            rootProject {
+                ext.codelensClasspathEntries = new LinkedHashSet()
+                ext.codelensProjectOutputDirs = new LinkedHashSet()
+            }
+
             allprojects {
-                task codelensWriteClasspath {
+                task codelensCollectClasspath {
                     doLast {
-                        def outputPath = project.findProperty('codelensOutputFile') ?: 'build/codelens-classpath.txt'
-                        def outputFile = new File(outputPath)
-                        outputFile.parentFile?.mkdirs()
-
-                        def classpathEntries = []
-                        def projectOutputDirs = []
-
-                        // Collect from all source sets
+                        // Collect from all source sets in this project
                         if (project.plugins.hasPlugin('java') || project.plugins.hasPlugin('java-library')) {
                             project.sourceSets.each { sourceSet ->
                                 // Add output directories
                                 sourceSet.output.classesDirs.each { dir ->
                                     if (dir.exists()) {
-                                        projectOutputDirs << dir.absolutePath
-                                        classpathEntries << dir.absolutePath
+                                        rootProject.ext.codelensProjectOutputDirs << dir.absolutePath
+                                        rootProject.ext.codelensClasspathEntries << dir.absolutePath
                                     }
                                 }
 
                                 // Add resources
                                 if (sourceSet.output.resourcesDir?.exists()) {
-                                    projectOutputDirs << sourceSet.output.resourcesDir.absolutePath
-                                    classpathEntries << sourceSet.output.resourcesDir.absolutePath
+                                    rootProject.ext.codelensProjectOutputDirs << sourceSet.output.resourcesDir.absolutePath
+                                    rootProject.ext.codelensClasspathEntries << sourceSet.output.resourcesDir.absolutePath
                                 }
                             }
 
                             // Add runtime dependencies
                             try {
                                 configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-                                    classpathEntries << artifact.file.absolutePath
+                                    rootProject.ext.codelensClasspathEntries << artifact.file.absolutePath
                                 }
                             } catch (Exception e) {
                                 // Try compileClasspath as fallback
                                 try {
                                     configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-                                        classpathEntries << artifact.file.absolutePath
+                                        rootProject.ext.codelensClasspathEntries << artifact.file.absolutePath
                                     }
                                 } catch (Exception e2) {
-                                    logger.warn("Could not resolve classpath configurations: " + e2.message)
+                                    logger.warn("Could not resolve classpath configurations for " + project.name + ": " + e2.message)
                                 }
                             }
                         }
+                        println "CodeLens: Collected classpath from project: " + project.name
+                    }
+                }
+            }
+
+            // Root project task that writes the aggregated results
+            rootProject {
+                task codelensWriteClasspath {
+                    dependsOn allprojects.collect { it.tasks.findByName('codelensCollectClasspath') }.findAll { it != null }
+
+                    doLast {
+                        def outputPath = project.findProperty('codelensOutputFile') ?: 'build/codelens-classpath.txt'
+                        def outputFile = new File(outputPath)
+                        outputFile.parentFile?.mkdirs()
+
+                        def projectOutputDirs = rootProject.ext.codelensProjectOutputDirs.toList()
+                        def classpathEntries = rootProject.ext.codelensClasspathEntries.toList()
 
                         // Write output in a parseable format
                         outputFile.text = "# CodeLens Classpath\n" +
@@ -172,7 +189,7 @@ class GradleProjectResolver : ClasspathResolver {
                             "# CLASSPATH_ENTRIES\n" +
                             classpathEntries.join('\n') + '\n'
 
-                        println "CodeLens: Wrote classpath (" + classpathEntries.size() + " entries) to " + outputFile.absolutePath
+                        println "CodeLens: Wrote aggregated classpath (" + classpathEntries.size() + " entries, " + projectOutputDirs.size() + " project outputs) to " + outputFile.absolutePath
                     }
                 }
             }

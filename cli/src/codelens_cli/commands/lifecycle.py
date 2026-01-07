@@ -171,6 +171,7 @@ def restart(
         "--project-java",
         help="Java home for target project's Gradle (auto-detected if not specified)",
     ),
+    timeout: int = typer.Option(60, "--timeout", help="Startup timeout in seconds"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Restart the CodeLens server for a project."""
@@ -193,6 +194,7 @@ def restart(
             server_service.start_server(
                 project_path,
                 mode=server_mode,
+                timeout=timeout,
                 project_java_home=project_java_home,
             )
         )
@@ -203,6 +205,10 @@ def restart(
             console.print(f"[green]✓[/green] Server restarted")
             print_server_status(server.model_dump(by_alias=True, mode="json"), console)
 
+    except TimeoutError:
+        err_console.print(f"[red]Error:[/red] Server did not start within {timeout}s")
+        err_console.print(f"\nCheck logs: [cyan]~/.cache/codelens/logs/[/cyan]")
+        raise typer.Exit(ExitCode.TIMEOUT)
     except Exception as e:
         err_console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(ExitCode.SERVER_ERROR)
