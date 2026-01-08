@@ -5,6 +5,7 @@ from rich.console import Console
 
 from codelens_cli.commands import (
     annotations,
+    antipatterns,
     classes,
     handlers,
     integrations,
@@ -15,6 +16,7 @@ from codelens_cli.commands import (
     modules,
     project,
     promises,
+    routes,
     source,
 )
 
@@ -37,6 +39,8 @@ app.add_typer(promises.app, name="promises")  # Promise usage analysis
 app.add_typer(migration.app, name="migration")  # Migration complexity analysis
 app.add_typer(modules.app, name="modules")  # Guice modules analysis
 app.add_typer(integrations.app, name="integrations")  # Integration detection
+app.add_typer(antipatterns.app, name="antipatterns")  # Anti-pattern detection
+app.add_typer(routes.app, name="routes")  # Route analysis
 app.command(name="project")(project.project_info)
 
 

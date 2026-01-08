@@ -183,7 +183,7 @@ def list_integrations(
 
     with handle_api_errors():
         result = client.list_integrations(
-            type=validated_type,
+            integration_type=validated_type,
             sub_type=sub_type.upper() if sub_type else None,
             include_libraries=include_libraries,
         )
@@ -255,7 +255,7 @@ def find_by_type(
 
     with handle_api_errors():
         result = client.find_integrations_by_type(
-            type=validated_type,
+            integration_type=validated_type,
             sub_type=sub_type.upper() if sub_type else None,
             include_libraries=include_libraries,
         )

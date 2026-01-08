@@ -178,9 +178,6 @@ cd cli
 
 # Install with uv (recommended for development)
 uv tool install --editable .
-
-# Or install system-wide with pip
-pip install -e .
 ```
 
 ## Usage
@@ -369,6 +366,15 @@ codelens modules show com.example.MyModule      # Module bindings
 codelens integrations list                      # List all integrations
 codelens integrations show com.example.MyHandler  # Integrations for a class
 codelens integrations find HTTP_CLIENT          # Find classes by type
+
+# Anti-pattern detection
+codelens antipatterns scan                      # Scan for code anti-patterns
+codelens antipatterns show com.example.Handler  # Show class-specific issues
+
+# Route analysis
+codelens routes list                            # List all routes
+codelens routes tree                            # Show route tree structure
+codelens routes spring                          # Generate Spring @RequestMapping equivalents
 ```
 
 #### Source Code Retrieval
@@ -463,6 +469,11 @@ The server exposes a REST API. For complete documentation, see [docs/api.md](doc
 | `GET /api/v1/ratpack/modules/{fqn}` | Module details |
 | `GET /api/v1/ratpack/integrations` | Integration summary |
 | `GET /api/v1/ratpack/integrations/{fqn}` | Class integrations |
+| `GET /api/v1/ratpack/antipatterns` | Anti-pattern summary |
+| `GET /api/v1/ratpack/antipatterns/{fqn}` | Class anti-patterns |
+| `GET /api/v1/ratpack/routes` | All routes |
+| `GET /api/v1/ratpack/routes/tree` | Route tree structure |
+| `GET /api/v1/ratpack/routes/spring` | Spring mappings |
 
 ## Development
 
@@ -510,33 +521,6 @@ codelens project
 codelens stop
 ```
 
-## Current Status
-
-**Phase 2B Complete** - Full Ratpack migration analysis:
-
-✅ Full server implementation with Ktor
-✅ Complete CLI with lifecycle management
-✅ ClassGraph bytecode scanning
-✅ Gradle Tooling API for classpath resolution
-✅ Class listing, filtering, and search
-✅ Implementation/subclass discovery
-✅ Class hierarchy analysis
-✅ Dependency mapping (incoming/outgoing)
-✅ Annotation usage search
-✅ Method search across codebase
-✅ Auto-start capability
-✅ Multiple project support
-✅ Idle shutdown
-✅ JSON output support
-✅ Ratpack handler detection (Handler, ChainAction, GroovyHandler)
-✅ Promise usage analysis (map, flatMap, blocking, async)
-✅ Migration complexity scoring and tier classification
-✅ Guice module and binding analysis
-✅ Source code retrieval (class and method level)
-✅ External service integration detection (HTTP clients, databases, queues)
-✅ Handler @Inject annotation detection for DI migration scoping
-✅ Migration hints for DI conversion
-
 ## Development
 
 ### Running Tests
@@ -565,5 +549,5 @@ The codebase follows a service/repository pattern:
 
 - JDK 21+
 - Python 3.13+
-- UV package manager (recommended) or pip
+- UV package manager
 - Gradle 8.x (included via wrapper)

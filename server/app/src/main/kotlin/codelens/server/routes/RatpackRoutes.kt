@@ -106,6 +106,36 @@ data class IntegrationsByTypeResponse(
     val totalCount: Int
 )
 
+@Serializable
+data class AntiPatternSummaryResponse(
+    val summary: AntiPatternSummary,
+    val appliedFilters: AntiPatternFilterApplied
+)
+
+@Serializable
+data class AntiPatternFilterApplied(
+    val severity: String? = null,
+    val type: String? = null,
+    val includeLibraries: Boolean = false
+)
+
+@Serializable
+data class ClassAntiPatternsResponse(
+    val classFqn: String,
+    val antiPatterns: List<AntiPatternInstance>,
+    val totalCount: Int
+)
+
+@Serializable
+data class RoutingSummaryResponse(
+    val summary: RoutingSummary
+)
+
+@Serializable
+data class RouteTreeResponse(
+    val tree: RouteTreeNode
+)
+
 // ============================================================================
 // Routes
 // ============================================================================
@@ -548,6 +578,146 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
                     totalCount = classes.size
                 )
             )
+        }
+
+        // =====================================================================
+        // Anti-Pattern Detection Endpoints
+        // =====================================================================
+
+        /**
+         * GET /api/v1/ratpack/antipatterns
+         * Get project-wide anti-pattern summary.
+         *
+         * Query parameters:
+         * - severity: Filter by severity (INFO, WARNING, ERROR, CRITICAL)
+         * - type: Filter by anti-pattern type (BLOCKING_JDBC, THREAD_SLEEP, etc.)
+         * - includeLibraries: Include library classes (default: false)
+         */
+        get("/antipatterns") {
+            val severityParam = call.request.queryParameters["severity"]
+            val typeParam = call.request.queryParameters["type"]
+            val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+
+            // Validate severity parameter
+            val severity = if (severityParam != null) {
+                try {
+                    AntiPatternSeverity.valueOf(severityParam.uppercase())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            code = 400,
+                            type = "BadRequest",
+                            message = "Invalid severity: $severityParam. Valid values: ${AntiPatternSeverity.entries.joinToString()}"
+                        )
+                    )
+                    return@get
+                }
+            } else null
+
+            // Validate type parameter
+            val antiPatternType = if (typeParam != null) {
+                try {
+                    AntiPatternType.valueOf(typeParam.uppercase())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            code = 400,
+                            type = "BadRequest",
+                            message = "Invalid anti-pattern type: $typeParam. Valid values: ${AntiPatternType.entries.joinToString()}"
+                        )
+                    )
+                    return@get
+                }
+            } else null
+
+            val summary = ratpackService.getAntiPatternSummary(
+                severity = severity,
+                type = antiPatternType,
+                includeLibraries = includeLibraries
+            )
+
+            call.respond(
+                AntiPatternSummaryResponse(
+                    summary = summary,
+                    appliedFilters = AntiPatternFilterApplied(
+                        severity = severityParam,
+                        type = typeParam,
+                        includeLibraries = includeLibraries
+                    )
+                )
+            )
+        }
+
+        /**
+         * GET /api/v1/ratpack/antipatterns/{fqn}
+         * Get anti-patterns for a specific class.
+         */
+        get("/antipatterns/{fqn...}") {
+            val fqn = call.parameters.getAll("fqn")?.joinToString(".")
+            if (fqn.isNullOrBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required")
+                )
+                return@get
+            }
+
+            val antiPatterns = ratpackService.getClassAntiPatterns(fqn)
+            call.respond(
+                ClassAntiPatternsResponse(
+                    classFqn = fqn,
+                    antiPatterns = antiPatterns,
+                    totalCount = antiPatterns.size
+                )
+            )
+        }
+
+        // =====================================================================
+        // Route Analysis Endpoints
+        // =====================================================================
+
+        /**
+         * GET /api/v1/ratpack/routes
+         * Get all routes in the application.
+         *
+         * Query parameters:
+         * - includeLibraries: Include library classes (default: false)
+         */
+        get("/routes") {
+            val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+
+            val summary = ratpackService.getRoutingSummary(includeLibraries)
+            call.respond(RoutingSummaryResponse(summary = summary))
+        }
+
+        /**
+         * GET /api/v1/ratpack/routes/tree
+         * Get route tree structure.
+         *
+         * Query parameters:
+         * - includeLibraries: Include library classes (default: false)
+         */
+        get("/routes/tree") {
+            val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+
+            val tree = ratpackService.getRouteTree(includeLibraries)
+            call.respond(RouteTreeResponse(tree = tree))
+        }
+
+        /**
+         * GET /api/v1/ratpack/routes/spring
+         * Get Spring @RequestMapping equivalents for all routes.
+         *
+         * Query parameters:
+         * - includeLibraries: Include library classes (default: false)
+         */
+        get("/routes/spring") {
+            val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+
+            val mappings = ratpackService.getSpringMappings(includeLibraries)
+            call.respond(mappings)
         }
     }
 }

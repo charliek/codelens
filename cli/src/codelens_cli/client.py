@@ -5,17 +5,17 @@ from urllib.parse import quote
 
 import httpx
 
-
-def _encode_path_param(value: str) -> str:
-    """URL-encode a path parameter to prevent traversal attacks."""
-    return quote(value, safe="")
-
 from codelens_cli.models import (
     FormatFileResponse,
     FormatProjectResponse,
     LintFileResponse,
     LintProjectResponse,
 )
+
+
+def _encode_path_param(value: str) -> str:
+    """URL-encode a path parameter to prevent traversal attacks."""
+    return quote(value, safe="")
 
 
 class CodeLensClient:
@@ -356,14 +356,14 @@ class CodeLensClient:
 
     def list_integrations(
         self,
-        type: str | None = None,
+        integration_type: str | None = None,
         sub_type: str | None = None,
         include_libraries: bool = False,
     ) -> dict[str, Any]:
         """Get project-wide integration summary or filter by type.
 
         Args:
-            type: Filter by integration type (HTTP_CLIENT, DATABASE, etc.)
+            integration_type: Filter by integration type (HTTP_CLIENT, DATABASE, etc.)
             sub_type: Filter by sub-type (RATPACK_HTTP_CLIENT, DYNAMODB, etc.)
             include_libraries: Include library classes
 
@@ -371,8 +371,8 @@ class CodeLensClient:
             Integration summary or filtered results
         """
         params: dict[str, Any] = {}
-        if type:
-            params["type"] = type
+        if integration_type:
+            params["type"] = integration_type
         if sub_type:
             params["subType"] = sub_type
         if include_libraries:
@@ -392,14 +392,14 @@ class CodeLensClient:
 
     def find_integrations_by_type(
         self,
-        type: str,
+        integration_type: str,
         sub_type: str | None = None,
         include_libraries: bool = False,
     ) -> dict[str, Any]:
         """Find classes by integration type.
 
         Args:
-            type: Integration type
+            integration_type: Integration type
             sub_type: Optional sub-type filter
             include_libraries: Include library classes
 
@@ -411,4 +411,90 @@ class CodeLensClient:
             params["subType"] = sub_type
         if include_libraries:
             params["includeLibraries"] = "true"
-        return self._get(f"/api/v1/ratpack/integrations/by-type/{_encode_path_param(type)}", params=params or None)
+        return self._get(f"/api/v1/ratpack/integrations/by-type/{_encode_path_param(integration_type)}", params=params or None)
+
+    # =========================================================================
+    # Anti-Pattern Detection API
+    # =========================================================================
+
+    def get_antipatterns(
+        self,
+        severity: str | None = None,
+        pattern_type: str | None = None,
+        include_libraries: bool = False,
+    ) -> dict[str, Any]:
+        """Get project-wide anti-pattern summary.
+
+        Args:
+            severity: Filter by severity (INFO, WARNING, ERROR, CRITICAL)
+            pattern_type: Filter by anti-pattern type
+            include_libraries: Include library classes
+
+        Returns:
+            Anti-pattern summary
+        """
+        params: dict[str, Any] = {}
+        if severity:
+            params["severity"] = severity
+        if pattern_type:
+            params["type"] = pattern_type
+        if include_libraries:
+            params["includeLibraries"] = "true"
+        return self._get("/api/v1/ratpack/antipatterns", params=params or None)
+
+    def get_class_antipatterns(self, fqn: str) -> dict[str, Any]:
+        """Get anti-patterns for a specific class.
+
+        Args:
+            fqn: Fully qualified class name
+
+        Returns:
+            List of anti-patterns in the class
+        """
+        return self._get(f"/api/v1/ratpack/antipatterns/{_encode_path_param(fqn)}")
+
+    # =========================================================================
+    # Route Analysis API
+    # =========================================================================
+
+    def get_routes(self, include_libraries: bool = False) -> dict[str, Any]:
+        """Get all routes in the application.
+
+        Args:
+            include_libraries: Include library classes
+
+        Returns:
+            Routing summary
+        """
+        params: dict[str, Any] = {}
+        if include_libraries:
+            params["includeLibraries"] = "true"
+        return self._get("/api/v1/ratpack/routes", params=params or None)
+
+    def get_route_tree(self, include_libraries: bool = False) -> dict[str, Any]:
+        """Get route tree structure.
+
+        Args:
+            include_libraries: Include library classes
+
+        Returns:
+            Route tree
+        """
+        params: dict[str, Any] = {}
+        if include_libraries:
+            params["includeLibraries"] = "true"
+        return self._get("/api/v1/ratpack/routes/tree", params=params or None)
+
+    def get_spring_mappings(self, include_libraries: bool = False) -> dict[str, Any]:
+        """Get Spring @RequestMapping equivalents.
+
+        Args:
+            include_libraries: Include library classes
+
+        Returns:
+            Spring mappings
+        """
+        params: dict[str, Any] = {}
+        if include_libraries:
+            params["includeLibraries"] = "true"
+        return self._get("/api/v1/ratpack/routes/spring", params=params or None)

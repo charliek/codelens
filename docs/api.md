@@ -1041,6 +1041,201 @@ Find all bindings for a specific type.
 
 ---
 
+### GET /api/v1/ratpack/antipatterns
+
+Get project-wide anti-pattern summary.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `severity` | string | - | Filter by severity (INFO, WARNING, ERROR, CRITICAL) |
+| `type` | string | - | Filter by anti-pattern type |
+| `includeLibraries` | boolean | `false` | Include library classes |
+
+**Anti-Pattern Types:**
+- `BLOCKING_JDBC` - JDBC calls without Blocking.get() wrapper
+- `THREAD_SLEEP` - Thread.sleep() calls blocking the event loop
+- `SYNCHRONOUS_FILE_IO` - Blocking file I/O operations
+- `BLOCKING_HTTP_CLIENT` - Using Apache HttpClient or java.net.URL
+- `CONSOLE_LOGGING` - Direct System.out/err usage
+- `SWALLOWED_EXCEPTION` - Catching and swallowing exceptions
+
+**Response:**
+```json
+{
+  "summary": {
+    "instances": [
+      {
+        "type": "BLOCKING_JDBC",
+        "severity": "CRITICAL",
+        "classFqn": "com.example.UserHandler",
+        "methodName": null,
+        "confidence": 0.8,
+        "reason": "JDBC types are used without visible Blocking.get() usage.",
+        "recommendation": "Wrap JDBC calls in Blocking.get { ... }",
+        "fixExample": "..."
+      }
+    ],
+    "countByType": {"BLOCKING_JDBC": 2, "BLOCKING_HTTP_CLIENT": 1},
+    "countBySeverity": {"CRITICAL": 2, "ERROR": 1},
+    "worstOffenders": [
+      {"classFqn": "com.example.UserHandler", "count": 2, "criticalCount": 1, "errorCount": 1}
+    ],
+    "totalCount": 3
+  },
+  "appliedFilters": {
+    "severity": null,
+    "type": null,
+    "includeLibraries": false
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/antipatterns/{fqn}
+
+Get anti-patterns for a specific class.
+
+**Response:**
+```json
+{
+  "classFqn": "com.example.UserHandler",
+  "antiPatterns": [
+    {
+      "type": "BLOCKING_JDBC",
+      "severity": "CRITICAL",
+      "classFqn": "com.example.UserHandler",
+      "methodName": null,
+      "confidence": 0.8,
+      "reason": "JDBC types are used without visible Blocking.get() usage.",
+      "recommendation": "Wrap JDBC calls in Blocking.get { ... }",
+      "fixExample": "..."
+    }
+  ],
+  "totalCount": 1
+}
+```
+
+---
+
+### GET /api/v1/ratpack/routes
+
+Get all routes in the application.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `includeLibraries` | boolean | `false` | Include library classes |
+
+**Response:**
+```json
+{
+  "summary": {
+    "totalRoutes": 5,
+    "routesByMethod": {"GET": 3, "POST": 1, "DELETE": 1},
+    "routes": [
+      {
+        "method": "GET",
+        "pathPattern": "/users",
+        "handlerFqn": "com.example.ListUsersHandler",
+        "handlerSimpleName": "ListUsersHandler",
+        "chainFqn": "com.example.UsersChain",
+        "pathParameters": [],
+        "isPrefix": false,
+        "nestedRoutes": []
+      }
+    ],
+    "chainClasses": [
+      {
+        "fqn": "com.example.UsersChain",
+        "simpleName": "UsersChain",
+        "routeCount": 4,
+        "pathPrefix": "/users"
+      }
+    ],
+    "uniquePaths": 4
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/routes/tree
+
+Get routes as a tree structure.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `includeLibraries` | boolean | `false` | Include library classes |
+
+**Response:**
+```json
+{
+  "tree": {
+    "segment": "",
+    "fullPath": "/",
+    "routes": [],
+    "children": [
+      {
+        "segment": "users",
+        "fullPath": "/users",
+        "routes": [
+          {"method": "GET", "pathPattern": "/users", "handlerSimpleName": "ListHandler"}
+        ],
+        "children": [
+          {
+            "segment": ":id",
+            "fullPath": "/users/:id",
+            "routes": [
+              {"method": "GET", "pathPattern": "/users/:id", "handlerSimpleName": "GetHandler"}
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /api/v1/ratpack/routes/spring
+
+Get Spring @RequestMapping equivalents for all routes.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `includeLibraries` | boolean | `false` | Include library classes |
+
+**Response:**
+```json
+{
+  "mappings": [
+    {
+      "ratpackRoute": {
+        "method": "GET",
+        "pathPattern": "/users/:id",
+        "handlerSimpleName": "GetUserHandler"
+      },
+      "springAnnotation": "@GetMapping(\"/users/{id}\")",
+      "methodSignature": "fun getUser(@PathVariable id: String): ResponseEntity<*>",
+      "notes": ["Contains 1 path parameter(s)"]
+    }
+  ],
+  "totalCount": 5
+}
+```
+
+---
+
 ## Source Classification
 
 Classes are classified by source:

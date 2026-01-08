@@ -13,10 +13,10 @@ This document provides a comprehensive catalog of all planned CodeLens features 
 | 5 | Source Code Retrieval | P1 | 2B | Complete | Return actual source for classes/methods |
 | 6 | External Service Detection | P1 | 2B | Complete | HTTP clients, databases, queues |
 | 7 | @Inject Annotation Detection | P1 | 2B | Complete | Handler DI readiness detection |
-| 8 | API Versioning Detection | P1 | 2C | Not Started | Version routing patterns |
-| 9 | Pattern-Based Migration Hints | P2 | 2C | Not Started | Pattern-specific recommendations |
-| 10 | Route/Chain Analysis | P2 | 2C | Not Started | URL structure and middleware |
-| 11 | Anti-pattern Detection | P2 | 2C | Not Started | Blocking code, Thread.sleep, etc. |
+| 8 | API Versioning Detection | P1 | 2C | Deferred | Version routing patterns (LLM can detect from code) |
+| 9 | Pattern-Based Migration Hints | P2 | 2C | Deferred | Pattern-specific recommendations (LLM can generate) |
+| 10 | Route/Chain Analysis | P2 | 2C | Complete | URL structure and middleware |
+| 11 | Anti-pattern Detection | P2 | 2C | Complete | Blocking code, Thread.sleep, etc. |
 | 12 | Full Migration Report | P2 | 2D | Not Started | Comprehensive planning document |
 | 13 | Dependency Migration Graph | P2 | 2D | Not Started | Migration ordering |
 | 14 | OpenRewrite Recipe Generation | P3 | 3 | Not Started | Auto-generate refactoring recipes |
@@ -891,11 +891,13 @@ The original plan for Feature 7 was comprehensive registry access analysis (ctx.
 
 **Priority**: P1 - High
 **Phase**: 2C
-**Status**: Planned
+**Status**: Deferred
 
 ### Description
 
 Detects API versioning strategies used in the codebase (path-based, header-based, etc.) and maps handlers to versions.
+
+**Note**: This feature is deferred. LLMs can detect versioning patterns directly from the source code, making a dedicated detection feature less necessary for the migration workflow.
 
 ### CLI Commands
 
@@ -947,11 +949,13 @@ codelens api versions --json
 
 **Priority**: P2 - Medium
 **Phase**: 2C
-**Status**: Planned
+**Status**: Deferred
 
 ### Description
 
 Provides pattern-specific migration recommendations and code snippets. Lower priority since LLMs can generate code from analysis data.
+
+**Note**: This feature is deferred. LLMs excel at generating migration code and recommendations when provided with analysis data from other features, making hardcoded hints less valuable.
 
 ### Output Example
 
@@ -978,30 +982,61 @@ Provides pattern-specific migration recommendations and code snippets. Lower pri
 
 **Priority**: P2 - Medium
 **Phase**: 2C
-**Status**: Planned
+**Status**: Complete
 
 ### Description
 
-Analyzes route definitions, path parameters, middleware chains, and HTTP method mappings.
+Analyzes Action<Chain> implementations to extract route definitions, path parameters, and HTTP method mappings. Generates Spring @RequestMapping equivalents for migration planning.
+
+### CLI Commands
+
+```bash
+# List all routes
+codelens routes list
+
+# Show route tree structure
+codelens routes tree
+
+# Generate Spring @RequestMapping equivalents
+codelens routes spring
+```
 
 ### Output Example
 
 ```json
 {
-  "routes": [
+  "summary": {
+    "totalRoutes": 5,
+    "routesByMethod": {"GET": 3, "POST": 1, "DELETE": 1},
+    "routes": [
+      {
+        "method": "GET",
+        "pathPattern": "/users",
+        "handlerFqn": "com.example.ListUsersHandler",
+        "handlerSimpleName": "ListUsersHandler",
+        "chainFqn": "com.example.UsersChain",
+        "pathParameters": [],
+        "isPrefix": false
+      }
+    ],
+    "chainClasses": [
+      {"fqn": "com.example.UsersChain", "simpleName": "UsersChain", "routeCount": 4, "pathPrefix": "/users"}
+    ],
+    "uniquePaths": 4
+  }
+}
+```
+
+### Spring Mapping Example
+
+```json
+{
+  "mappings": [
     {
-      "path": "/locationgroups/:locationGroupId/locations/:locationId/devices/:deviceId",
-      "methods": ["GET"],
-      "handler": "DeviceStateGetHandler",
-      "middleware": ["BearerTokenAuthHandler", "RequireAuthHandler", "RateLimitHandler"],
-      "pathParams": ["locationGroupId", "locationId", "deviceId"]
-    }
-  ],
-  "middleware": [
-    {
-      "name": "BearerTokenAuthHandler",
-      "appliedTo": "all routes under /api",
-      "purpose": "Authentication"
+      "ratpackRoute": {"method": "GET", "pathPattern": "/users/:id"},
+      "springAnnotation": "@GetMapping(\"/users/{id}\")",
+      "methodSignature": "fun getUser(@PathVariable id: String): ResponseEntity<*>",
+      "notes": ["Contains 1 path parameter(s)"]
     }
   ]
 }
@@ -1013,7 +1048,7 @@ Analyzes route definitions, path parameters, middleware chains, and HTTP method 
 
 **Priority**: P2 - Medium
 **Phase**: 2C
-**Status**: Planned
+**Status**: Complete
 
 ### Description
 
@@ -1023,35 +1058,53 @@ Detects code patterns that block the event loop or violate Ratpack best practice
 
 | Anti-pattern | Severity | Fix |
 |--------------|----------|-----|
-| JDBC without Blocking | HIGH | Wrap in Blocking.get() or use async driver |
-| Thread.sleep() | MEDIUM | Replace with delay() in coroutines |
-| Unsubscribed Promise | MEDIUM | Ensure Promise is consumed |
-| Synchronous file I/O | MEDIUM | Use async file APIs or Blocking |
+| BLOCKING_JDBC | CRITICAL/ERROR | Wrap in Blocking.get() or use async driver |
+| THREAD_SLEEP | CRITICAL/WARNING | Replace with Execution.sleep() |
+| SYNCHRONOUS_FILE_IO | ERROR/WARNING | Use async file APIs or Blocking |
+| BLOCKING_HTTP_CLIENT | ERROR/WARNING | Use Ratpack's HttpClient |
+| CONSOLE_LOGGING | INFO | Use proper logging framework |
+| SWALLOWED_EXCEPTION | WARNING | Log exceptions before handling |
+
+### CLI Commands
+
+```bash
+# Scan for anti-patterns
+codelens antipatterns scan
+
+# Filter by severity
+codelens antipatterns scan --severity CRITICAL
+
+# Filter by type
+codelens antipatterns scan --type BLOCKING_JDBC
+
+# Show anti-patterns for a specific class
+codelens antipatterns show com.example.UserHandler
+```
 
 ### Output Example
 
 ```json
 {
-  "antiPatterns": [
-    {
-      "type": "BLOCKING_JDBC",
-      "severity": "HIGH",
-      "class": "LegacyReportHandler",
-      "method": "handle",
-      "line": 45,
-      "description": "Direct JDBC call without Blocking.get() wrapper",
-      "fix": "Wrap in Blocking.get() before migration, or convert to R2DBC"
-    },
-    {
-      "type": "THREAD_SLEEP",
-      "severity": "MEDIUM",
-      "class": "BatchProcessor",
-      "method": "process",
-      "line": 78,
-      "description": "Thread.sleep() blocks compute thread",
-      "fix": "Replace with delay() in coroutines or Ratpack's Throttle"
-    }
-  ]
+  "summary": {
+    "instances": [
+      {
+        "type": "BLOCKING_JDBC",
+        "severity": "CRITICAL",
+        "classFqn": "com.example.UserHandler",
+        "methodName": null,
+        "confidence": 0.8,
+        "reason": "JDBC types are used without visible Blocking.get() usage.",
+        "recommendation": "Wrap JDBC calls in Blocking.get { ... }",
+        "fixExample": "// Before:\nval result = connection.prepareStatement(sql).executeQuery()\n\n// After:\nBlocking.get {\n    connection.prepareStatement(sql).executeQuery()\n}.then { result ->\n    // handle result\n}"
+      }
+    ],
+    "countByType": {"BLOCKING_JDBC": 2, "BLOCKING_HTTP_CLIENT": 1},
+    "countBySeverity": {"CRITICAL": 2, "ERROR": 1},
+    "worstOffenders": [
+      {"classFqn": "com.example.UserHandler", "count": 2, "criticalCount": 1, "errorCount": 1}
+    ],
+    "totalCount": 3
+  }
 }
 ```
 

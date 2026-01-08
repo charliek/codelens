@@ -1,11 +1,13 @@
 package codelens.server.services
 
 import codelens.classgraph.ClassGraphProvider
+import codelens.classgraph.ratpack.AntiPatternDetector
 import codelens.classgraph.ratpack.ComplexityCalculator
 import codelens.classgraph.ratpack.GuiceModuleDetector
 import codelens.classgraph.ratpack.IntegrationDetector
 import codelens.classgraph.ratpack.PromiseDetector
 import codelens.classgraph.ratpack.RatpackDetector
+import codelens.classgraph.ratpack.RouteAnalyzer
 import codelens.core.model.ratpack.*
 import org.slf4j.LoggerFactory
 
@@ -28,6 +30,8 @@ class RatpackAnalysisService(
     private val complexityCalculator by lazy { ComplexityCalculator(classGraphProvider) }
     private val guiceModuleDetector by lazy { GuiceModuleDetector(classGraphProvider) }
     private val integrationDetector by lazy { IntegrationDetector(classGraphProvider) }
+    private val antiPatternDetector by lazy { AntiPatternDetector(classGraphProvider) }
+    private val routeAnalyzer by lazy { RouteAnalyzer(classGraphProvider) }
 
     // =========================================================================
     // Handler Analysis
@@ -217,5 +221,79 @@ class RatpackAnalysisService(
         includeLibraries: Boolean = false
     ): List<ClassIntegrations> {
         return integrationDetector.findByType(type, subType, includeLibraries)
+    }
+
+    // =========================================================================
+    // Anti-Pattern Detection
+    // =========================================================================
+
+    /**
+     * Get project-wide anti-pattern summary.
+     *
+     * @param severity Filter by severity level (optional)
+     * @param type Filter by anti-pattern type (optional)
+     * @param includeLibraries Include library classes
+     * @return Anti-pattern summary
+     */
+    fun getAntiPatternSummary(
+        severity: AntiPatternSeverity? = null,
+        type: AntiPatternType? = null,
+        includeLibraries: Boolean = false
+    ): AntiPatternSummary {
+        return antiPatternDetector.getProjectSummary(
+            severityFilter = severity,
+            typeFilter = type,
+            includeLibraries = includeLibraries
+        )
+    }
+
+    /**
+     * Get anti-patterns for a specific class.
+     *
+     * @param fqn Fully qualified class name
+     * @return List of anti-pattern instances
+     */
+    fun getClassAntiPatterns(fqn: String): List<AntiPatternInstance> {
+        return antiPatternDetector.analyzeClass(fqn)
+    }
+
+    // =========================================================================
+    // Route Analysis
+    // =========================================================================
+
+    /**
+     * Get routing summary for the project.
+     *
+     * @param includeLibraries Include library classes
+     * @return Routing summary
+     */
+    fun getRoutingSummary(includeLibraries: Boolean = false): RoutingSummary {
+        return routeAnalyzer.getRoutingSummary(includeLibraries)
+    }
+
+    /**
+     * Get route tree structure.
+     *
+     * @param includeLibraries Include library classes
+     * @return Route tree root node
+     */
+    fun getRouteTree(includeLibraries: Boolean = false): RouteTreeNode {
+        val summary = routeAnalyzer.getRoutingSummary(includeLibraries)
+        return routeAnalyzer.buildRouteTree(summary.routes)
+    }
+
+    /**
+     * Get Spring @RequestMapping equivalents for all routes.
+     *
+     * @param includeLibraries Include library classes
+     * @return List of Spring mapping equivalents
+     */
+    fun getSpringMappings(includeLibraries: Boolean = false): SpringMappingsResponse {
+        val summary = routeAnalyzer.getRoutingSummary(includeLibraries)
+        val mappings = routeAnalyzer.generateSpringMappings(summary.routes)
+        return SpringMappingsResponse(
+            mappings = mappings,
+            totalCount = mappings.size
+        )
     }
 }

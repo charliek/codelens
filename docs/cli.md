@@ -46,6 +46,11 @@ The CLI commands map to server API endpoints as follows:
 | `codelens integrations list` | `GET /api/v1/ratpack/integrations` | Integration summary |
 | `codelens integrations show` | `GET /api/v1/ratpack/integrations/{fqn}` | Class integrations |
 | `codelens integrations find` | `GET /api/v1/ratpack/integrations/by-type/{type}` | Find by type |
+| `codelens antipatterns scan` | `GET /api/v1/ratpack/antipatterns` | Anti-pattern summary |
+| `codelens antipatterns show` | `GET /api/v1/ratpack/antipatterns/{fqn}` | Class anti-patterns |
+| `codelens routes list` | `GET /api/v1/ratpack/routes` | List all routes |
+| `codelens routes tree` | `GET /api/v1/ratpack/routes/tree` | Route tree structure |
+| `codelens routes spring` | `GET /api/v1/ratpack/routes/spring` | Spring equivalents |
 | `codelens lint check` | `POST /api/v1/ktlint/lint/file` or `lint/project` | Check style issues |
 | `codelens lint format` | `POST /api/v1/ktlint/format/file` or `format/project` | Format files |
 
@@ -1415,6 +1420,243 @@ codelens integrations find HTTP_CLIENT
 
 # Find DynamoDB users specifically
 codelens integrations find DATABASE --sub-type DYNAMODB
+```
+
+---
+
+## Anti-Pattern Commands
+
+Commands for detecting code anti-patterns are under `codelens antipatterns`.
+
+### codelens antipatterns scan
+
+Scan the codebase for anti-patterns.
+
+```bash
+codelens antipatterns scan [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--severity`, `-s` | Filter by severity (INFO, WARNING, ERROR, CRITICAL) |
+| `--type`, `-t` | Filter by anti-pattern type |
+| `--include-libraries`, `-L` | Include library classes |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Anti-Pattern Types:**
+
+| Type | Description |
+|------|-------------|
+| `BLOCKING_JDBC` | JDBC calls without Blocking.get() wrapper |
+| `THREAD_SLEEP` | Thread.sleep() calls blocking the event loop |
+| `SYNCHRONOUS_FILE_IO` | Blocking file I/O operations |
+| `BLOCKING_HTTP_CLIENT` | Using Apache HttpClient or java.net.URL |
+| `CONSOLE_LOGGING` | Direct System.out/err usage |
+| `SWALLOWED_EXCEPTION` | Catching and swallowing exceptions |
+
+**Examples:**
+
+```bash
+# Scan entire project
+codelens antipatterns scan
+
+# Filter by severity
+codelens antipatterns scan --severity CRITICAL
+
+# Filter by type
+codelens antipatterns scan --type BLOCKING_JDBC
+```
+
+**Example Output:**
+
+```
+Anti-Pattern Summary: 5 issues found
+  Severity: 2 CRITICAL, 2 ERROR, 1 WARNING
+
+By Type:
+  BLOCKING_JDBC      2
+  BLOCKING_HTTP_CLIENT  2
+  SYNCHRONOUS_FILE_IO   1
+
+Top Classes with Issues:
+┌────────────────────┬───────┬──────────┬───────┐
+│ Class              │ Total │ Critical │ Error │
+├────────────────────┼───────┼──────────┼───────┤
+│ UserHandler        │     2 │        1 │     1 │
+│ FileProcessor      │     1 │        1 │     - │
+└────────────────────┴───────┴──────────┴───────┘
+
+All Issues (5):
+
+[CRITICAL] BLOCKING_JDBC in UserHandler
+  JDBC types (connection) are used without visible Blocking.get() usage.
+  Recommendation: Wrap JDBC calls in Blocking.get { ... }
+```
+
+---
+
+### codelens antipatterns show
+
+Show anti-patterns for a specific class.
+
+```bash
+codelens antipatterns show FQN [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified class name |
+
+**Examples:**
+
+```bash
+codelens antipatterns show com.example.UserHandler
+```
+
+---
+
+## Route Commands
+
+Commands for analyzing Ratpack routes are under `codelens routes`.
+
+### codelens routes list
+
+List all routes defined in the application.
+
+```bash
+codelens routes list [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--method`, `-m` | Filter by HTTP method (GET, POST, PUT, PATCH, DELETE) |
+| `--include-libraries`, `-L` | Include library classes |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# List all routes
+codelens routes list
+
+# Filter by HTTP method
+codelens routes list --method GET
+```
+
+**Example Output:**
+
+```
+Route Summary: 5 routes (5 unique paths)
+  Methods: 3 GET, 1 POST, 1 DELETE
+
+Routes:
+┌────────┬────────────────┬─────────────────┬───────────────┐
+│ Method │ Path           │ Handler         │ Chain         │
+├────────┼────────────────┼─────────────────┼───────────────┤
+│ GET    │ /users         │ ListUsersHandler│ UsersChain    │
+│ POST   │ /users         │ CreateHandler   │ UsersChain    │
+│ GET    │ /users/:id     │ GetUserHandler  │ UsersChain    │
+│ DELETE │ /users/:id     │ DeleteHandler   │ UsersChain    │
+└────────┴────────────────┴─────────────────┴───────────────┘
+
+Chain Classes:
+┌─────────────┬────────┬─────────┐
+│ Class       │ Routes │ Prefix  │
+├─────────────┼────────┼─────────┤
+│ UsersChain  │      4 │ /users  │
+│ RootChain   │      1 │ -       │
+└─────────────┴────────┴─────────┘
+```
+
+---
+
+### codelens routes tree
+
+Show routes as a tree structure.
+
+```bash
+codelens routes tree [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--include-libraries`, `-L` | Include library classes |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Example Output:**
+
+```
+Route Tree:
+
+/
+├── /users
+│   ├── GET ListUsersHandler
+│   ├── POST CreateHandler
+│   └── /:id
+│       ├── GET GetUserHandler
+│       └── DELETE DeleteHandler
+└── /health
+    └── GET HealthHandler
+```
+
+---
+
+### codelens routes spring
+
+Generate Spring @RequestMapping equivalents for all routes.
+
+```bash
+codelens routes spring [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--include-libraries`, `-L` | Include library classes |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# Generate Spring mappings
+codelens routes spring
+```
+
+**Example Output:**
+
+```
+Spring @RequestMapping Equivalents (5 routes)
+
+GET /users
+  Annotation: @GetMapping("/users")
+  Signature:  fun listUsers(): ResponseEntity<*>
+
+POST /users
+  Annotation: @PostMapping("/users")
+  Signature:  fun createUsers(): ResponseEntity<*>
+
+GET /users/:id
+  Annotation: @GetMapping("/users/{id}")
+  Signature:  fun getUser(@PathVariable id: String): ResponseEntity<*>
+  Note: Contains 1 path parameter(s)
+
+DELETE /users/:id
+  Annotation: @DeleteMapping("/users/{id}")
+  Signature:  fun deleteUser(@PathVariable id: String): ResponseEntity<*>
+  Note: Contains 1 path parameter(s)
 ```
 
 ---
