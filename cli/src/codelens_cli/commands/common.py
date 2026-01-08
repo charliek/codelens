@@ -7,6 +7,7 @@ from typing import Generator, Optional
 
 import httpx
 import typer
+from pydantic import ValidationError
 from rich.console import Console
 
 from codelens_cli.client import CodeLensClient
@@ -32,6 +33,9 @@ def handle_api_errors() -> Generator[None, None, None]:
         yield
     except (typer.Exit, SystemExit):
         raise  # Preserve explicit exits
+    except ValidationError as e:
+        err_console.print(f"[red]Invalid server response:[/red] {e}")
+        raise typer.Exit(ExitCode.GENERAL_ERROR)
     except httpx.TimeoutException as e:
         err_console.print(f"[red]Timeout:[/red] Request timed out: {e}")
         raise typer.Exit(ExitCode.TIMEOUT)

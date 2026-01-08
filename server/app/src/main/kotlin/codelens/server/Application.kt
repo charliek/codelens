@@ -10,6 +10,7 @@ import codelens.server.routes.analysisRoutes
 import codelens.server.routes.ktlintRoutes
 import codelens.server.routes.projectRoutes
 import codelens.server.routes.ratpackRoutes
+import codelens.server.routes.sourceRoutes
 import codelens.server.services.AnalysisService
 import codelens.server.services.KtlintService
 import codelens.server.services.RatpackAnalysisService
@@ -125,6 +126,7 @@ fun Application.configureServer(
         adminRoutes(analysisService, activityTracker, config)
         projectRoutes(analysisService)
         analysisRoutes(analysisService)
+        sourceRoutes(analysisService)
         ratpackRoutes(ratpackAnalysisService)
         ktlintRoutes(ktlintService)
     }

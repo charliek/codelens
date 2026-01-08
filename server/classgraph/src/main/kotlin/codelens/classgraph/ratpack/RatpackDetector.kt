@@ -309,6 +309,9 @@ class RatpackDetector(
         // Calculate complexity
         val complexity = complexityCalculator.calculate(classInfo.name.fqn)
 
+        // Check if any constructor has @Inject annotation
+        val hasInjectAnnotation = hasInjectAnnotatedConstructor(classInfo)
+
         return HandlerSummary(
             fqn = classInfo.name.fqn,
             simpleName = classInfo.name.simpleName,
@@ -318,7 +321,19 @@ class RatpackDetector(
             complexityScore = complexity.score,
             complexityTier = complexity.tier,
             promiseOperationCount = promiseAnalysis.totalOperationCount,
-            usesBlocking = promiseAnalysis.usesBlocking
+            usesBlocking = promiseAnalysis.usesBlocking,
+            hasInjectAnnotation = hasInjectAnnotation
         )
+    }
+
+    /**
+     * Check if any constructor has an @Inject annotation.
+     */
+    private fun hasInjectAnnotatedConstructor(classInfo: ClassInfo): Boolean {
+        return classInfo.constructors.any { constructor ->
+            constructor.annotations.any { ann ->
+                ann.type in RatpackTypes.INJECT_ANNOTATIONS
+            }
+        }
     }
 }

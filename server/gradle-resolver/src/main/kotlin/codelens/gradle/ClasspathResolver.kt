@@ -1,5 +1,6 @@
 package codelens.gradle
 
+import codelens.core.model.source.SourceRootInfo
 import java.io.File
 
 /**
@@ -16,6 +17,12 @@ data class ResolvedClasspath(
      * Used to classify classes as PROJECT vs LIBRARY.
      */
     val projectOutputDirs: Set<File>,
+
+    /**
+     * Source root directories for the project.
+     * Used for source code retrieval.
+     */
+    val sourceRoots: List<SourceRootInfo>,
 
     /**
      * Resolution method used (for diagnostics).

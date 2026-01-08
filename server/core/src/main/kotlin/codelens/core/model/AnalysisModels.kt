@@ -64,6 +64,21 @@ data class ParameterInfo(
 )
 
 /**
+ * Information about a constructor.
+ */
+@Serializable
+data class ConstructorInfo(
+    /** Visibility modifier */
+    val visibility: Visibility,
+    /** Constructor parameters */
+    val parameters: List<ParameterInfo> = emptyList(),
+    /** Annotations on this constructor */
+    val annotations: List<AnnotationInfo> = emptyList(),
+    /** Is this constructor synthetic (compiler-generated)? */
+    val isSynthetic: Boolean = false
+)
+
+/**
  * Information about a method.
  */
 @Serializable
@@ -163,6 +178,8 @@ data class ClassInfo(
     val interfaces: List<String> = emptyList(),
     /** Annotations on this class */
     val annotations: List<AnnotationInfo> = emptyList(),
+    /** Constructors in this class */
+    val constructors: List<ConstructorInfo> = emptyList(),
     /** Methods in this class */
     val methods: List<MethodInfo> = emptyList(),
     /** Fields in this class */

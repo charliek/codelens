@@ -322,6 +322,10 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         return results.sortedWith(compareBy({ it.classFqn }, { it.method.name }))
     }
 
+    override fun getAllClasses(): Map<String, ClassInfo> {
+        return classes.toMap()
+    }
+
     /**
      * Extracts the base type FQN from a type descriptor, handling arrays and generics.
      */
@@ -365,6 +369,7 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             superclass = cgClass.superclass?.name,
             interfaces = cgClass.interfaces.map { it.name },
             annotations = cgClass.annotationInfo.map { convertAnnotation(it) },
+            constructors = cgClass.declaredConstructorInfo.map { convertConstructor(it) },
             methods = cgClass.declaredMethodInfo.map { convertMethod(it) },
             fields = cgClass.declaredFieldInfo.map { convertField(it) }
         )
@@ -446,6 +451,24 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             is Class<*> -> value.name
             else -> value.toString()
         }
+    }
+
+    /**
+     * Converts a constructor.
+     */
+    private fun convertConstructor(ctor: CGMethodInfo): ConstructorInfo {
+        return ConstructorInfo(
+            visibility = getMethodVisibility(ctor),
+            parameters = ctor.parameterInfo.mapIndexed { index, param ->
+                ParameterInfo(
+                    name = param.name ?: "arg$index",
+                    type = param.typeDescriptor?.toString() ?: "java.lang.Object",
+                    annotations = param.annotationInfo.map { convertAnnotation(it) }
+                )
+            },
+            annotations = ctor.annotationInfo.map { convertAnnotation(it) },
+            isSynthetic = ctor.isSynthetic
+        )
     }
 
     /**

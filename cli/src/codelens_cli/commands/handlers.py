@@ -27,30 +27,34 @@ def _tier_style(tier: str) -> str:
     }.get(tier, "white")
 
 
-def _print_handler_list(data: dict) -> None:
+def _print_handler_list(data: dict, show_count: int | None = None) -> None:
     """Print handler list in human-readable format."""
     handlers = data.get("handlers", [])
     total = data.get("totalCount", len(handlers))
+    display_count = show_count if show_count is not None else total
 
     if not handlers:
         console.print("[yellow]No handlers found.[/yellow]")
         return
 
-    table = Table(title=f"Ratpack Handlers ({total} total)")
+    table = Table(title=f"Ratpack Handlers ({display_count} of {total} total)")
     table.add_column("Class", style="cyan")
     table.add_column("Type", style="blue")
     table.add_column("Tier", justify="center")
     table.add_column("Score", justify="right")
+    table.add_column("@Inject", justify="center")
     table.add_column("Promise Ops", justify="right")
     table.add_column("Blocking", justify="center")
 
     for handler in handlers:
         tier = handler.get("complexityTier", "LOW")
+        has_inject = handler.get("hasInjectAnnotation", False)
         table.add_row(
             handler.get("simpleName", ""),
             handler.get("handlerType", ""),
             f"[{_tier_style(tier)}]{tier}[/{_tier_style(tier)}]",
             str(handler.get("complexityScore", 0)),
+            "[green]Yes[/green]" if has_inject else "[dim]No[/dim]",
             str(handler.get("promiseOperationCount", 0)),
             "[red]Yes[/red]" if handler.get("usesBlocking") else "[dim]No[/dim]",
         )
@@ -141,6 +145,12 @@ def list_handlers(
         "--tier",
         help="Filter by complexity tier (LOW, MEDIUM, HIGH, CRITICAL)",
     ),
+    missing_inject: bool = typer.Option(
+        False,
+        "--missing-inject",
+        "-I",
+        help="Only show handlers without @Inject annotation",
+    ),
     include_libraries: bool = typer.Option(
         False, "--include-libraries", "-L", help="Include library handlers"
     ),
@@ -157,10 +167,20 @@ def list_handlers(
             include_libraries=include_libraries,
         )
 
+        # Apply client-side filter for missing @Inject
+        if missing_inject:
+            handlers = result.get("handlers", [])
+            filtered = [h for h in handlers if not h.get("hasInjectAnnotation", False)]
+            result["handlers"] = filtered
+            # Keep original totalCount for display context
+            display_count = len(filtered)
+        else:
+            display_count = None
+
         if json_output or not is_tty():
             print_json(result)
         else:
-            _print_handler_list(result)
+            _print_handler_list(result, show_count=display_count)
 
 
 @app.command(name="show")

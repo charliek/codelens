@@ -2,7 +2,9 @@ package codelens.server.services
 
 import codelens.classgraph.ClassGraphProvider
 import codelens.classgraph.ClassGraphProviderImpl
+import codelens.classgraph.source.SourceResolver
 import codelens.core.model.*
+import codelens.core.model.source.*
 import codelens.gradle.ClasspathFileResolver
 import codelens.gradle.ClasspathResolutionException
 import codelens.gradle.ClasspathResolver
@@ -193,5 +195,52 @@ class AnalysisService(
      */
     fun searchMethods(filter: MethodFilter): List<MethodSearchResult> {
         return classGraphProvider.searchMethods(filter)
+    }
+
+    /**
+     * Lazily initialized source resolver.
+     */
+    private val sourceResolver: SourceResolver? by lazy {
+        val classpath = resolvedClasspath ?: return@lazy null
+        val classMap = classGraphProvider.getAllClasses()
+        SourceResolver(classpath.sourceRoots, classMap)
+    }
+
+    /**
+     * Gets source code for a class by FQN.
+     *
+     * @param fqn Fully qualified class name
+     * @return SourceInfo or error
+     */
+    fun getSource(fqn: String): Result<SourceInfo> {
+        val resolver = sourceResolver
+            ?: return Result.failure(SourceResolutionException(
+                fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
+                "Source resolver not initialized - scan may still be in progress"
+            ))
+        return resolver.resolveClass(fqn)
+    }
+
+    /**
+     * Gets source code for a specific method.
+     *
+     * @param fqn Fully qualified class name
+     * @param methodName Method name
+     * @param parameterTypes Optional list of parameter types for disambiguation
+     * @param contextLines Number of context lines to include before/after
+     * @return MethodSourceInfo or error
+     */
+    fun getMethodSource(
+        fqn: String,
+        methodName: String,
+        parameterTypes: List<String>? = null,
+        contextLines: Int = 0
+    ): Result<MethodSourceInfo> {
+        val resolver = sourceResolver
+            ?: return Result.failure(SourceResolutionException(
+                fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
+                "Source resolver not initialized - scan may still be in progress"
+            ))
+        return resolver.resolveMethod(fqn, methodName, parameterTypes, contextLines)
     }
 }

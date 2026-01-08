@@ -99,4 +99,11 @@ interface ClassGraphProvider {
      * @return List of methods matching the filter with their containing class
      */
     fun searchMethods(filter: MethodFilter): List<MethodSearchResult>
+
+    /**
+     * Get all scanned classes as a map.
+     *
+     * @return Map of FQN to ClassInfo for all scanned classes
+     */
+    fun getAllClasses(): Map<String, ClassInfo>
 }

@@ -1,5 +1,6 @@
 package codelens.gradle
 
+import codelens.core.model.source.SourceRootInfo
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -74,11 +75,15 @@ class ClasspathFileResolver(
         // Also scan for standard output directories
         addStandardOutputDirs(projectDir, projectOutputDirs, classpathEntries)
 
-        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs")
+        // Detect standard source roots
+        val sourceRoots = detectStandardSourceRoots(projectDir)
+
+        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots")
 
         return ResolvedClasspath(
             entries = classpathEntries.distinctBy { it.absolutePath },
             projectOutputDirs = projectOutputDirs,
+            sourceRoots = sourceRoots,
             resolvedBy = "Classpath file: ${classpathFile.name}"
         )
     }
@@ -104,5 +109,30 @@ class ClasspathFileResolver(
                 classpathEntries.add(it)
             }
         }
+    }
+
+    /**
+     * Detects standard Gradle source directories.
+     */
+    private fun detectStandardSourceRoots(projectDir: File): List<SourceRootInfo> {
+        val srcDir = projectDir.resolve("src")
+        val sourceRoots = mutableListOf<SourceRootInfo>()
+
+        listOf(
+            Triple(srcDir.resolve("main/java"), "java", "main"),
+            Triple(srcDir.resolve("main/kotlin"), "kotlin", "main"),
+            Triple(srcDir.resolve("test/java"), "java", "test"),
+            Triple(srcDir.resolve("test/kotlin"), "kotlin", "test")
+        ).filter { (dir, _, _) -> dir.exists() }
+            .forEach { (dir, language, sourceSet) ->
+                sourceRoots.add(SourceRootInfo(
+                    path = dir,
+                    language = language,
+                    sourceSet = sourceSet,
+                    module = ":"
+                ))
+            }
+
+        return sourceRoots
     }
 }

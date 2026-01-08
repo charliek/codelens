@@ -41,6 +41,11 @@ The CLI commands map to server API endpoints as follows:
 | `codelens modules list` | `GET /api/v1/ratpack/modules` | List Guice modules |
 | `codelens modules show` | `GET /api/v1/ratpack/modules/{fqn}` | Module details |
 | `codelens modules bindings` | `GET /api/v1/ratpack/bindings/{fqn}` | Find bindings |
+| `codelens source show` | `GET /api/v1/source/{fqn}` | Get class source code |
+| `codelens source method` | `GET /api/v1/source/{fqn}/method/{name}` | Get method source |
+| `codelens integrations list` | `GET /api/v1/ratpack/integrations` | Integration summary |
+| `codelens integrations show` | `GET /api/v1/ratpack/integrations/{fqn}` | Class integrations |
+| `codelens integrations find` | `GET /api/v1/ratpack/integrations/by-type/{type}` | Find by type |
 | `codelens lint check` | `POST /api/v1/ktlint/lint/file` or `lint/project` | Check style issues |
 | `codelens lint format` | `POST /api/v1/ktlint/format/file` or `format/project` | Format files |
 
@@ -852,6 +857,7 @@ codelens handlers list [OPTIONS]
 |--------|-------------|
 | `--type`, `-t` | Filter by handler type (HANDLER, CHAIN_ACTION, INLINE_HANDLER, GROOVY_HANDLER) |
 | `--tier` | Filter by complexity tier (LOW, MEDIUM, HIGH, CRITICAL) |
+| `--missing-inject`, `-I` | Only show handlers without @Inject annotation |
 | `--include-libraries`, `-L` | Include library handlers |
 | `--project`, `-p` | Project directory |
 | `--json` | Output as JSON |
@@ -861,6 +867,9 @@ codelens handlers list [OPTIONS]
 ```bash
 # List all handlers
 codelens handlers list
+
+# Find handlers missing @Inject annotation (need DI refactoring)
+codelens handlers list --missing-inject
 
 # Find only high-complexity handlers
 codelens handlers list --tier HIGH
@@ -1219,6 +1228,193 @@ Bindings for com.example.UserService
 ├──────────────┼─────────────┼──────────┼───────────┤
 │ AppModule    │ UserService │ PROVIDES │ Singleton │
 └──────────────┴─────────────┴──────────┴───────────┘
+```
+
+---
+
+## Source Commands
+
+Commands for viewing source code are under `codelens source`.
+
+### codelens source show
+
+View source code for a class.
+
+```bash
+codelens source show FQN [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified class name |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# View source code for a class
+codelens source show com.example.UserHandler
+```
+
+---
+
+### codelens source method
+
+View source code for a specific method.
+
+```bash
+codelens source method FQN METHOD [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified class name |
+| `METHOD` | Method name |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--context`, `-c` | Number of context lines before/after (default: 0) |
+| `--param-types` | Comma-separated parameter types for disambiguation |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# View a method's source
+codelens source method com.example.UserHandler handle
+
+# Add context lines
+codelens source method com.example.UserHandler handle --context 5
+
+# Disambiguate overloaded method
+codelens source method com.example.UserService getUser --param-types String
+```
+
+---
+
+## Integration Commands
+
+Commands for detecting external service integrations are under `codelens integrations`.
+
+### codelens integrations list
+
+List external service integrations detected in the codebase.
+
+```bash
+codelens integrations list [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--type`, `-t` | Filter by integration type (HTTP_CLIENT, DATABASE, MESSAGE_QUEUE, CACHE, GRPC, FILE_STORAGE) |
+| `--sub-type` | Filter by specific sub-type (DYNAMODB, SQS, REDIS_LETTUCE, etc.) |
+| `--include-libraries`, `-L` | Include library classes |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# List all integrations
+codelens integrations list
+
+# Filter by type
+codelens integrations list --type HTTP_CLIENT
+
+# Filter by sub-type
+codelens integrations list --type DATABASE --sub-type DYNAMODB
+```
+
+**Example Output:**
+
+```
+External Service Integrations
+Classes with integrations: 12 | Total usages: 28
+
+By Type:
+  DATABASE: 15
+  HTTP_CLIENT: 8
+  MESSAGE_QUEUE: 5
+
+┌─────────────┬─────────────────┬────────────────────┬─────────┬────────┐
+│ Type        │ SubType         │ Primary FQN        │ Classes │ Usages │
+├─────────────┼─────────────────┼────────────────────┼─────────┼────────┤
+│ HTTP_CLIENT │ RATPACK_HTTP    │ HttpClient         │       5 │      8 │
+│ DATABASE    │ DYNAMODB        │ DynamoDbAsyncClient│       3 │      6 │
+│ MESSAGE_QUE │ SQS             │ SqsAsyncClient     │       2 │      3 │
+└─────────────┴─────────────────┴────────────────────┴─────────┴────────┘
+```
+
+---
+
+### codelens integrations show
+
+Show integrations for a specific class.
+
+```bash
+codelens integrations show FQN [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `FQN` | Fully qualified class name |
+
+**Examples:**
+
+```bash
+codelens integrations show com.example.UserHandler
+```
+
+---
+
+### codelens integrations find
+
+Find classes using a specific integration type.
+
+```bash
+codelens integrations find TYPE [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `TYPE` | Integration type (HTTP_CLIENT, DATABASE, MESSAGE_QUEUE, CACHE, GRPC, FILE_STORAGE) |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--sub-type` | Filter by sub-type |
+| `--include-libraries`, `-L` | Include library classes |
+| `--project`, `-p` | Project directory |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# Find all classes using HTTP clients
+codelens integrations find HTTP_CLIENT
+
+# Find DynamoDB users specifically
+codelens integrations find DATABASE --sub-type DYNAMODB
 ```
 
 ---

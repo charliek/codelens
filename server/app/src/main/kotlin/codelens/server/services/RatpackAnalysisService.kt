@@ -3,6 +3,7 @@ package codelens.server.services
 import codelens.classgraph.ClassGraphProvider
 import codelens.classgraph.ratpack.ComplexityCalculator
 import codelens.classgraph.ratpack.GuiceModuleDetector
+import codelens.classgraph.ratpack.IntegrationDetector
 import codelens.classgraph.ratpack.PromiseDetector
 import codelens.classgraph.ratpack.RatpackDetector
 import codelens.core.model.ratpack.*
@@ -26,6 +27,7 @@ class RatpackAnalysisService(
     private val promiseDetector by lazy { PromiseDetector(classGraphProvider) }
     private val complexityCalculator by lazy { ComplexityCalculator(classGraphProvider) }
     private val guiceModuleDetector by lazy { GuiceModuleDetector(classGraphProvider) }
+    private val integrationDetector by lazy { IntegrationDetector(classGraphProvider) }
 
     // =========================================================================
     // Handler Analysis
@@ -175,5 +177,45 @@ class RatpackAnalysisService(
      */
     fun findBindingsForType(typeFqn: String): List<Pair<String, GuiceBinding>> {
         return guiceModuleDetector.findBindingsForType(typeFqn)
+    }
+
+    // =========================================================================
+    // Integration Analysis
+    // =========================================================================
+
+    /**
+     * Get project-wide integration summary.
+     *
+     * @param includeLibraries Include library classes
+     * @return Integration summary
+     */
+    fun getIntegrationsSummary(includeLibraries: Boolean = false): ProjectIntegrationSummary {
+        return integrationDetector.getProjectSummary(includeLibraries)
+    }
+
+    /**
+     * Get integrations for a specific class.
+     *
+     * @param fqn Fully qualified class name
+     * @return Class integrations, or null if class not found
+     */
+    fun getClassIntegrations(fqn: String): ClassIntegrations? {
+        return integrationDetector.analyzeClass(fqn)
+    }
+
+    /**
+     * Find classes by integration type.
+     *
+     * @param type Integration type
+     * @param subType Optional subtype filter
+     * @param includeLibraries Include library classes
+     * @return List of class integrations
+     */
+    fun findIntegrationsByType(
+        type: IntegrationType,
+        subType: IntegrationSubType? = null,
+        includeLibraries: Boolean = false
+    ): List<ClassIntegrations> {
+        return integrationDetector.findByType(type, subType, includeLibraries)
     }
 }

@@ -479,3 +479,234 @@ class FormatProjectResponse(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+# ============================================================================
+# Source Code Retrieval Models
+# ============================================================================
+
+
+class SourceLanguage(str, Enum):
+    """Source file language."""
+
+    JAVA = "JAVA"
+    KOTLIN = "KOTLIN"
+    UNKNOWN = "UNKNOWN"
+
+
+class SourceResolutionErrorReason(str, Enum):
+    """Reason for source resolution failure."""
+
+    LIBRARY_CLASS = "LIBRARY_CLASS"
+    JDK_CLASS = "JDK_CLASS"
+    FILE_NOT_FOUND = "FILE_NOT_FOUND"
+    CLASS_NOT_FOUND = "CLASS_NOT_FOUND"
+    METHOD_NOT_FOUND = "METHOD_NOT_FOUND"
+
+
+class SourceInfo(BaseModel):
+    """Complete source code information for a class."""
+
+    fqn: str
+    file_path: str = Field(alias="filePath")
+    language: SourceLanguage
+    content: str
+    line_count: int = Field(alias="lineCount")
+    module: Optional[str] = None
+
+    class Config:
+        populate_by_name = True
+
+
+class MethodSourceInfo(BaseModel):
+    """Source code for a specific method."""
+
+    class_fqn: str = Field(alias="classFqn")
+    method_name: str = Field(alias="methodName")
+    signature: str
+    content: str
+    start_line: int = Field(alias="startLine")
+    end_line: int = Field(alias="endLine")
+    context_before: Optional[str] = Field(None, alias="contextBefore")
+    context_after: Optional[str] = Field(None, alias="contextAfter")
+
+    class Config:
+        populate_by_name = True
+
+
+class SourceResolutionError(BaseModel):
+    """Error when source cannot be resolved."""
+
+    fqn: str
+    reason: SourceResolutionErrorReason
+    message: str
+
+
+class SourceResponse(BaseModel):
+    """Response wrapper for source code."""
+
+    source: SourceInfo
+
+
+class MethodSourceResponse(BaseModel):
+    """Response wrapper for method source code."""
+
+    method_source: MethodSourceInfo = Field(alias="methodSource")
+
+    class Config:
+        populate_by_name = True
+
+
+# ============================================================================
+# Integration Detection Models
+# ============================================================================
+
+
+class IntegrationType(str, Enum):
+    """Type of external service integration."""
+
+    HTTP_CLIENT = "HTTP_CLIENT"
+    DATABASE = "DATABASE"
+    MESSAGE_QUEUE = "MESSAGE_QUEUE"
+    CACHE = "CACHE"
+    GRPC = "GRPC"
+    FILE_STORAGE = "FILE_STORAGE"
+    OTHER = "OTHER"
+
+
+class IntegrationSubType(str, Enum):
+    """Specific implementation of integration."""
+
+    # HTTP Clients
+    RATPACK_HTTP_CLIENT = "RATPACK_HTTP_CLIENT"
+    ASYNC_HTTP_CLIENT = "ASYNC_HTTP_CLIENT"
+    APACHE_HTTP_CLIENT = "APACHE_HTTP_CLIENT"
+    OK_HTTP = "OK_HTTP"
+    JAVA_HTTP_CLIENT = "JAVA_HTTP_CLIENT"
+    RETROFIT = "RETROFIT"
+
+    # Databases
+    DYNAMODB = "DYNAMODB"
+    JDBC = "JDBC"
+    HIKARI = "HIKARI"
+    JOOQ = "JOOQ"
+    HIBERNATE = "HIBERNATE"
+    REDIS_LETTUCE = "REDIS_LETTUCE"
+    REDIS_JEDIS = "REDIS_JEDIS"
+    MONGO = "MONGO"
+    ELASTICSEARCH = "ELASTICSEARCH"
+
+    # Message Queues
+    SQS = "SQS"
+    SNS = "SNS"
+    KAFKA = "KAFKA"
+    RABBITMQ = "RABBITMQ"
+    KINESIS = "KINESIS"
+
+    # Caches
+    CAFFEINE = "CAFFEINE"
+    GUAVA_CACHE = "GUAVA_CACHE"
+    EHCACHE = "EHCACHE"
+    MEMCACHED = "MEMCACHED"
+
+    # gRPC
+    GRPC_STUB = "GRPC_STUB"
+    GRPC_CHANNEL = "GRPC_CHANNEL"
+
+    # Storage
+    S3 = "S3"
+    GCS = "GCS"
+
+    # Other
+    UNKNOWN = "UNKNOWN"
+
+
+class IntegrationLocation(str, Enum):
+    """Where the integration is used."""
+
+    FIELD = "FIELD"
+    CONSTRUCTOR_PARAMETER = "CONSTRUCTOR_PARAMETER"
+    METHOD_PARAMETER = "METHOD_PARAMETER"
+    METHOD_RETURN_TYPE = "METHOD_RETURN_TYPE"
+
+
+class IntegrationUsage(BaseModel):
+    """A single usage of an external integration."""
+
+    location: IntegrationLocation
+    name: str
+    type_fqn: str = Field(alias="typeFqn")
+    context: Optional[str] = None
+    integration_type: IntegrationType = Field(alias="integrationType")
+    sub_type: IntegrationSubType = Field(alias="subType")
+
+    class Config:
+        populate_by_name = True
+
+
+class ClassIntegrations(BaseModel):
+    """All integrations detected in a class."""
+
+    class_fqn: str = Field(alias="classFqn")
+    simple_name: str = Field(alias="simpleName")
+    package_name: str = Field(alias="packageName")
+    source: ClassSource
+    integrations: list[IntegrationUsage]
+    type_summary: dict[str, int] = Field(alias="typeSummary")
+
+    class Config:
+        populate_by_name = True
+
+
+class IntegrationSummary(BaseModel):
+    """Summary of integration usage."""
+
+    type: IntegrationType
+    sub_type: IntegrationSubType = Field(alias="subType")
+    primary_type_fqn: str = Field(alias="primaryTypeFqn")
+    usage_count: int = Field(alias="usageCount")
+    class_count: int = Field(alias="classCount")
+    sample_classes: list[str] = Field(alias="sampleClasses")
+
+    class Config:
+        populate_by_name = True
+
+
+class ProjectIntegrationSummary(BaseModel):
+    """Project-wide integration summary."""
+
+    classes_with_integrations: int = Field(alias="classesWithIntegrations")
+    total_usages: int = Field(alias="totalUsages")
+    type_breakdown: dict[str, int] = Field(alias="typeBreakdown")
+    integrations: list[IntegrationSummary]
+
+    class Config:
+        populate_by_name = True
+
+
+class IntegrationsResponse(BaseModel):
+    """Response for integrations summary."""
+
+    summary: ProjectIntegrationSummary
+    filter: Optional[dict] = None
+
+
+class ClassIntegrationsResponse(BaseModel):
+    """Response for class integrations."""
+
+    class_integrations: ClassIntegrations = Field(alias="classIntegrations")
+
+    class Config:
+        populate_by_name = True
+
+
+class IntegrationsByTypeResponse(BaseModel):
+    """Response for finding integrations by type."""
+
+    type: IntegrationType
+    sub_type: Optional[IntegrationSubType] = Field(None, alias="subType")
+    classes: list[ClassIntegrations]
+    total_count: int = Field(alias="totalCount")
+
+    class Config:
+        populate_by_name = True

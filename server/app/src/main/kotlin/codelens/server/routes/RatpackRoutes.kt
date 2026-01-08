@@ -87,6 +87,25 @@ data class TypeBindingResult(
     val binding: GuiceBinding
 )
 
+@Serializable
+data class IntegrationsResponse(
+    val summary: ProjectIntegrationSummary,
+    val filter: IntegrationFilterApplied? = null
+)
+
+@Serializable
+data class ClassIntegrationsDetailResponse(
+    val classIntegrations: ClassIntegrations
+)
+
+@Serializable
+data class IntegrationsByTypeResponse(
+    val type: IntegrationType,
+    val subType: IntegrationSubType? = null,
+    val classes: List<ClassIntegrations>,
+    val totalCount: Int
+)
+
 // ============================================================================
 // Routes
 // ============================================================================
@@ -374,6 +393,159 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
                         TypeBindingResult(moduleFqn = moduleFqn, binding = binding)
                     },
                     totalCount = bindings.size
+                )
+            )
+        }
+
+        // =====================================================================
+        // Integration Endpoints
+        // =====================================================================
+
+        /**
+         * GET /api/v1/ratpack/integrations
+         * Get project-wide integration summary.
+         *
+         * Query parameters:
+         * - type: Filter by integration type (HTTP_CLIENT, DATABASE, etc.)
+         * - subType: Filter by sub-type (RATPACK_HTTP_CLIENT, DYNAMODB, etc.)
+         * - includeLibraries: Include library classes (default: false)
+         */
+        get("/integrations") {
+            val typeParam = call.request.queryParameters["type"]
+            val subTypeParam = call.request.queryParameters["subType"]
+            val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+
+            // If filtering by type, use findByType
+            if (typeParam != null) {
+                val type = try {
+                    IntegrationType.valueOf(typeParam.uppercase())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            code = 400,
+                            type = "BadRequest",
+                            message = "Invalid integration type: $typeParam. Valid values: ${IntegrationType.entries.joinToString()}"
+                        )
+                    )
+                    return@get
+                }
+
+                val subType = if (subTypeParam != null) {
+                    try {
+                        IntegrationSubType.valueOf(subTypeParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid integration sub-type: $subTypeParam"
+                            )
+                        )
+                        return@get
+                    }
+                } else null
+
+                val classes = ratpackService.findIntegrationsByType(type, subType, includeLibraries)
+                call.respond(
+                    IntegrationsByTypeResponse(
+                        type = type,
+                        subType = subType,
+                        classes = classes,
+                        totalCount = classes.size
+                    )
+                )
+            } else {
+                // Return full summary
+                val summary = ratpackService.getIntegrationsSummary(includeLibraries)
+                call.respond(IntegrationsResponse(summary = summary))
+            }
+        }
+
+        /**
+         * GET /api/v1/ratpack/integrations/{fqn}
+         * Get integrations for a specific class.
+         */
+        get("/integrations/{fqn...}") {
+            val fqn = call.parameters.getAll("fqn")?.joinToString(".")
+            if (fqn.isNullOrBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required")
+                )
+                return@get
+            }
+
+            val classIntegrations = ratpackService.getClassIntegrations(fqn)
+            if (classIntegrations != null) {
+                call.respond(ClassIntegrationsDetailResponse(classIntegrations = classIntegrations))
+            } else {
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    ErrorResponse(code = 404, type = "NotFound", message = "Class not found: $fqn")
+                )
+            }
+        }
+
+        /**
+         * GET /api/v1/ratpack/integrations/by-type/{type}
+         * Find classes by integration type.
+         *
+         * Query parameters:
+         * - subType: Filter by sub-type
+         * - includeLibraries: Include library classes (default: false)
+         */
+        get("/integrations/by-type/{type}") {
+            val typeParam = call.parameters["type"]
+            if (typeParam.isNullOrBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Integration type is required")
+                )
+                return@get
+            }
+
+            val type = try {
+                IntegrationType.valueOf(typeParam.uppercase())
+            } catch (e: IllegalArgumentException) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(
+                        code = 400,
+                        type = "BadRequest",
+                        message = "Invalid integration type: $typeParam. Valid values: ${IntegrationType.entries.joinToString()}"
+                    )
+                )
+                return@get
+            }
+
+            val subTypeParam = call.request.queryParameters["subType"]
+            val subType = if (subTypeParam != null) {
+                try {
+                    IntegrationSubType.valueOf(subTypeParam.uppercase())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            code = 400,
+                            type = "BadRequest",
+                            message = "Invalid integration sub-type: $subTypeParam"
+                        )
+                    )
+                    return@get
+                }
+            } else null
+
+            val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+            val classes = ratpackService.findIntegrationsByType(type, subType, includeLibraries)
+
+            call.respond(
+                IntegrationsByTypeResponse(
+                    type = type,
+                    subType = subType,
+                    classes = classes,
+                    totalCount = classes.size
                 )
             )
         }

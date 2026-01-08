@@ -10,9 +10,9 @@ This document provides a comprehensive catalog of all planned CodeLens features 
 | 2 | Promise Usage Detection | P0 | 2A | Complete | Identify Promise patterns, operations, sources |
 | 3 | Migration Complexity Scoring | P0 | 2A | Complete | Rate handlers by migration difficulty |
 | 4 | Guice DI Analysis | P0 | 2A | Complete | Map modules, bindings, providers |
-| 5 | Source Code Retrieval | P1 | 2B | Not Started | Return actual source for classes/methods |
-| 6 | External Service Detection | P1 | 2B | Not Started | HTTP clients, databases, queues |
-| 7 | Registry Access Analysis | P1 | 2B | Not Started | ctx.get() usage patterns |
+| 5 | Source Code Retrieval | P1 | 2B | Complete | Return actual source for classes/methods |
+| 6 | External Service Detection | P1 | 2B | Complete | HTTP clients, databases, queues |
+| 7 | @Inject Annotation Detection | P1 | 2B | Complete | Handler DI readiness detection |
 | 8 | API Versioning Detection | P1 | 2C | Not Started | Version routing patterns |
 | 9 | Pattern-Based Migration Hints | P2 | 2C | Not Started | Pattern-specific recommendations |
 | 10 | Route/Chain Analysis | P2 | 2C | Not Started | URL structure and middleware |
@@ -803,60 +803,87 @@ codelens integrations list --json
 
 ---
 
-## Feature 7: Registry Access Analysis
+## Feature 7: @Inject Annotation Detection
 
 **Priority**: P1 - High
 **Phase**: 2B
-**Status**: Planned
+**Status**: Complete
 
 ### Description
 
-Identifies `ctx.get()`, `ctx.maybeGet()`, and other Registry access patterns. These dynamic DI lookups need to be converted to constructor injection in Spring/Micronaut.
+Detects whether handler constructors have `@Inject` annotations (from javax.inject or com.google.inject). This helps identify handlers that are already using proper dependency injection vs those that may need DI setup during migration.
+
+### Value Proposition
+
+- **For Migration Planning**: Quickly identify handlers without proper DI annotation that may need attention
+- **For LLMs**: Scope DI migration work to handlers missing @Inject
+- **For Understanding**: See DI readiness status in handler listings
+
+### Implementation
+
+This feature is integrated into the existing handler discovery:
+
+1. `HandlerSummary` includes `hasInjectAnnotation: Boolean` field
+2. Handler list shows "@Inject" column with Yes/No values
+3. Filter `--missing-inject` shows only handlers without @Inject annotation
 
 ### CLI Commands
 
 ```bash
-# Find all registry access
-codelens registry usages
+# List handlers with @Inject status column
+codelens handlers list
 
-# Show for specific class
-codelens registry show com.example.UserHandler
+# Filter to only handlers missing @Inject annotation
+codelens handlers list --missing-inject
 
-# JSON output
-codelens registry usages --json
+# JSON output includes hasInjectAnnotation field
+codelens handlers list --json
 ```
 
 ### Output Example
 
+**Human-readable (table includes @Inject column):**
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+│ Handler                          │ Type            │ Complexity │ Promise Ops   │ @Inject   │
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ sample.handlers.BlockingHandler  │ Handler         │ 2 (Low)    │ 0             │ Yes       │
+│ sample.handlers.SimpleHandler    │ Handler         │ 1 (Low)    │ 0             │ No        │
+│ sample.handlers.AsyncHandler     │ Handler         │ 1 (Low)    │ 1             │ No        │
+└──────────────────────────────────┴─────────────────┴────────────┴───────────────┴───────────┘
+```
+
+**JSON output:**
 ```json
 {
-  "class": "com.smartthings.moonracer.DevicesApi",
-  "registryAccess": [
+  "handlers": [
     {
-      "method": "get",
-      "accessedType": "com.smartthings.moonracer.DeviceStateGetHandler",
-      "location": "line 45",
-      "pattern": "ctx.get(DeviceStateGetHandler.class)",
-      "migrationHint": "Inject DeviceStateGetHandler via constructor"
+      "fqn": "sample.handlers.BlockingHandler",
+      "simpleName": "BlockingHandler",
+      "handlerType": "HANDLER",
+      "complexityScore": 2,
+      "complexityTier": "LOW",
+      "hasInjectAnnotation": true
     },
     {
-      "method": "maybeGet",
-      "accessedType": "com.smartthings.RequestContext",
-      "location": "line 52",
-      "pattern": "RequestContext.maybeGet()",
-      "migrationHint": "Use @RequestScope bean or pass as method parameter"
+      "fqn": "sample.handlers.SimpleHandler",
+      "simpleName": "SimpleHandler",
+      "handlerType": "HANDLER",
+      "complexityScore": 1,
+      "complexityTier": "LOW",
+      "hasInjectAnnotation": false
     }
-  ],
-  "summary": {
-    "totalAccess": 8,
-    "byMethod": {
-      "get": 5,
-      "maybeGet": 2,
-      "getAll": 1
-    }
-  }
+  ]
 }
 ```
+
+### Note on Registry Access Analysis
+
+The original plan for Feature 7 was comprehensive registry access analysis (ctx.get(), ctx.maybeGet() patterns). This was simplified to @Inject annotation detection because:
+
+1. @Inject detection provides the key insight for DI migration scoping
+2. Registry access detection would require source-level parsing (not bytecode analysis)
+3. The hasInjectAnnotation field on handler summaries achieves the main goal of identifying DI readiness
 
 ---
 

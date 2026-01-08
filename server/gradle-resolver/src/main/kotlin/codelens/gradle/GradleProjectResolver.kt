@@ -1,5 +1,6 @@
 package codelens.gradle
 
+import codelens.core.model.source.SourceRootInfo
 import org.gradle.tooling.GradleConnector
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
@@ -125,6 +126,7 @@ class GradleProjectResolver : ClasspathResolver {
             rootProject {
                 ext.codelensClasspathEntries = new LinkedHashSet()
                 ext.codelensProjectOutputDirs = new LinkedHashSet()
+                ext.codelensSourceRoots = new LinkedHashSet()
             }
 
             allprojects {
@@ -145,6 +147,34 @@ class GradleProjectResolver : ClasspathResolver {
                                 if (sourceSet.output.resourcesDir?.exists()) {
                                     rootProject.ext.codelensProjectOutputDirs << sourceSet.output.resourcesDir.absolutePath
                                     rootProject.ext.codelensClasspathEntries << sourceSet.output.resourcesDir.absolutePath
+                                }
+
+                                // Collect Java source directories
+                                sourceSet.java.srcDirs.each { dir ->
+                                    if (dir.exists()) {
+                                        rootProject.ext.codelensSourceRoots << [
+                                            path: dir.absolutePath,
+                                            language: 'java',
+                                            sourceSet: sourceSet.name,
+                                            module: project.path
+                                        ]
+                                    }
+                                }
+
+                                // Collect Kotlin source directories (if Kotlin plugin is applied)
+                                try {
+                                    sourceSet.kotlin?.srcDirs?.each { dir ->
+                                        if (dir.exists()) {
+                                            rootProject.ext.codelensSourceRoots << [
+                                                path: dir.absolutePath,
+                                                language: 'kotlin',
+                                                sourceSet: sourceSet.name,
+                                                module: project.path
+                                            ]
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    // Kotlin plugin not applied, ignore
                                 }
                             }
 
@@ -181,15 +211,24 @@ class GradleProjectResolver : ClasspathResolver {
 
                         def projectOutputDirs = rootProject.ext.codelensProjectOutputDirs.toList()
                         def classpathEntries = rootProject.ext.codelensClasspathEntries.toList()
+                        def sourceRoots = rootProject.ext.codelensSourceRoots.toList()
 
                         // Write output in a parseable format
-                        outputFile.text = "# CodeLens Classpath\n" +
-                            "# PROJECT_OUTPUTS\n" +
-                            projectOutputDirs.join('\n') + '\n' +
-                            "# CLASSPATH_ENTRIES\n" +
-                            classpathEntries.join('\n') + '\n'
+                        def content = new StringBuilder()
+                        content.append("# CodeLens Classpath\n")
+                        content.append("# PROJECT_OUTPUTS\n")
+                        content.append(projectOutputDirs.join('\n') + '\n')
+                        content.append("# CLASSPATH_ENTRIES\n")
+                        content.append(classpathEntries.join('\n') + '\n')
+                        content.append("# SOURCE_ROOTS\n")
+                        sourceRoots.each { root ->
+                            // Format: path|language|sourceSet|module
+                            content.append(root.path + '|' + root.language + '|' + root.sourceSet + '|' + root.module + '\n')
+                        }
 
-                        println "CodeLens: Wrote aggregated classpath (" + classpathEntries.size() + " entries, " + projectOutputDirs.size() + " project outputs) to " + outputFile.absolutePath
+                        outputFile.text = content.toString()
+
+                        println "CodeLens: Wrote aggregated classpath (" + classpathEntries.size() + " entries, " + projectOutputDirs.size() + " project outputs, " + sourceRoots.size() + " source roots) to " + outputFile.absolutePath
                     }
                 }
             }
@@ -212,17 +251,35 @@ class GradleProjectResolver : ClasspathResolver {
         val lines = outputFile.readLines()
         val projectOutputDirs = mutableSetOf<File>()
         val classpathEntries = mutableListOf<File>()
+        val sourceRoots = mutableListOf<SourceRootInfo>()
 
         var inProjectOutputs = false
         var inClasspathEntries = false
+        var inSourceRoots = false
 
         for (line in lines) {
             when {
                 line.startsWith("#") -> {
                     inProjectOutputs = line.contains("PROJECT_OUTPUTS")
                     inClasspathEntries = line.contains("CLASSPATH_ENTRIES")
+                    inSourceRoots = line.contains("SOURCE_ROOTS")
                 }
                 line.isBlank() -> continue
+                inSourceRoots -> {
+                    // Format: path|language|sourceSet|module
+                    val parts = line.split("|")
+                    if (parts.size >= 4) {
+                        val file = File(parts[0])
+                        if (file.exists()) {
+                            sourceRoots.add(SourceRootInfo(
+                                path = file,
+                                language = parts[1],
+                                sourceSet = parts[2],
+                                module = parts[3]
+                            ))
+                        }
+                    }
+                }
                 inProjectOutputs -> {
                     val file = File(line)
                     if (file.exists()) projectOutputDirs.add(file)
@@ -237,11 +294,15 @@ class GradleProjectResolver : ClasspathResolver {
         // Also add standard output directories that might not be in the output
         addStandardOutputDirs(projectDir, projectOutputDirs, classpathEntries)
 
-        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs")
+        // Add standard source roots that might not be detected
+        addStandardSourceRoots(projectDir, sourceRoots)
+
+        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots")
 
         return ResolvedClasspath(
             entries = classpathEntries.distinctBy { it.absolutePath },
             projectOutputDirs = projectOutputDirs,
+            sourceRoots = sourceRoots.distinctBy { it.path.absolutePath },
             resolvedBy = "Gradle Tooling API"
         )
     }
@@ -267,5 +328,32 @@ class GradleProjectResolver : ClasspathResolver {
                 classpathEntries.add(it)
             }
         }
+    }
+
+    /**
+     * Adds standard Gradle source directories that might not be detected by the init script.
+     */
+    private fun addStandardSourceRoots(
+        projectDir: File,
+        sourceRoots: MutableList<SourceRootInfo>
+    ) {
+        val srcDir = projectDir.resolve("src")
+        val existingPaths = sourceRoots.map { it.path.absolutePath }.toSet()
+
+        // Standard main source directories
+        listOf(
+            Triple(srcDir.resolve("main/java"), "java", "main"),
+            Triple(srcDir.resolve("main/kotlin"), "kotlin", "main"),
+            Triple(srcDir.resolve("test/java"), "java", "test"),
+            Triple(srcDir.resolve("test/kotlin"), "kotlin", "test")
+        ).filter { (dir, _, _) -> dir.exists() && dir.absolutePath !in existingPaths }
+            .forEach { (dir, language, sourceSet) ->
+                sourceRoots.add(SourceRootInfo(
+                    path = dir,
+                    language = language,
+                    sourceSet = sourceSet,
+                    module = ":"
+                ))
+            }
     }
 }

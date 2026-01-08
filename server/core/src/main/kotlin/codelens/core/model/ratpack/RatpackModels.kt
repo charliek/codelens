@@ -45,7 +45,9 @@ data class HandlerSummary(
     /** Number of Promise operations detected */
     val promiseOperationCount: Int,
     /** Whether this handler uses Blocking.get() */
-    val usesBlocking: Boolean
+    val usesBlocking: Boolean,
+    /** Whether constructor has @Inject annotation */
+    val hasInjectAnnotation: Boolean
 )
 
 /**

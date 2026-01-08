@@ -344,6 +344,40 @@ codelens lint format                   # Format all Kotlin files
 codelens lint format --dry-run         # Preview formatting changes
 ```
 
+#### Ratpack-Specific Analysis
+
+```bash
+# Handler analysis
+codelens handlers list                          # List all Ratpack handlers
+codelens handlers show com.example.MyHandler    # Show handler details
+codelens handlers list --tier HIGH              # Filter by complexity tier
+
+# Promise usage analysis
+codelens promises summary                       # Project-wide Promise usage
+codelens promises show com.example.MyHandler    # Promise usage for a class
+
+# Migration planning
+codelens migration summary                      # Complexity summary
+codelens migration complexity com.example.MyHandler  # Class complexity
+codelens migration order                        # Suggested migration order
+
+# Guice module analysis
+codelens modules list                           # List Guice modules
+codelens modules show com.example.MyModule      # Module bindings
+
+# External service integrations
+codelens integrations list                      # List all integrations
+codelens integrations show com.example.MyHandler  # Integrations for a class
+codelens integrations find HTTP_CLIENT          # Find classes by type
+```
+
+#### Source Code Retrieval
+
+```bash
+codelens source show com.example.MyHandler        # View class source code
+codelens source method com.example.MyHandler handle  # View method source
+```
+
 #### Common Options
 
 All commands support:
@@ -416,6 +450,19 @@ The server exposes a REST API. For complete documentation, see [docs/api.md](doc
 | `POST /api/v1/ktlint/lint/project` | Lint project |
 | `POST /api/v1/ktlint/format/file` | Format single file |
 | `POST /api/v1/ktlint/format/project` | Format project |
+| `GET /api/v1/source/{fqn}` | Get class source code |
+| `GET /api/v1/source/{fqn}/method/{name}` | Get method source code |
+| `GET /api/v1/ratpack/handlers` | List Ratpack handlers |
+| `GET /api/v1/ratpack/handlers/{fqn}` | Handler details |
+| `GET /api/v1/ratpack/promises` | Promise usage summary |
+| `GET /api/v1/ratpack/promises/{fqn}` | Class Promise usage |
+| `GET /api/v1/ratpack/complexity` | Complexity summary |
+| `GET /api/v1/ratpack/complexity/{fqn}` | Class complexity |
+| `GET /api/v1/ratpack/migration-order` | Migration order |
+| `GET /api/v1/ratpack/modules` | List Guice modules |
+| `GET /api/v1/ratpack/modules/{fqn}` | Module details |
+| `GET /api/v1/ratpack/integrations` | Integration summary |
+| `GET /api/v1/ratpack/integrations/{fqn}` | Class integrations |
 
 ## Development
 
@@ -465,7 +512,7 @@ codelens stop
 
 ## Current Status
 
-**Phase A & B Complete** - Full bytecode analysis is now available:
+**Phase 2B Complete** - Full Ratpack migration analysis:
 
 ✅ Full server implementation with Ktor
 ✅ Complete CLI with lifecycle management
@@ -481,11 +528,14 @@ codelens stop
 ✅ Multiple project support
 ✅ Idle shutdown
 ✅ JSON output support
-
-**Planned for future phases:**
-- Ratpack-specific analysis endpoints
-- Migration complexity scoring
-- Handler migration recommendations
+✅ Ratpack handler detection (Handler, ChainAction, GroovyHandler)
+✅ Promise usage analysis (map, flatMap, blocking, async)
+✅ Migration complexity scoring and tier classification
+✅ Guice module and binding analysis
+✅ Source code retrieval (class and method level)
+✅ External service integration detection (HTTP clients, databases, queues)
+✅ Handler @Inject annotation detection for DI migration scoping
+✅ Migration hints for DI conversion
 
 ## Development
 
