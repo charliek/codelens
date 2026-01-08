@@ -1,9 +1,28 @@
 # Phase 2B: Source & Integration Context
 
-**Status**: Not Started
-**Prerequisite**: Phase 2A complete
+**Status**: Complete (January 2026)
+**Prerequisite**: Phase 2A complete ✓
 **Target**: Provide LLMs with source code and integration context
-**Features**: 5-7 (Source Code Retrieval, External Service Detection, Registry Access Analysis)
+**Features**: 5-7 (Source Code Retrieval, External Service Detection, @Inject Annotation Detection)
+
+---
+
+## Completion Summary
+
+Phase 2B was completed with the following deliverables:
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Feature 5: Source Code Retrieval | ✅ Complete | Class and method source with syntax highlighting |
+| Feature 6: External Service Detection | ✅ Complete | HTTP clients, databases, message queues, etc. |
+| Feature 7: @Inject Annotation Detection | ✅ Complete | Simplified from Registry Access Analysis |
+
+**Key Implementation Notes**:
+- Source routes use URL-encoded single-segment `{fqn}` parameters (not tailcard `{fqn...}`) to fix Ktor routing issues
+- Added `ConstructorInfo` model to properly detect `@Inject` annotations on constructors
+- Feature 7 was simplified from full registry access analysis to `hasInjectAnnotation` on handler summaries, which provides the key insight for DI migration scoping without requiring source-level parsing
+
+**Commit**: `dffcebf` - Implement Phase 2B: Source retrieval, integration detection, and code quality fixes
 
 ---
 
@@ -12,9 +31,9 @@
 Phase 2B focuses on giving LLMs the context they need to generate accurate migration code. While Phase 2A tells us *what* needs migration, Phase 2B provides the *actual code* and identifies integration points that need special attention.
 
 **Success Criteria**:
-- Can retrieve source code for any analyzed class
-- Identifies all external service integrations (HTTP, DB, Queue)
-- Maps Registry access patterns for DI conversion
+- ✅ Can retrieve source code for any analyzed class
+- ✅ Identifies all external service integrations (HTTP, DB, Queue)
+- ✅ Detects @Inject annotations on handler constructors for DI migration scoping
 
 ---
 
