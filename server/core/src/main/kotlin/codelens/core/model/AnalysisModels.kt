@@ -183,5 +183,7 @@ data class ClassInfo(
     /** Methods in this class */
     val methods: List<MethodInfo> = emptyList(),
     /** Fields in this class */
-    val fields: List<FieldInfo> = emptyList()
+    val fields: List<FieldInfo> = emptyList(),
+    /** Path to the JAR or directory containing this class (for library source resolution) */
+    val jarPath: String? = null
 )

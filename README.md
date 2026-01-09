@@ -74,6 +74,14 @@ codelens/
 │   │       └── codelens/classgraph/
 │   │           └── ClassGraphProvider.kt
 │   │
+│   ├── source-resolver/             # Library/JDK source resolution
+│   │   ├── build.gradle.kts
+│   │   └── src/main/kotlin/
+│   │       └── codelens/source/
+│   │           ├── cache/           # Source cache management
+│   │           ├── resolver/        # Source resolution (Maven, JDK, decompiler)
+│   │           └── format/          # Stub/javadoc generation
+│   │
 │   ├── ktlint/                      # ktlint-based linting (warm server)
 │   │   ├── build.gradle.kts
 │   │   └── src/main/kotlin/
@@ -380,7 +388,15 @@ codelens routes spring                          # Generate Spring @RequestMappin
 #### Source Code Retrieval
 
 ```bash
-codelens source show com.example.MyHandler        # View class source code
+codelens source show com.example.MyHandler        # View project class source
+codelens source show java.util.HashMap            # View JDK source (from src.zip)
+codelens source show com.google.guava.ImmutableList  # View library source
+
+# LLM-friendly output formats
+codelens source show com.google.guava.ImmutableList --stub  # Stub from bytecode
+codelens source show com.google.guava.ImmutableList --stub --kotlin  # Kotlin stub
+codelens source show com.google.guava.ImmutableList --signatures --public-only  # Minimal
+
 codelens source method com.example.MyHandler handle  # View method source
 ```
 

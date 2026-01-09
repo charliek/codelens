@@ -10,6 +10,13 @@ import codelens.gradle.ClasspathResolutionException
 import codelens.gradle.ClasspathResolver
 import codelens.gradle.GradleProjectResolver
 import codelens.gradle.ResolvedClasspath
+import codelens.core.model.MavenCoordinates
+import codelens.source.cache.SourceCache
+import codelens.source.format.JavadocExtractor
+import codelens.source.format.StubGenerator
+import codelens.source.model.StubLanguage
+import codelens.source.model.VisibilityFilter
+import codelens.source.resolver.LibrarySourceResolver
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Instant
@@ -198,7 +205,7 @@ class AnalysisService(
     }
 
     /**
-     * Lazily initialized source resolver.
+     * Lazily initialized source resolver for project sources.
      */
     private val sourceResolver: SourceResolver? by lazy {
         val classpath = resolvedClasspath ?: return@lazy null
@@ -207,18 +214,166 @@ class AnalysisService(
     }
 
     /**
+     * Shared source cache for library sources.
+     */
+    private val sourceCache = SourceCache()
+
+    /**
+     * Lazily initialized library source resolver.
+     */
+    private val librarySourceResolver: LibrarySourceResolver? by lazy {
+        val classpath = resolvedClasspath ?: return@lazy null
+
+        // Build artifact mappings from the resolved classpath
+        val mappings = mutableMapOf<String, MavenCoordinates>()
+        for (mapping in classpath.artifactMappings) {
+            mappings[mapping.jarPath] = mapping.coordinates
+        }
+
+        logger.info("Initialized library source resolver with ${mappings.size} artifact mappings")
+        LibrarySourceResolver(
+            artifactMappings = mappings,
+            cache = sourceCache
+        )
+    }
+
+    /**
      * Gets source code for a class by FQN.
+     * Supports project classes, library classes (from source JARs or decompilation),
+     * and JDK classes (from src.zip).
      *
      * @param fqn Fully qualified class name
+     * @param allowDecompilation Whether to fall back to decompilation when source unavailable
+     * @param forceRefresh Whether to re-download source JARs
      * @return SourceInfo or error
      */
-    fun getSource(fqn: String): Result<SourceInfo> {
-        val resolver = sourceResolver
+    fun getSource(
+        fqn: String,
+        allowDecompilation: Boolean = true,
+        forceRefresh: Boolean = false
+    ): Result<SourceInfo> {
+        // First, check what type of class this is
+        val classInfo = classGraphProvider.getClass(fqn)
+
+        // If class not found in scan, check if it's a JDK class by package name
+        // (JDK classes aren't included in the ClassGraph scan)
+        if (classInfo == null) {
+            if (isJdkPackage(fqn)) {
+                return resolveJdkSource(fqn, allowDecompilation)
+            }
+            return Result.failure(SourceResolutionException(
+                fqn, SourceResolutionErrorReason.CLASS_NOT_FOUND,
+                "Class not found: $fqn"
+            ))
+        }
+
+        return when (classInfo.source) {
+            ClassSource.PROJECT -> {
+                // Use project source resolver
+                val resolver = sourceResolver
+                    ?: return Result.failure(SourceResolutionException(
+                        fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
+                        "Source resolver not initialized - scan may still be in progress"
+                    ))
+                resolver.resolveClass(fqn)
+            }
+
+            ClassSource.LIBRARY, ClassSource.JDK -> {
+                // Use library source resolver
+                val resolver = librarySourceResolver
+                    ?: return Result.failure(SourceResolutionException(
+                        fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
+                        "Library source resolver not initialized - scan may still be in progress"
+                    ))
+
+                val isJdk = classInfo.source == ClassSource.JDK
+                resolver.resolveSource(
+                    fqn = fqn,
+                    jarPath = classInfo.jarPath,
+                    isJdkClass = isJdk,
+                    allowDecompilation = allowDecompilation,
+                    forceRefresh = forceRefresh
+                ).map { libSourceInfo ->
+                    // Convert LibrarySourceInfo to SourceInfo
+                    SourceInfo(
+                        fqn = fqn,
+                        filePath = null,
+                        language = if (libSourceInfo.language == "KOTLIN") SourceLanguage.KOTLIN else SourceLanguage.JAVA,
+                        content = libSourceInfo.source,
+                        lineCount = libSourceInfo.source.lines().size,
+                        module = null,
+                        sourceOrigin = libSourceInfo.sourceOrigin,
+                        mavenCoordinates = libSourceInfo.mavenCoordinates?.toGradleNotation(),
+                        isDecompiled = libSourceInfo.isDecompiled,
+                        format = SourceFormat.FULL
+                    )
+                }.recoverCatching { error ->
+                    throw SourceResolutionException(
+                        fqn,
+                        if (isJdk) SourceResolutionErrorReason.JDK_CLASS else SourceResolutionErrorReason.LIBRARY_CLASS,
+                        error.message ?: "Unknown error"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks if a fully qualified class name belongs to a JDK package.
+     */
+    private fun isJdkPackage(fqn: String): Boolean {
+        val jdkPrefixes = listOf(
+            "java.",
+            "javax.",
+            "sun.",
+            "com.sun.",
+            "jdk.",
+            "org.w3c.",
+            "org.xml.",
+            "org.ietf."
+        )
+        return jdkPrefixes.any { fqn.startsWith(it) }
+    }
+
+    /**
+     * Resolves source for a JDK class that isn't in the ClassGraph scan.
+     */
+    private fun resolveJdkSource(
+        fqn: String,
+        allowDecompilation: Boolean
+    ): Result<SourceInfo> {
+        val resolver = librarySourceResolver
             ?: return Result.failure(SourceResolutionException(
                 fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
-                "Source resolver not initialized - scan may still be in progress"
+                "Library source resolver not initialized - scan may still be in progress"
             ))
-        return resolver.resolveClass(fqn)
+
+        return resolver.resolveSource(
+            fqn = fqn,
+            jarPath = null, // JDK classes don't have a jar path
+            isJdkClass = true,
+            allowDecompilation = allowDecompilation,
+            forceRefresh = false
+        ).map { libSourceInfo ->
+            SourceInfo(
+                fqn = fqn,
+                filePath = null,
+                language = if (libSourceInfo.language == "KOTLIN") SourceLanguage.KOTLIN else SourceLanguage.JAVA,
+                content = libSourceInfo.source,
+                lineCount = libSourceInfo.source.lines().size,
+                module = null,
+                sourceOrigin = libSourceInfo.sourceOrigin,
+                mavenCoordinates = null,
+                isDecompiled = libSourceInfo.isDecompiled,
+                format = SourceFormat.FULL
+            )
+        }.recoverCatching { error ->
+            throw SourceResolutionException(
+                fqn,
+                SourceResolutionErrorReason.JDK_CLASS,
+                error.message ?: "Unknown error resolving JDK source"
+            )
+        }
     }
 
     /**
@@ -242,5 +397,92 @@ class AnalysisService(
                 "Source resolver not initialized - scan may still be in progress"
             ))
         return resolver.resolveMethod(fqn, methodName, parameterTypes, contextLines)
+    }
+
+    /**
+     * Stub generator for creating source stubs from bytecode.
+     */
+    private val stubGenerator = StubGenerator()
+
+    /**
+     * Javadoc extractor for extracting signatures with doc comments.
+     */
+    private val javadocExtractor = JavadocExtractor()
+
+    /**
+     * Gets a source stub for a class.
+     * Works for any class - no source code required.
+     *
+     * @param fqn Fully qualified class name
+     * @param language Target language (JAVA or KOTLIN)
+     * @param visibility Visibility filter (ALL, PUBLIC, PUBLIC_PROTECTED)
+     * @param format Output format (STUB or SIGNATURES)
+     * @return SourceInfo with generated stub
+     */
+    fun getStub(
+        fqn: String,
+        language: StubLanguage = StubLanguage.JAVA,
+        visibility: VisibilityFilter = VisibilityFilter.ALL,
+        format: SourceFormat = SourceFormat.STUB
+    ): Result<SourceInfo> {
+        val classInfo = classGraphProvider.getClass(fqn)
+            ?: return Result.failure(SourceResolutionException(
+                fqn, SourceResolutionErrorReason.CLASS_NOT_FOUND,
+                "Class not found: $fqn"
+            ))
+
+        val stubSource = stubGenerator.generateStub(classInfo, language, visibility, format)
+
+        return Result.success(SourceInfo(
+            fqn = fqn,
+            filePath = null,
+            language = if (language == StubLanguage.KOTLIN) SourceLanguage.KOTLIN else SourceLanguage.JAVA,
+            content = stubSource,
+            lineCount = stubSource.lines().size,
+            module = null,
+            sourceOrigin = when (classInfo.source) {
+                ClassSource.PROJECT -> SourceOrigin.PROJECT_SOURCE
+                ClassSource.LIBRARY -> SourceOrigin.SOURCE_JAR // Stub from bytecode
+                ClassSource.JDK -> SourceOrigin.JDK_SOURCE
+            },
+            mavenCoordinates = null,
+            isDecompiled = false,
+            format = format
+        ))
+    }
+
+    /**
+     * Gets source with javadoc comments only.
+     * Requires actual source code (not bytecode).
+     *
+     * @param fqn Fully qualified class name
+     * @param visibility Visibility filter
+     * @param allowDecompilation Whether to allow decompilation fallback
+     * @param forceRefresh Whether to force re-download of source JARs
+     * @return SourceInfo with javadoc-only content
+     */
+    fun getSourceWithJavadoc(
+        fqn: String,
+        visibility: VisibilityFilter = VisibilityFilter.ALL,
+        allowDecompilation: Boolean = true,
+        forceRefresh: Boolean = false
+    ): Result<SourceInfo> {
+        // First get the full source
+        val sourceResult = getSource(fqn, allowDecompilation, forceRefresh)
+
+        return sourceResult.map { sourceInfo ->
+            val language = if (sourceInfo.language == SourceLanguage.KOTLIN) "kotlin" else "java"
+            val extractedContent = javadocExtractor.extractWithDocs(
+                source = sourceInfo.content,
+                language = language,
+                visibility = visibility
+            )
+
+            sourceInfo.copy(
+                content = extractedContent,
+                lineCount = extractedContent.lines().size,
+                format = SourceFormat.JAVADOC
+            )
+        }
     }
 }

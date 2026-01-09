@@ -53,10 +53,11 @@ uv run pytest tests/test_models.py::test_function_name
 
 ### Gradle Multi-Module Structure
 
-The server is split into five Gradle modules:
+The server is split into six Gradle modules:
 - `server:core` - Shared data models and interfaces
 - `server:classgraph` - ClassGraph-based bytecode analysis
 - `server:gradle-resolver` - Gradle Tooling API for classpath resolution
+- `server:source-resolver` - Library/JDK source retrieval, decompilation, and stub generation
 - `server:ktlint` - Warm ktlint server for Kotlin linting/formatting
 - `server:app` - Ktor HTTP server application with routes and services
 

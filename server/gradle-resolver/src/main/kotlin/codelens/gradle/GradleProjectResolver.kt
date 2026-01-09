@@ -1,5 +1,6 @@
 package codelens.gradle
 
+import codelens.core.model.MavenCoordinates
 import codelens.core.model.source.SourceRootInfo
 import org.gradle.tooling.GradleConnector
 import org.slf4j.LoggerFactory
@@ -127,6 +128,7 @@ class GradleProjectResolver : ClasspathResolver {
                 ext.codelensClasspathEntries = new LinkedHashSet()
                 ext.codelensProjectOutputDirs = new LinkedHashSet()
                 ext.codelensSourceRoots = new LinkedHashSet()
+                ext.codelensArtifactMappings = new LinkedHashSet()
             }
 
             allprojects {
@@ -178,16 +180,22 @@ class GradleProjectResolver : ClasspathResolver {
                                 }
                             }
 
-                            // Add runtime dependencies
+                            // Add runtime dependencies with artifact coordinates
                             try {
                                 configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
                                     rootProject.ext.codelensClasspathEntries << artifact.file.absolutePath
+                                    // Capture Maven coordinates for library source resolution
+                                    def id = artifact.moduleVersion.id
+                                    rootProject.ext.codelensArtifactMappings << "${'$'}{id.group}:${'$'}{id.name}:${'$'}{id.version}|${'$'}{artifact.file.absolutePath}"
                                 }
                             } catch (Exception e) {
                                 // Try compileClasspath as fallback
                                 try {
                                     configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
                                         rootProject.ext.codelensClasspathEntries << artifact.file.absolutePath
+                                        // Capture Maven coordinates for library source resolution
+                                        def id = artifact.moduleVersion.id
+                                        rootProject.ext.codelensArtifactMappings << "${'$'}{id.group}:${'$'}{id.name}:${'$'}{id.version}|${'$'}{artifact.file.absolutePath}"
                                     }
                                 } catch (Exception e2) {
                                     logger.warn("Could not resolve classpath configurations for " + project.name + ": " + e2.message)
@@ -212,6 +220,7 @@ class GradleProjectResolver : ClasspathResolver {
                         def projectOutputDirs = rootProject.ext.codelensProjectOutputDirs.toList()
                         def classpathEntries = rootProject.ext.codelensClasspathEntries.toList()
                         def sourceRoots = rootProject.ext.codelensSourceRoots.toList()
+                        def artifactMappings = rootProject.ext.codelensArtifactMappings.toList()
 
                         // Write output in a parseable format
                         def content = new StringBuilder()
@@ -225,10 +234,15 @@ class GradleProjectResolver : ClasspathResolver {
                             // Format: path|language|sourceSet|module
                             content.append(root.path + '|' + root.language + '|' + root.sourceSet + '|' + root.module + '\n')
                         }
+                        content.append("# ARTIFACT_MAPPINGS\n")
+                        artifactMappings.each { mapping ->
+                            // Format: groupId:artifactId:version|jarPath
+                            content.append(mapping + '\n')
+                        }
 
                         outputFile.text = content.toString()
 
-                        println "CodeLens: Wrote aggregated classpath (" + classpathEntries.size() + " entries, " + projectOutputDirs.size() + " project outputs, " + sourceRoots.size() + " source roots) to " + outputFile.absolutePath
+                        println "CodeLens: Wrote aggregated classpath (" + classpathEntries.size() + " entries, " + projectOutputDirs.size() + " project outputs, " + sourceRoots.size() + " source roots, " + artifactMappings.size() + " artifact mappings) to " + outputFile.absolutePath
                     }
                 }
             }
@@ -252,10 +266,12 @@ class GradleProjectResolver : ClasspathResolver {
         val projectOutputDirs = mutableSetOf<File>()
         val classpathEntries = mutableListOf<File>()
         val sourceRoots = mutableListOf<SourceRootInfo>()
+        val artifactMappings = mutableListOf<ArtifactMapping>()
 
         var inProjectOutputs = false
         var inClasspathEntries = false
         var inSourceRoots = false
+        var inArtifactMappings = false
 
         for (line in lines) {
             when {
@@ -263,8 +279,22 @@ class GradleProjectResolver : ClasspathResolver {
                     inProjectOutputs = line.contains("PROJECT_OUTPUTS")
                     inClasspathEntries = line.contains("CLASSPATH_ENTRIES")
                     inSourceRoots = line.contains("SOURCE_ROOTS")
+                    inArtifactMappings = line.contains("ARTIFACT_MAPPINGS")
                 }
                 line.isBlank() -> continue
+                inArtifactMappings -> {
+                    // Format: groupId:artifactId:version|jarPath
+                    val parts = line.split("|")
+                    if (parts.size >= 2) {
+                        val coordinates = MavenCoordinates.parse(parts[0])
+                        if (coordinates != null) {
+                            artifactMappings.add(ArtifactMapping(
+                                jarPath = parts[1],
+                                coordinates = coordinates
+                            ))
+                        }
+                    }
+                }
                 inSourceRoots -> {
                     // Format: path|language|sourceSet|module
                     val parts = line.split("|")
@@ -297,13 +327,14 @@ class GradleProjectResolver : ClasspathResolver {
         // Add standard source roots that might not be detected
         addStandardSourceRoots(projectDir, sourceRoots)
 
-        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots")
+        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots, ${artifactMappings.size} artifact mappings")
 
         return ResolvedClasspath(
             entries = classpathEntries.distinctBy { it.absolutePath },
             projectOutputDirs = projectOutputDirs,
             sourceRoots = sourceRoots.distinctBy { it.path.absolutePath },
-            resolvedBy = "Gradle Tooling API"
+            resolvedBy = "Gradle Tooling API",
+            artifactMappings = artifactMappings.distinctBy { it.jarPath }
         )
     }
 

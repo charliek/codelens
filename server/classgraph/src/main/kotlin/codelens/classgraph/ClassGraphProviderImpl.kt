@@ -371,7 +371,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             annotations = cgClass.annotationInfo.map { convertAnnotation(it) },
             constructors = cgClass.declaredConstructorInfo.map { convertConstructor(it) },
             methods = cgClass.declaredMethodInfo.map { convertMethod(it) },
-            fields = cgClass.declaredFieldInfo.map { convertField(it) }
+            fields = cgClass.declaredFieldInfo.map { convertField(it) },
+            jarPath = cgClass.classpathElementFile?.absolutePath
         )
     }
 

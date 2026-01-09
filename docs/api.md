@@ -554,6 +554,118 @@ GET /api/v1/methods?returnType=ratpack.exec.Promise&inPackage=com.example.*
 
 ---
 
+## Source Endpoints
+
+These endpoints provide source code retrieval for classes.
+
+### GET /api/v1/source/{fqn}
+
+Get source code for a class.
+
+**Path Parameters:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `fqn` | Fully qualified class name |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `format` | string | `full` | Output format: `full`, `stub`, `signatures`, `javadoc` |
+| `visibility` | string | `all` | Filter by visibility: `all`, `public`, `protected` |
+| `lang` | string | - | Stub language: `java`, `kotlin` (only applies to stub format) |
+| `allowDecompilation` | boolean | `true` | Allow decompilation fallback when source unavailable |
+| `forceRefresh` | boolean | `false` | Force re-download of source JAR |
+
+**Format Options:**
+
+| Format | Description | Source Required? |
+|--------|-------------|------------------|
+| `full` | Complete source code | Yes |
+| `stub` | Signatures with placeholder bodies | No (uses bytecode) |
+| `signatures` | Just declarations | No (uses bytecode) |
+| `javadoc` | Signatures + doc comments | Yes |
+
+**Example:**
+```
+GET /api/v1/source/com.google.common.collect.ImmutableList?format=stub&lang=kotlin
+```
+
+**Response:**
+```json
+{
+  "fqn": "com.google.common.collect.ImmutableList",
+  "source": "package com.google.common.collect\n\nabstract class ImmutableList<E> : ...",
+  "sourceFile": null,
+  "language": "KOTLIN",
+  "startLine": null,
+  "endLine": null,
+  "sourceOrigin": "SOURCE_JAR",
+  "mavenCoordinates": "com.google.guava:guava:32.1.3-jre",
+  "isDecompiled": false,
+  "format": "STUB"
+}
+```
+
+**Source Origins:**
+
+| Origin | Description |
+|--------|-------------|
+| `PROJECT_SOURCE` | From project source roots |
+| `SOURCE_JAR` | From library -sources.jar |
+| `DECOMPILED` | From bytecode decompilation |
+| `JDK_SOURCE` | From JDK src.zip |
+
+**Error Response (404):**
+```json
+{
+  "code": 404,
+  "type": "NotFound",
+  "message": "Class not found: com.example.Unknown"
+}
+```
+
+---
+
+### GET /api/v1/source/{fqn}/method/{methodName}
+
+Get source code for a specific method.
+
+**Path Parameters:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `fqn` | Fully qualified class name |
+| `methodName` | Method name |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `paramTypes` | string | - | Comma-separated parameter types to disambiguate overloads |
+| `context` | int | `0` | Number of context lines before/after method |
+
+**Example:**
+```
+GET /api/v1/source/com.example.UserHandler/method/handle
+```
+
+**Response:**
+```json
+{
+  "fqn": "com.example.UserHandler",
+  "methodName": "handle",
+  "source": "public void handle(Context ctx) {\n    ...\n}",
+  "sourceFile": "/path/to/UserHandler.java",
+  "language": "JAVA",
+  "startLine": 25,
+  "endLine": 35
+}
+```
+
+---
+
 ## Lint Endpoints
 
 These endpoints provide Kotlin linting and formatting via ktlint.

@@ -17,6 +17,7 @@ This document provides a comprehensive catalog of all planned CodeLens features 
 | 9 | Pattern-Based Migration Hints | P2 | 2C | Deferred | Pattern-specific recommendations (LLM can generate) |
 | 10 | Route/Chain Analysis | P2 | 2C | Complete | URL structure and middleware |
 | 11 | Anti-pattern Detection | P2 | 2C | Complete | Blocking code, Thread.sleep, etc. |
+| 11.5 | Library Source Resolution | P1 | 2C.5 | In Progress | Library/JDK source retrieval for LLM assistance |
 | 12 | Full Migration Report | P2 | 2D | Not Started | Comprehensive planning document |
 | 13 | Dependency Migration Graph | P2 | 2D | Not Started | Migration ordering |
 | 14 | OpenRewrite Recipe Generation | P3 | 3 | Not Started | Auto-generate refactoring recipes |
@@ -1105,6 +1106,108 @@ codelens antipatterns show com.example.UserHandler
     ],
     "totalCount": 3
   }
+}
+```
+
+---
+
+## Feature 11.5: Library Source Code Resolution
+
+**Priority**: P1 - High
+**Phase**: 2C.5
+**Status**: In Progress
+
+### Description
+
+Extends the existing source code retrieval (Feature 5) to include library dependencies and JDK classes. This is critical for LLM-assisted development where understanding framework implementations (Spring Boot, Micronaut, Ratpack, etc.) is essential.
+
+LLMs often need to understand how library APIs work internally, but they typically only have access to project source code. This feature enables retrieval of source from:
+1. Library source JARs (downloaded from Maven Central if needed)
+2. JDK `src.zip` (bundled with JDK installations)
+3. Decompiled bytecode (fallback when source isn't available)
+
+### Value Proposition
+
+- **For LLMs**: Access to library implementation details for better code suggestions
+- **For Migration**: Understanding framework internals helps generate accurate migration code
+- **For Debugging**: Inspect library source when troubleshooting issues
+
+### CLI Commands
+
+```bash
+# Full source (default)
+codelens source show com.google.common.collect.ImmutableList
+
+# Stub generation (from bytecode, no source needed)
+codelens source show com.google.guava.ImmutableList --stub
+codelens source show com.google.guava.ImmutableList --stub --kotlin
+
+# Signatures only (minimal tokens)
+codelens source show io.ktor.server.application.Application --signatures
+
+# With Javadoc (requires source)
+codelens source show java.util.HashMap --javadoc
+
+# Filter by visibility
+codelens source show org.springframework.boot.SpringApplication --public-only
+```
+
+### Output Formats
+
+| Format | Description | Source Required? | Token Usage |
+|--------|-------------|------------------|-------------|
+| `full` | Complete source code (default) | Yes | High |
+| `stub` | Signatures with `{ ... }` bodies | No (bytecode) | Low |
+| `signatures` | Just method/field declarations | No (bytecode) | Very low |
+| `javadoc` | Signatures + doc comments only | Yes | Medium |
+
+### API Endpoints
+
+```
+GET /api/v1/source/{fqn}?format=full           # Full source (default)
+GET /api/v1/source/{fqn}?format=stub           # Stub with empty bodies
+GET /api/v1/source/{fqn}?format=signatures     # Signatures only (minimal)
+GET /api/v1/source/{fqn}?format=javadoc        # Signatures + doc comments
+
+GET /api/v1/source/{fqn}?visibility=public     # Public members only
+GET /api/v1/source/{fqn}?format=stub&lang=kotlin  # Kotlin-style stub
+GET /api/v1/source/{fqn}?allowDecompilation=false # Only original source
+```
+
+### Source Origin Types
+
+| Origin | Description |
+|--------|-------------|
+| `PROJECT_SOURCE` | From project source roots |
+| `SOURCE_JAR` | From library -sources.jar |
+| `DECOMPILED` | From bytecode decompilation |
+| `JDK_SOURCE` | From JDK src.zip |
+
+### Implementation Details
+
+New module `server:source-resolver` with:
+- `SourceCache` - Disk cache in `~/.cache/codelens/sources/`
+- `MavenCentralClient` - Download source JARs from Maven Central
+- `SourceJarExtractor` - Extract .java files from source JARs
+- `Decompiler` - CFR wrapper for bytecode decompilation
+- `JdkSourceResolver` - Extract from JDK src.zip
+- `StubGenerator` - Generate source stubs from ClassInfo
+- `JavadocExtractor` - Extract doc comments from source
+
+### Response Model
+
+```json
+{
+  "fqn": "com.google.common.collect.ImmutableList",
+  "source": "package com.google.common.collect;...",
+  "sourceFile": null,
+  "language": "JAVA",
+  "startLine": null,
+  "endLine": null,
+  "sourceOrigin": "SOURCE_JAR",
+  "mavenCoordinates": "com.google.guava:guava:32.1.3-jre",
+  "isDecompiled": false,
+  "format": "FULL"
 }
 ```
 

@@ -1,7 +1,16 @@
 package codelens.gradle
 
+import codelens.core.model.MavenCoordinates
 import codelens.core.model.source.SourceRootInfo
 import java.io.File
+
+/**
+ * Mapping of a JAR file to its Maven coordinates.
+ */
+data class ArtifactMapping(
+    val jarPath: String,
+    val coordinates: MavenCoordinates
+)
 
 /**
  * Result of classpath resolution.
@@ -27,7 +36,13 @@ data class ResolvedClasspath(
     /**
      * Resolution method used (for diagnostics).
      */
-    val resolvedBy: String
+    val resolvedBy: String,
+
+    /**
+     * Mapping of JAR paths to their Maven coordinates.
+     * Used for library source resolution.
+     */
+    val artifactMappings: List<ArtifactMapping> = emptyList()
 )
 
 /**

@@ -44,14 +44,44 @@ enum class SourceLanguage {
 }
 
 /**
+ * Origin of resolved source code.
+ */
+@Serializable
+enum class SourceOrigin {
+    /** Source from project source roots */
+    PROJECT_SOURCE,
+    /** Source from library -sources.jar */
+    SOURCE_JAR,
+    /** Source from bytecode decompilation */
+    DECOMPILED,
+    /** Source from JDK src.zip */
+    JDK_SOURCE
+}
+
+/**
+ * Format of source output for LLM-friendly responses.
+ */
+@Serializable
+enum class SourceFormat {
+    /** Complete source code */
+    FULL,
+    /** Stub with placeholder method bodies */
+    STUB,
+    /** Just method/field signatures */
+    SIGNATURES,
+    /** Signatures with doc comments only */
+    JAVADOC
+}
+
+/**
  * Complete source code information for a class.
  */
 @Serializable
 data class SourceInfo(
     /** Fully qualified class name */
     val fqn: String,
-    /** Absolute path to the source file */
-    val filePath: String,
+    /** Absolute path to the source file (null for library/JDK sources) */
+    val filePath: String? = null,
     /** Source language */
     val language: SourceLanguage,
     /** Full source code content */
@@ -59,7 +89,15 @@ data class SourceInfo(
     /** Total number of lines */
     val lineCount: Int,
     /** Module this source belongs to (for multi-module projects) */
-    val module: String? = null
+    val module: String? = null,
+    /** Origin of the source code */
+    val sourceOrigin: SourceOrigin = SourceOrigin.PROJECT_SOURCE,
+    /** Maven coordinates for library sources (e.g., "com.google.guava:guava:32.1.3-jre") */
+    val mavenCoordinates: String? = null,
+    /** Whether the source was decompiled from bytecode */
+    val isDecompiled: Boolean = false,
+    /** Format of the returned content */
+    val format: SourceFormat = SourceFormat.FULL
 )
 
 /**

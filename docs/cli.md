@@ -1239,11 +1239,11 @@ Bindings for com.example.UserService
 
 ## Source Commands
 
-Commands for viewing source code are under `codelens source`.
+Commands for viewing source code are under `codelens source`. Source can be retrieved for project classes, library classes (from source JARs or decompilation), and JDK classes (from src.zip).
 
 ### codelens source show
 
-View source code for a class.
+View source code for a class. Supports project classes, library classes, and JDK classes.
 
 ```bash
 codelens source show FQN [OPTIONS]
@@ -1259,14 +1259,62 @@ codelens source show FQN [OPTIONS]
 
 | Option | Description |
 |--------|-------------|
+| `--stub` | Generate stub with placeholder bodies (from bytecode, no source needed) |
+| `--signatures` | Show only method/field signatures (minimal output) |
+| `--javadoc` | Show signatures with doc comments only |
+| `--kotlin` | Generate Kotlin-style stub (use with `--stub`) |
+| `--public-only` | Show only public members |
+| `--no-decompile` | Don't decompile if source unavailable |
 | `--project`, `-p` | Project directory |
 | `--json` | Output as JSON |
+
+**Format Options:**
+
+| Format | Description | Source Required? |
+|--------|-------------|------------------|
+| (default) | Complete source code | Yes |
+| `--stub` | Signatures with `{ ... }` bodies | No (uses bytecode) |
+| `--signatures` | Just declarations | No (uses bytecode) |
+| `--javadoc` | Signatures + doc comments | Yes |
 
 **Examples:**
 
 ```bash
-# View source code for a class
+# View project class source
 codelens source show com.example.UserHandler
+
+# View library source (from source JAR or decompiled)
+codelens source show com.google.common.collect.ImmutableList
+
+# View JDK source (from src.zip)
+codelens source show java.util.HashMap
+
+# Generate stub from bytecode (no source needed)
+codelens source show com.google.common.collect.ImmutableList --stub
+
+# Generate Kotlin-style stub
+codelens source show com.google.common.collect.ImmutableList --stub --kotlin
+
+# Show only public signatures (minimal tokens for LLM)
+codelens source show org.springframework.boot.SpringApplication --signatures --public-only
+
+# Get source with javadoc comments
+codelens source show java.util.HashMap --javadoc
+```
+
+**Example Output (stub):**
+
+```java
+package com.google.common.collect;
+
+public abstract class ImmutableList<E> extends ImmutableCollection<E>
+    implements List<E>, RandomAccess {
+
+    public static <E> ImmutableList<E> of() { /* ... */ }
+    public static <E> ImmutableList<E> copyOf(Collection<? extends E> elements) { /* ... */ }
+    public abstract E get(int index);
+    public abstract int size();
+}
 ```
 
 ---

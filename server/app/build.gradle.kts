@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":server:classgraph"))
     implementation(project(":server:ktlint"))
     implementation(project(":server:gradle-resolver"))
+    implementation(project(":server:source-resolver"))
 
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
