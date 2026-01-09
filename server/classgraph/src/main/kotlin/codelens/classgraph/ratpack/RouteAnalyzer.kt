@@ -34,11 +34,14 @@ object ChainMethods {
  * Analyzes Ratpack route/chain definitions.
  *
  * Finds Action<Chain> implementations and extracts route patterns.
+ * Uses ASM-based bytecode analysis to detect routes defined programmatically
+ * in execute(Chain) methods.
  */
 class RouteAnalyzer(
     private val classGraphProvider: ClassGraphProvider
 ) {
     private val logger = LoggerFactory.getLogger(RouteAnalyzer::class.java)
+    private val bytecodeExtractor by lazy { BytecodeRouteExtractor(classGraphProvider) }
 
     /**
      * Get summary of all routes in the project.
@@ -48,15 +51,44 @@ class RouteAnalyzer(
         val allRoutes = mutableListOf<RouteInfo>()
         val chainInfos = mutableListOf<ChainClassInfo>()
 
-        for (chainClass in chainClasses) {
-            val routes = analyzeChainClass(chainClass)
-            allRoutes.addAll(routes)
+        // Find root chain classes (those not referenced as nested chains by others)
+        val nestedChainFqns = findNestedChainReferences(chainClasses)
+        val rootChainClasses = chainClasses.filter { it.name.fqn !in nestedChainFqns }
+
+        // If no root chains found, treat all chains as roots
+        val chainsToAnalyze = rootChainClasses.ifEmpty { chainClasses }
+
+        for (chainClass in chainsToAnalyze) {
+            // Try bytecode extraction first
+            val extractedRoutes = bytecodeExtractor.extractRoutesRecursively(chainClass.name.fqn)
+
+            if (extractedRoutes.isNotEmpty()) {
+                // Convert extracted routes to RouteInfo
+                val routes = extractedRoutes.map { extracted ->
+                    RouteInfo(
+                        method = extracted.method,
+                        pathPattern = extracted.path.ifEmpty { "/" },
+                        handlerFqn = extracted.handlerClassName,
+                        handlerSimpleName = extracted.handlerClassName?.substringAfterLast("."),
+                        chainFqn = chainClass.name.fqn,
+                        pathParameters = extractPathParameters(extracted.path),
+                        isPrefix = extracted.isNestedChain
+                    )
+                }
+                allRoutes.addAll(routes)
+                logger.info("Bytecode extraction found ${routes.size} routes in ${chainClass.name.fqn}")
+            } else {
+                // Fall back to heuristic analysis
+                logger.debug("Bytecode extraction returned no routes for ${chainClass.name.fqn}, using heuristics")
+                val routes = analyzeChainClassHeuristic(chainClass)
+                allRoutes.addAll(routes)
+            }
 
             chainInfos.add(
                 ChainClassInfo(
                     fqn = chainClass.name.fqn,
                     simpleName = chainClass.name.simpleName,
-                    routeCount = routes.size,
+                    routeCount = allRoutes.count { it.chainFqn == chainClass.name.fqn },
                     pathPrefix = extractPathPrefix(chainClass)
                 )
             )
@@ -73,6 +105,28 @@ class RouteAnalyzer(
             chainClasses = chainInfos,
             uniquePaths = allRoutes.map { it.pathPattern }.distinct().size
         )
+    }
+
+    /**
+     * Find FQNs of chain classes that are referenced as nested chains by other classes.
+     */
+    private fun findNestedChainReferences(chainClasses: List<ClassInfo>): Set<String> {
+        val nestedFqns = mutableSetOf<String>()
+        val chainFqnSet = chainClasses.map { it.name.fqn }.toSet()
+
+        for (chainClass in chainClasses) {
+            // Check bytecode for prefix() calls that reference other chain classes
+            val extractedRoutes = bytecodeExtractor.extractRoutes(chainClass.name.fqn)
+            for (route in extractedRoutes) {
+                if (route.isNestedChain && route.handlerClassName != null) {
+                    if (route.handlerClassName in chainFqnSet) {
+                        nestedFqns.add(route.handlerClassName)
+                    }
+                }
+            }
+        }
+
+        return nestedFqns
     }
 
     /**
@@ -102,10 +156,10 @@ class RouteAnalyzer(
     }
 
     /**
-     * Analyze a chain class to extract routes.
-     * Since we can't analyze method bodies, we infer routes from class structure.
+     * Analyze a chain class using heuristics (fallback when bytecode analysis fails).
+     * Infers routes from class structure since method bodies can't be analyzed.
      */
-    private fun analyzeChainClass(classInfo: ClassInfo): List<RouteInfo> {
+    private fun analyzeChainClassHeuristic(classInfo: ClassInfo): List<RouteInfo> {
         val routes = mutableListOf<RouteInfo>()
 
         // Find the execute method

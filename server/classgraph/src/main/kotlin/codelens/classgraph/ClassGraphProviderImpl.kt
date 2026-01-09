@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import java.util.jar.JarFile
 
 /**
  * Implementation of ClassGraphProvider using the ClassGraph library.
@@ -324,6 +325,50 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 
     override fun getAllClasses(): Map<String, ClassInfo> {
         return classes.toMap()
+    }
+
+    override fun getClassBytes(fqn: String): ByteArray? {
+        val classInfo = classes[fqn] ?: return null
+        val jarPath = classInfo.jarPath ?: return null
+        val classFile = File(jarPath)
+
+        if (!classFile.exists()) {
+            logger.warn("Class file location not found: $jarPath")
+            return null
+        }
+
+        // Convert FQN to class file path (e.g., com.example.Foo -> com/example/Foo.class)
+        val classEntryPath = fqn.replace('.', '/') + ".class"
+
+        return try {
+            if (classFile.isDirectory) {
+                // Read from directory
+                val file = File(classFile, classEntryPath)
+                if (file.exists()) {
+                    file.readBytes()
+                } else {
+                    logger.warn("Class file not found: ${file.absolutePath}")
+                    null
+                }
+            } else if (classFile.extension == "jar" || classFile.name.endsWith(".jar")) {
+                // Read from JAR
+                JarFile(classFile).use { jar ->
+                    val entry = jar.getJarEntry(classEntryPath)
+                    if (entry != null) {
+                        jar.getInputStream(entry).use { it.readBytes() }
+                    } else {
+                        logger.warn("Class entry not found in JAR: $classEntryPath in $jarPath")
+                        null
+                    }
+                }
+            } else {
+                logger.warn("Unknown classpath element type: $jarPath")
+                null
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to read class bytes for $fqn: ${e.message}")
+            null
+        }
     }
 
     /**

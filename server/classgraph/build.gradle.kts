@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(project(":server:core"))
     implementation(libs.classgraph)
+    implementation(libs.asm)
     implementation(libs.logback.classic)
 
     // Test dependencies

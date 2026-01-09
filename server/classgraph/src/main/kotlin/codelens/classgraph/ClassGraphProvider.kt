@@ -106,4 +106,15 @@ interface ClassGraphProvider {
      * @return Map of FQN to ClassInfo for all scanned classes
      */
     fun getAllClasses(): Map<String, ClassInfo>
+
+    /**
+     * Get the raw bytecode bytes for a class.
+     *
+     * This is used for ASM-based bytecode analysis that requires
+     * access to the actual bytecode instructions.
+     *
+     * @param fqn Fully qualified class name
+     * @return Raw class bytes, or null if not found
+     */
+    fun getClassBytes(fqn: String): ByteArray?
 }
