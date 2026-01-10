@@ -719,5 +719,81 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             val mappings = ratpackService.getSpringMappings(includeLibraries)
             call.respond(mappings)
         }
+
+        // =====================================================================
+        // Dependency Analysis Endpoints
+        // =====================================================================
+
+        /**
+         * GET /api/v1/ratpack/dependencies
+         * Get full dependency analysis.
+         *
+         * Query parameters:
+         * - format: Output format (json, dot) - default: json
+         */
+        get("/dependencies") {
+            val format = call.request.queryParameters["format"]?.lowercase() ?: "json"
+
+            when (format) {
+                "dot" -> {
+                    val dot = ratpackService.getDependencyGraphDot()
+                    call.respondText(dot, ContentType.Text.Plain)
+                }
+                else -> {
+                    val analysis = ratpackService.getDependencyAnalysis()
+                    call.respond(DependencyAnalysisResponse(analysis = analysis))
+                }
+            }
+        }
+
+        /**
+         * GET /api/v1/ratpack/dependencies/foundation
+         * Get foundation classes (most depended-on classes).
+         */
+        get("/dependencies/foundation") {
+            val foundationClasses = ratpackService.getFoundationClasses()
+            call.respond(
+                FoundationClassesResponse(
+                    foundationClasses = foundationClasses,
+                    count = foundationClasses.size
+                )
+            )
+        }
+
+        /**
+         * GET /api/v1/ratpack/dependencies/quickwins
+         * Get quick win handlers (few dependencies, low complexity).
+         */
+        get("/dependencies/quickwins") {
+            val quickWins = ratpackService.getQuickWins()
+            call.respond(
+                QuickWinsResponse(
+                    quickWins = quickWins,
+                    count = quickWins.size
+                )
+            )
+        }
+
+        /**
+         * GET /api/v1/ratpack/dependencies/graph
+         * Get full dependency graph for visualization.
+         *
+         * Query parameters:
+         * - format: Output format (json, dot) - default: json
+         */
+        get("/dependencies/graph") {
+            val format = call.request.queryParameters["format"]?.lowercase() ?: "json"
+
+            when (format) {
+                "dot" -> {
+                    val dot = ratpackService.getDependencyGraphDot()
+                    call.respondText(dot, ContentType.Text.Plain)
+                }
+                else -> {
+                    val graph = ratpackService.getDependencyGraph()
+                    call.respond(DependencyGraphResponse(graph = graph))
+                }
+            }
+        }
     }
 }

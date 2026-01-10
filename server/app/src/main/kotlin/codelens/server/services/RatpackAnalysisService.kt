@@ -3,6 +3,7 @@ package codelens.server.services
 import codelens.classgraph.ClassGraphProvider
 import codelens.classgraph.ratpack.AntiPatternDetector
 import codelens.classgraph.ratpack.ComplexityCalculator
+import codelens.classgraph.ratpack.DependencyAnalyzer
 import codelens.classgraph.ratpack.GuiceModuleDetector
 import codelens.classgraph.ratpack.IntegrationDetector
 import codelens.classgraph.ratpack.PromiseDetector
@@ -32,6 +33,7 @@ class RatpackAnalysisService(
     private val integrationDetector by lazy { IntegrationDetector(classGraphProvider) }
     private val antiPatternDetector by lazy { AntiPatternDetector(classGraphProvider) }
     private val routeAnalyzer by lazy { RouteAnalyzer(classGraphProvider) }
+    private val dependencyAnalyzer by lazy { DependencyAnalyzer(classGraphProvider) }
 
     // =========================================================================
     // Handler Analysis
@@ -295,5 +297,54 @@ class RatpackAnalysisService(
             mappings = mappings,
             totalCount = mappings.size
         )
+    }
+
+    // =========================================================================
+    // Dependency Analysis
+    // =========================================================================
+
+    /**
+     * Get full dependency analysis for all handlers.
+     *
+     * @return Dependency analysis with foundation classes, quick wins, cycles, and tiers
+     */
+    fun getDependencyAnalysis(): DependencyAnalysis {
+        return dependencyAnalyzer.analyze()
+    }
+
+    /**
+     * Get foundation classes (most depended-on classes).
+     *
+     * @return List of foundation classes sorted by dependent count
+     */
+    fun getFoundationClasses(): List<FoundationClass> {
+        return dependencyAnalyzer.getFoundationClasses()
+    }
+
+    /**
+     * Get quick win handlers (few dependencies, low complexity).
+     *
+     * @return List of quick win handlers
+     */
+    fun getQuickWins(): List<QuickWinHandler> {
+        return dependencyAnalyzer.getQuickWins()
+    }
+
+    /**
+     * Get full dependency graph for visualization.
+     *
+     * @return Dependency graph with nodes, edges, and cycles
+     */
+    fun getDependencyGraph(): DependencyGraph {
+        return dependencyAnalyzer.getDependencyGraph()
+    }
+
+    /**
+     * Get dependency graph in DOT format for Graphviz.
+     *
+     * @return DOT format string
+     */
+    fun getDependencyGraphDot(): String {
+        return dependencyAnalyzer.toDotFormat()
     }
 }

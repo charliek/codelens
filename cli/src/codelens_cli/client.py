@@ -498,3 +498,53 @@ class CodeLensClient:
         if include_libraries:
             params["includeLibraries"] = "true"
         return self._get("/api/v1/ratpack/routes/spring", params=params or None)
+
+    # =========================================================================
+    # Dependency Analysis API
+    # =========================================================================
+
+    def get_dependency_analysis(self, format: str = "json") -> dict[str, Any] | str:
+        """Get full dependency analysis.
+
+        Args:
+            format: Output format (json, dot)
+
+        Returns:
+            Dependency analysis or DOT string
+        """
+        if format == "dot":
+            response = self._client.get("/api/v1/ratpack/dependencies", params={"format": "dot"})
+            response.raise_for_status()
+            return response.text
+        return self._get("/api/v1/ratpack/dependencies")
+
+    def get_foundation_classes(self) -> dict[str, Any]:
+        """Get foundation classes (most depended-on classes).
+
+        Returns:
+            List of foundation classes sorted by dependent count
+        """
+        return self._get("/api/v1/ratpack/dependencies/foundation")
+
+    def get_quick_wins(self) -> dict[str, Any]:
+        """Get quick win handlers (few dependencies, low complexity).
+
+        Returns:
+            List of quick win handlers
+        """
+        return self._get("/api/v1/ratpack/dependencies/quickwins")
+
+    def get_dependency_graph(self, format: str = "json") -> dict[str, Any] | str:
+        """Get full dependency graph for visualization.
+
+        Args:
+            format: Output format (json, dot)
+
+        Returns:
+            Dependency graph or DOT string
+        """
+        if format == "dot":
+            response = self._client.get("/api/v1/ratpack/dependencies/graph", params={"format": "dot"})
+            response.raise_for_status()
+            return response.text
+        return self._get("/api/v1/ratpack/dependencies/graph")

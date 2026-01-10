@@ -7,6 +7,7 @@ from codelens_cli.commands import (
     annotations,
     antipatterns,
     classes,
+    deps,
     handlers,
     integrations,
     lifecycle,
@@ -41,6 +42,7 @@ app.add_typer(modules.app, name="modules")  # Guice modules analysis
 app.add_typer(integrations.app, name="integrations")  # Integration detection
 app.add_typer(antipatterns.app, name="antipatterns")  # Anti-pattern detection
 app.add_typer(routes.app, name="routes")  # Route analysis
+app.add_typer(deps.app, name="deps")  # Dependency analysis
 app.command(name="project")(project.project_info)
 
 
