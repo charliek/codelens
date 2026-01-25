@@ -89,7 +89,9 @@ def find_repo_path() -> Path:
     # Walk up from this file to find gradlew
     current = Path(__file__).resolve().parent
     for _ in range(10):  # Max 10 levels up
-        if (current / "gradlew").exists() and (current / "settings.gradle.kts").exists():
+        if (current / "gradlew").exists() and (
+            current / "settings.gradle.kts"
+        ).exists():
             return current
         parent = current.parent
         if parent == current:
@@ -264,7 +266,10 @@ def resolve_project_java_home(project_path: Path) -> Optional[Path]:
             if line.strip().startswith("org.gradle.java.home="):
                 java_home_str = line.split("=", 1)[1].strip()
                 java_home_path = Path(java_home_str).expanduser()
-                if java_home_path.exists() and (java_home_path / "bin" / "java").exists():
+                if (
+                    java_home_path.exists()
+                    and (java_home_path / "bin" / "java").exists()
+                ):
                     return java_home_path
 
     return None

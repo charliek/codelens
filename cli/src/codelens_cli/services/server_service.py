@@ -66,7 +66,12 @@ class ServerService:
         try:
             repo_path = find_repo_path()
             jar_path = (
-                repo_path / "server" / "app" / "build" / "libs" / "codelens-server-all.jar"
+                repo_path
+                / "server"
+                / "app"
+                / "build"
+                / "libs"
+                / "codelens-server-all.jar"
             )
             if jar_path.exists():
                 return ServerMode.JAR
@@ -135,7 +140,9 @@ class ServerService:
             if detected:
                 effective_project_java = detected
                 project_java_version = detect_project_java_version(project_path)
-                project_java_source = f"auto-detected from project ({project_java_version})"
+                project_java_source = (
+                    f"auto-detected from project ({project_java_version})"
+                )
             else:
                 # Warn user that they may need to provide Java home
                 project_java_version = detect_project_java_version(project_path)
@@ -173,7 +180,12 @@ class ServerService:
             cwd: Optional[Path] = repo_path
         else:
             jar_path = (
-                repo_path / "server" / "app" / "build" / "libs" / "codelens-server-all.jar"
+                repo_path
+                / "server"
+                / "app"
+                / "build"
+                / "libs"
+                / "codelens-server-all.jar"
             )
             if not jar_path.exists():
                 raise FileNotFoundError(
@@ -266,7 +278,9 @@ class ServerService:
 
         # Wait for ready signal
         try:
-            ready_info = await self._wait_for_ready(process, timeout, log_file, project_path)
+            ready_info = await self._wait_for_ready(
+                process, timeout, log_file, project_path
+            )
             self.repository.update_status(project_path, ProjectStatus.READY)
 
             # Reload state with updated port from server
@@ -281,10 +295,16 @@ class ServerService:
             raise
 
     async def _wait_for_ready(
-        self, process: subprocess.Popen, timeout: int, log_file: Path, project_path: Optional[Path] = None
+        self,
+        process: subprocess.Popen,
+        timeout: int,
+        log_file: Path,
+        project_path: Optional[Path] = None,
     ) -> dict[str, int | str]:
         """Wait for server to print CODELENS_READY."""
-        ready_pattern = re.compile(r"CODELENS_READY port=(\d+) host=(\S+) version=(\S+)")
+        ready_pattern = re.compile(
+            r"CODELENS_READY port=(\d+) host=(\S+) version=(\S+)"
+        )
 
         loop = asyncio.get_event_loop()
         start_time = loop.time()
@@ -316,7 +336,9 @@ class ServerService:
 
         raise TimeoutError(f"Server did not become ready within {timeout}s")
 
-    def _check_for_java_version_error(self, log_file: Path, project_path: Optional[Path] = None) -> None:
+    def _check_for_java_version_error(
+        self, log_file: Path, project_path: Optional[Path] = None
+    ) -> None:
         """Check if the server failed due to Java version mismatch.
 
         Reads the log file to detect Java version errors and raises
@@ -330,14 +352,20 @@ class ServerService:
 
             # Check for Gradle Tooling API Java version error
             if "Unsupported class file major version" in log_content:
-                gradle_version = get_gradle_version(project_path) if project_path else None
-                project_java = detect_project_java_version(project_path) if project_path else None
+                gradle_version = (
+                    get_gradle_version(project_path) if project_path else None
+                )
+                project_java = (
+                    detect_project_java_version(project_path) if project_path else None
+                )
 
                 error_msg = "Gradle version incompatibility detected.\n\n"
                 if gradle_version:
                     error_msg += f"The target project uses Gradle {gradle_version}, which cannot run with Java 21.\n"
                 else:
-                    error_msg += "The target project's Gradle version cannot run with Java 21.\n"
+                    error_msg += (
+                        "The target project's Gradle version cannot run with Java 21.\n"
+                    )
 
                 if project_java:
                     error_msg += (

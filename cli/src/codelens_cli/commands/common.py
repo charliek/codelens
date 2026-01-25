@@ -40,7 +40,9 @@ def handle_api_errors() -> Generator[None, None, None]:
         err_console.print(f"[red]Timeout:[/red] Request timed out: {e}")
         raise typer.Exit(ExitCode.TIMEOUT)
     except httpx.ConnectError as e:
-        err_console.print(f"[red]Connection error:[/red] Could not connect to server: {e}")
+        err_console.print(
+            f"[red]Connection error:[/red] Could not connect to server: {e}"
+        )
         raise typer.Exit(ExitCode.CONNECTION_ERROR)
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:

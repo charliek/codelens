@@ -7,7 +7,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.models import (
     FormatFileResponse,
     FormatProjectResponse,
@@ -68,9 +72,7 @@ def lint_check(
             if result.error_count > 0:
                 raise typer.Exit(1)
         else:
-            result = client.lint_project(
-                pattern=pattern, include_tests=include_tests
-            )
+            result = client.lint_project(pattern=pattern, include_tests=include_tests)
 
             if json_output or not is_tty():
                 print_json(result.model_dump(by_alias=True))
@@ -117,9 +119,7 @@ def lint_format(
             file_path = Path(file)
             if not file_path.is_absolute():
                 file_path = project_path / file_path
-            result = client.format_file(
-                str(file_path), write_to_file=not dry_run
-            )
+            result = client.format_file(str(file_path), write_to_file=not dry_run)
 
             if json_output or not is_tty():
                 print_json(result.model_dump(by_alias=True))
@@ -148,7 +148,9 @@ def _print_file_lint_result(result: LintFileResponse) -> None:
         console.print(f"[dim]Checked in {result.duration_ms}ms[/dim]\n")
         return
 
-    console.print(f"\n[bold]{display_path}[/bold] - [red]{result.error_count} issue(s)[/red]")
+    console.print(
+        f"\n[bold]{display_path}[/bold] - [red]{result.error_count} issue(s)[/red]"
+    )
     console.print()
 
     table = Table(show_header=True, header_style="bold")
@@ -199,7 +201,9 @@ def _print_project_lint_result(result: LintProjectResponse) -> None:
         except ValueError:
             rel_path = Path(file_result.file_path).name
 
-        console.print(f"[bold cyan]{rel_path}[/bold cyan] ({file_result.error_count} issue(s))")
+        console.print(
+            f"[bold cyan]{rel_path}[/bold cyan] ({file_result.error_count} issue(s))"
+        )
 
         for error in file_result.errors:
             fix_hint = " [dim](auto-fixable)[/]" if error.can_be_auto_corrected else ""
@@ -231,9 +235,13 @@ def _print_file_format_result(result: FormatFileResponse, dry_run: bool) -> None
         console.print(f"\n[green]Formatted[/green] {display_path}")
 
     if result.remaining_errors:
-        console.print(f"\n[yellow]{len(result.remaining_errors)} issue(s) could not be auto-fixed:[/yellow]")
+        console.print(
+            f"\n[yellow]{len(result.remaining_errors)} issue(s) could not be auto-fixed:[/yellow]"
+        )
         for error in result.remaining_errors:
-            console.print(f"  [dim]{error.line}:{error.col}[/dim] {error.rule_id}: {error.detail}")
+            console.print(
+                f"  [dim]{error.line}:{error.col}[/dim] {error.rule_id}: {error.detail}"
+            )
 
     console.print(f"\n[dim]Processed in {result.duration_ms}ms[/dim]\n")
 

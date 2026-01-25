@@ -6,7 +6,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.models import (
     ClassIntegrationsResponse,
     IntegrationsByTypeResponse,
@@ -34,6 +38,7 @@ def validate_integration_type(type_name: str) -> str:
     except ValueError:
         valid = ", ".join(t.value for t in IntegrationType)
         raise typer.BadParameter(f"Invalid type '{type_name}'. Valid types: {valid}")
+
 
 console = Console()
 
@@ -228,7 +233,9 @@ def show_class_integrations(
 
 @app.command(name="find")
 def find_by_type(
-    type_name: str = typer.Argument(help="Integration type (HTTP_CLIENT, DATABASE, etc.)"),
+    type_name: str = typer.Argument(
+        help="Integration type (HTTP_CLIENT, DATABASE, etc.)"
+    ),
     project: Optional[str] = typer.Option(
         None, "--project", "-p", help="Project directory"
     ),

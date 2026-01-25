@@ -6,7 +6,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.output import is_tty, print_json
 
 app = typer.Typer(
@@ -33,7 +37,9 @@ def _print_complexity_summary(data: dict) -> None:
 
     console.print("\n[bold]Migration Complexity Summary[/bold]")
     console.print(f"  Total Handlers: {summary.get('totalHandlers', 0)}")
-    console.print(f"  Total Estimated Hours: {summary.get('totalEstimatedHours', 0):.1f}")
+    console.print(
+        f"  Total Estimated Hours: {summary.get('totalEstimatedHours', 0):.1f}"
+    )
     console.print(f"  Average Score: {summary.get('averageScore', 0):.1f}")
     console.print()
 
@@ -139,7 +145,9 @@ def _print_migration_order(data: dict) -> None:
 
 @app.command(name="complexity")
 def complexity(
-    fqn: Optional[str] = typer.Argument(None, help="Fully qualified class name (optional)"),
+    fqn: Optional[str] = typer.Argument(
+        None, help="Fully qualified class name (optional)"
+    ),
     project: Optional[str] = typer.Option(
         None, "--project", "-p", help="Project directory"
     ),
