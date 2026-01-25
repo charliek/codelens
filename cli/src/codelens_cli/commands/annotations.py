@@ -6,7 +6,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.models import (
     AnnotationUsagesResponse,
     ClassSummary,

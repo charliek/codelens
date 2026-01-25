@@ -4,7 +4,11 @@ from typing import Optional
 
 import typer
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.formatters import (
     print_class_detail,
     print_class_list,

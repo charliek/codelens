@@ -7,7 +7,11 @@ from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.output import is_tty, print_json
 
 app = typer.Typer(
@@ -42,13 +46,24 @@ def _print_routes_summary(data: dict) -> None:
         console.print("[yellow]No routes found.[/yellow]")
         return
 
-    console.print(f"\n[bold]Route Summary:[/bold] {total} routes ({unique_paths} unique paths)")
+    console.print(
+        f"\n[bold]Route Summary:[/bold] {total} routes ({unique_paths} unique paths)"
+    )
 
     # Method breakdown
     routes_by_method = summary.get("routesByMethod", {})
     if routes_by_method:
         method_parts = []
-        for method in ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD", "ALL"]:
+        for method in [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS",
+            "HEAD",
+            "ALL",
+        ]:
             count = routes_by_method.get(method, 0)
             if count > 0:
                 style = _method_style(method)
@@ -138,15 +153,21 @@ def _print_spring_mappings(data: dict) -> None:
         console.print("[yellow]No routes to convert.[/yellow]")
         return
 
-    console.print(f"\n[bold]Spring @RequestMapping Equivalents ({total} routes)[/bold]\n")
+    console.print(
+        f"\n[bold]Spring @RequestMapping Equivalents ({total} routes)[/bold]\n"
+    )
 
     for mapping in mappings:
         route = mapping.get("ratpackRoute", {})
         method = route.get("method", "ALL")
         style = _method_style(method)
 
-        console.print(f"[{style}]{method}[/{style}] [cyan]{route.get('pathPattern', '')}[/cyan]")
-        console.print(f"  Annotation: [green]{mapping.get('springAnnotation', '')}[/green]")
+        console.print(
+            f"[{style}]{method}[/{style}] [cyan]{route.get('pathPattern', '')}[/cyan]"
+        )
+        console.print(
+            f"  Annotation: [green]{mapping.get('springAnnotation', '')}[/green]"
+        )
         console.print(f"  Signature:  [dim]{mapping.get('methodSignature', '')}[/dim]")
 
         notes = mapping.get("notes", [])
@@ -184,7 +205,9 @@ def list_routes(
         if method and not json_output:
             summary = result.get("summary", {})
             routes = summary.get("routes", [])
-            filtered = [r for r in routes if r.get("method", "").upper() == method.upper()]
+            filtered = [
+                r for r in routes if r.get("method", "").upper() == method.upper()
+            ]
             result["summary"]["routes"] = filtered
 
         if json_output or not is_tty():

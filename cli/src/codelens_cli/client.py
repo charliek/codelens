@@ -132,7 +132,9 @@ class CodeLensClient:
         params: dict[str, Any] = {}
         if include_libraries:
             params["includeLibraries"] = "true"
-        return self._get(f"/api/v1/implementations/{_encode_path_param(fqn)}", params=params or None)
+        return self._get(
+            f"/api/v1/implementations/{_encode_path_param(fqn)}", params=params or None
+        )
 
     def get_hierarchy(self, fqn: str) -> dict[str, Any]:
         """Get the class hierarchy for a class."""
@@ -145,7 +147,9 @@ class CodeLensClient:
         params: dict[str, Any] = {}
         if include_libraries:
             params["includeLibraries"] = "true"
-        return self._get(f"/api/v1/dependencies/{_encode_path_param(fqn)}", params=params or None)
+        return self._get(
+            f"/api/v1/dependencies/{_encode_path_param(fqn)}", params=params or None
+        )
 
     def get_annotation_usages(
         self, fqn: str, include_libraries: bool = False
@@ -154,7 +158,10 @@ class CodeLensClient:
         params: dict[str, Any] = {}
         if include_libraries:
             params["includeLibraries"] = "true"
-        return self._get(f"/api/v1/annotations/usages/{_encode_path_param(fqn)}", params=params or None)
+        return self._get(
+            f"/api/v1/annotations/usages/{_encode_path_param(fqn)}",
+            params=params or None,
+        )
 
     def search_methods(
         self,
@@ -348,7 +355,10 @@ class CodeLensClient:
             params["paramTypes"] = ",".join(param_types)
         if context > 0:
             params["context"] = context
-        return self._get(f"/api/v1/source/{_encode_path_param(fqn)}/method/{_encode_path_param(method_name)}", params=params or None)
+        return self._get(
+            f"/api/v1/source/{_encode_path_param(fqn)}/method/{_encode_path_param(method_name)}",
+            params=params or None,
+        )
 
     # =========================================================================
     # Integration Detection API
@@ -411,7 +421,10 @@ class CodeLensClient:
             params["subType"] = sub_type
         if include_libraries:
             params["includeLibraries"] = "true"
-        return self._get(f"/api/v1/ratpack/integrations/by-type/{_encode_path_param(integration_type)}", params=params or None)
+        return self._get(
+            f"/api/v1/ratpack/integrations/by-type/{_encode_path_param(integration_type)}",
+            params=params or None,
+        )
 
     # =========================================================================
     # Anti-Pattern Detection API
@@ -513,7 +526,9 @@ class CodeLensClient:
             Dependency analysis or DOT string
         """
         if format == "dot":
-            response = self._client.get("/api/v1/ratpack/dependencies", params={"format": "dot"})
+            response = self._client.get(
+                "/api/v1/ratpack/dependencies", params={"format": "dot"}
+            )
             response.raise_for_status()
             return response.text
         return self._get("/api/v1/ratpack/dependencies")
@@ -544,7 +559,9 @@ class CodeLensClient:
             Dependency graph or DOT string
         """
         if format == "dot":
-            response = self._client.get("/api/v1/ratpack/dependencies/graph", params={"format": "dot"})
+            response = self._client.get(
+                "/api/v1/ratpack/dependencies/graph", params={"format": "dot"}
+            )
             response.raise_for_status()
             return response.text
         return self._get("/api/v1/ratpack/dependencies/graph")

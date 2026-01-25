@@ -6,7 +6,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.models import MethodSearchResponse
 from codelens_cli.output import get_source_color, is_tty, print_json
 
@@ -89,9 +93,7 @@ def _print_method_search(response: MethodSearchResponse) -> None:
     for result in response.methods:
         method = result.method
         # Build method signature
-        params = ", ".join(
-            [f"{p.type.split('.')[-1]}" for p in method.parameters]
-        )
+        params = ", ".join([f"{p.type.split('.')[-1]}" for p in method.parameters])
         signature = f"{method.name}({params})"
 
         source_color = get_source_color(result.class_source.value)

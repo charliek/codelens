@@ -8,7 +8,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.output import is_tty, print_json
 
 app = typer.Typer(
@@ -48,7 +52,9 @@ def _print_summary(data: dict) -> None:
     console.print("\n[bold]Dependency Analysis Summary[/bold]")
     console.print(f"  Total Handlers: {stats.get('totalHandlers', 0)}")
     console.print(f"  Total Dependencies: {stats.get('totalDependencies', 0)}")
-    console.print(f"  Avg Dependencies/Handler: {stats.get('avgDependenciesPerHandler', 0):.1f}")
+    console.print(
+        f"  Avg Dependencies/Handler: {stats.get('avgDependenciesPerHandler', 0):.1f}"
+    )
     console.print(f"  Max Dependencies: {stats.get('maxDependencies', 0)}")
 
     cycle_count = stats.get("cycleCount", 0)
@@ -100,7 +106,9 @@ def _print_summary(data: dict) -> None:
     # Cycles
     cycles = analysis.get("cycles", [])
     if cycles:
-        console.print("[bold red]Circular Dependencies[/bold red] (refactor before migration)")
+        console.print(
+            "[bold red]Circular Dependencies[/bold red] (refactor before migration)"
+        )
         for cycle in cycles:
             console.print(f"  [red]- {cycle.get('description', '')}[/red]")
         console.print()
@@ -183,7 +191,9 @@ def _print_quick_wins(data: dict) -> None:
         return
 
     console.print(f"\n[bold]Quick Wins[/bold] ({count} found)")
-    console.print("Handlers with few dependencies and low complexity - easy starting points.\n")
+    console.print(
+        "Handlers with few dependencies and low complexity - easy starting points.\n"
+    )
 
     table = Table(show_header=True, header_style="bold")
     table.add_column("Handler", style="cyan")
@@ -210,7 +220,9 @@ def deps_default(
     project: Optional[str] = typer.Option(
         None, "--project", "-p", help="Project directory"
     ),
-    full: bool = typer.Option(False, "--full", help="Show full analysis with all details"),
+    full: bool = typer.Option(
+        False, "--full", help="Show full analysis with all details"
+    ),
     output_format: str = typer.Option(
         "table", "--format", "-f", help="Output format (table, dot, json)"
     ),
@@ -228,7 +240,9 @@ def deps_default(
     if ctx.invoked_subcommand is not None:
         return
 
-    server, project_path = ensure_server_running(project, json_output or output_format == "json")
+    server, project_path = ensure_server_running(
+        project, json_output or output_format == "json"
+    )
     client = get_client(server)
 
     with handle_api_errors():
@@ -309,7 +323,9 @@ def dependency_graph(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Get full dependency graph for visualization."""
-    server, project_path = ensure_server_running(project, json_output or output_format == "json")
+    server, project_path = ensure_server_running(
+        project, json_output or output_format == "json"
+    )
     client = get_client(server)
 
     with handle_api_errors():
@@ -339,7 +355,9 @@ def dependency_graph(
             console.print("\n[bold]Dependency Graph[/bold]")
             console.print(f"  Nodes: {len(nodes)}")
             console.print(f"  Edges: {len(edges)}")
-            console.print(f"  Acyclic: {'[green]Yes[/green]' if graph.get('isAcyclic') else '[red]No[/red]'}")
+            console.print(
+                f"  Acyclic: {'[green]Yes[/green]' if graph.get('isAcyclic') else '[red]No[/red]'}"
+            )
             console.print()
 
             if cycles:
@@ -349,7 +367,9 @@ def dependency_graph(
                 console.print()
 
             # Show high-impact nodes
-            high_impact = sorted(nodes, key=lambda n: n.get("inDegree", 0), reverse=True)[:10]
+            high_impact = sorted(
+                nodes, key=lambda n: n.get("inDegree", 0), reverse=True
+            )[:10]
             if high_impact:
                 console.print("[bold]High-Impact Nodes[/bold] (most dependents)")
                 table = Table(show_header=True, header_style="bold")
@@ -362,7 +382,11 @@ def dependency_graph(
                 for node in high_impact:
                     class_type = node.get("type", "OTHER")
                     complexity = node.get("complexity")
-                    complexity_str = f"[{_tier_style(complexity)}]{complexity}[/{_tier_style(complexity)}]" if complexity else "-"
+                    complexity_str = (
+                        f"[{_tier_style(complexity)}]{complexity}[/{_tier_style(complexity)}]"
+                        if complexity
+                        else "-"
+                    )
 
                     table.add_row(
                         node.get("label", ""),
@@ -375,5 +399,7 @@ def dependency_graph(
                 console.print(table)
                 console.print()
 
-            console.print("[dim]Use --format dot -o graph.dot to export for Graphviz visualization[/dim]")
+            console.print(
+                "[dim]Use --format dot -o graph.dot to export for Graphviz visualization[/dim]"
+            )
             console.print()

@@ -60,7 +60,9 @@ def start(
             console.print(
                 f"[yellow]Server already running for {project_path.name}[/yellow]"
             )
-            print_server_status(existing.model_dump(by_alias=True, mode="json"), console)
+            print_server_status(
+                existing.model_dump(by_alias=True, mode="json"), console
+            )
         return
 
     if not json_output and is_tty():
@@ -227,7 +229,9 @@ def refresh(
 
     server = server_service.find_server(project_path)
     if server is None:
-        err_console.print(f"[red]Error:[/red] No server running for {project_path.name}")
+        err_console.print(
+            f"[red]Error:[/red] No server running for {project_path.name}"
+        )
         err_console.print("\nStart with: [cyan]codelens start[/cyan]")
         raise typer.Exit(ExitCode.NOT_RUNNING)
 

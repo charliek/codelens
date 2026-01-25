@@ -1,12 +1,9 @@
 """Formatters for source code output."""
 
 from rich.console import Console
-from rich.panel import Panel
 from rich.syntax import Syntax
 
 from codelens_cli.models import (
-    MethodSourceInfo,
-    SourceInfo,
     SourceLanguage,
     SourceResponse,
     MethodSourceResponse,
@@ -31,7 +28,9 @@ def print_source(response: SourceResponse) -> None:
     # Print header
     console.print(f"\n[bold]{source.fqn}[/bold]")
     console.print(f"[dim]File: {source.file_path}[/dim]")
-    console.print(f"[dim]Language: {source.language.value} | Lines: {source.line_count}[/dim]")
+    console.print(
+        f"[dim]Language: {source.language.value} | Lines: {source.line_count}[/dim]"
+    )
     if source.module:
         console.print(f"[dim]Module: {source.module}[/dim]")
     console.print()
@@ -56,13 +55,13 @@ def _detect_language_from_content(content: str) -> str:
     """
     # Kotlin-specific patterns that don't appear in Java
     kotlin_patterns = [
-        "fun ",      # Kotlin function declaration
-        "val ",      # Kotlin val declaration
-        "var ",      # Kotlin var declaration (also in Java 10+ but rare)
+        "fun ",  # Kotlin function declaration
+        "val ",  # Kotlin val declaration
+        "var ",  # Kotlin var declaration (also in Java 10+ but rare)
         ": String",  # Kotlin type annotation style
-        ": Int",     # Kotlin type annotation style
-        "?.let",     # Kotlin safe call
-        "?:",        # Elvis operator
+        ": Int",  # Kotlin type annotation style
+        "?.let",  # Kotlin safe call
+        "?:",  # Elvis operator
         "companion object",
         "data class",
         "sealed class",

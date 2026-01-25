@@ -26,9 +26,7 @@ class ServiceContainer:
     def project_service(cls) -> ProjectService:
         """Get or create the ProjectService instance."""
         if cls._project_service is None:
-            cls._project_service = ProjectService(
-                server_service=cls.server_service()
-            )
+            cls._project_service = ProjectService(server_service=cls.server_service())
         return cls._project_service
 
     @classmethod

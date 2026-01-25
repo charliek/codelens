@@ -357,7 +357,9 @@ class ImplementationsResponse(BaseModel):
 
     target_class: str = Field(alias="targetClass")
     direct_implementations: list[ClassSummary] = Field(alias="directImplementations")
-    indirect_implementations: list[ClassSummary] = Field(alias="indirectImplementations")
+    indirect_implementations: list[ClassSummary] = Field(
+        alias="indirectImplementations"
+    )
     total_count: int = Field(alias="totalCount")
 
     class Config:

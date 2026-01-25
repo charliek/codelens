@@ -6,7 +6,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.output import is_tty, print_json
 
 app = typer.Typer(
@@ -206,9 +210,7 @@ def search_promises(
     fork: Optional[bool] = typer.Option(
         None, "--fork/--no-fork", help="Filter by fork usage"
     ),
-    min_operations: int = typer.Option(
-        0, "--min-ops", help="Minimum operation count"
-    ),
+    min_operations: int = typer.Option(0, "--min-ops", help="Minimum operation count"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Search for classes with specific Promise usage patterns."""

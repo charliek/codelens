@@ -19,7 +19,9 @@ class ExitCode(IntEnum):
 class CodeLensError(Exception):
     """Base exception for CodeLens CLI errors."""
 
-    def __init__(self, message: str, exit_code: ExitCode = ExitCode.GENERAL_ERROR) -> None:
+    def __init__(
+        self, message: str, exit_code: ExitCode = ExitCode.GENERAL_ERROR
+    ) -> None:
         super().__init__(message)
         self.exit_code = exit_code
 

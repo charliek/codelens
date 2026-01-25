@@ -7,7 +7,11 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from codelens_cli.commands.common import ensure_server_running, get_client, handle_api_errors
+from codelens_cli.commands.common import (
+    ensure_server_running,
+    get_client,
+    handle_api_errors,
+)
 from codelens_cli.output import is_tty, print_json
 
 app = typer.Typer(
@@ -75,8 +79,16 @@ def _print_antipattern_summary(data: dict) -> None:
             offender_table.add_row(
                 offender.get("classFqn", "").split(".")[-1],  # Simple name
                 str(offender.get("count", 0)),
-                str(offender.get("criticalCount", 0)) if offender.get("criticalCount", 0) > 0 else "-",
-                str(offender.get("errorCount", 0)) if offender.get("errorCount", 0) > 0 else "-",
+                (
+                    str(offender.get("criticalCount", 0))
+                    if offender.get("criticalCount", 0) > 0
+                    else "-"
+                ),
+                (
+                    str(offender.get("errorCount", 0))
+                    if offender.get("errorCount", 0) > 0
+                    else "-"
+                ),
             )
         console.print(offender_table)
 
@@ -91,9 +103,13 @@ def _print_antipattern_summary(data: dict) -> None:
             method = instance.get("methodName")
             location = f"{class_name}.{method}" if method else class_name
 
-            console.print(f"\n[{style}][{severity}][/{style}] {instance.get('type', '')} in [cyan]{location}[/cyan]")
+            console.print(
+                f"\n[{style}][{severity}][/{style}] {instance.get('type', '')} in [cyan]{location}[/cyan]"
+            )
             console.print(f"  {instance.get('reason', '')}")
-            console.print(f"  [dim]Recommendation:[/dim] {instance.get('recommendation', '')}")
+            console.print(
+                f"  [dim]Recommendation:[/dim] {instance.get('recommendation', '')}"
+            )
 
     console.print()
 
