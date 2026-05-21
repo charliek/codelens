@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
  * - bind().to() patterns (inferred from method signatures)
  */
 class GuiceModuleDetector(
-    private val classGraphProvider: ClassGraphProvider
+    private val classGraphProvider: ClassGraphProvider,
 ) {
     private val logger = LoggerFactory.getLogger(GuiceModuleDetector::class.java)
 
@@ -31,16 +31,18 @@ class GuiceModuleDetector(
         val modules = mutableListOf<GuiceModuleSummary>()
 
         // Find AbstractModule implementations
-        val (directAbstract, indirectAbstract) = classGraphProvider.getImplementations(
-            RatpackTypes.ABSTRACT_MODULE,
-            includeLibraries
-        )
+        val (directAbstract, indirectAbstract) =
+            classGraphProvider.getImplementations(
+                RatpackTypes.ABSTRACT_MODULE,
+                includeLibraries,
+            )
 
         // Find ConfigurableModule implementations
-        val (directConfigurable, indirectConfigurable) = classGraphProvider.getImplementations(
-            RatpackTypes.CONFIGURABLE_MODULE,
-            includeLibraries
-        )
+        val (directConfigurable, indirectConfigurable) =
+            classGraphProvider.getImplementations(
+                RatpackTypes.CONFIGURABLE_MODULE,
+                includeLibraries,
+            )
 
         // Process all module implementations
         val allModuleFqns = mutableSetOf<String>()
@@ -63,8 +65,8 @@ class GuiceModuleDetector(
                     packageName = classInfo.name.packageName,
                     moduleType = moduleType,
                     bindingCount = bindingCount,
-                    providesMethodCount = providesMethods
-                )
+                    providesMethodCount = providesMethods,
+                ),
             )
         }
 
@@ -83,8 +85,8 @@ class GuiceModuleDetector(
                     packageName = classInfo.name.packageName,
                     moduleType = GuiceModuleType.PROVIDER_CLASS,
                     bindingCount = 0,
-                    providesMethodCount = providesMethods
-                )
+                    providesMethodCount = providesMethods,
+                ),
             )
         }
 
@@ -126,7 +128,7 @@ class GuiceModuleDetector(
             configType = configType,
             bindings = bindings,
             providesMethods = providesMethods,
-            installedModules = installedModules
+            installedModules = installedModules,
         )
     }
 
@@ -155,17 +157,19 @@ class GuiceModuleDetector(
             for (provides in moduleInfo.providesMethods) {
                 if (provides.providesType == typeFqn) {
                     results.add(
-                        moduleSummary.fqn to GuiceBinding(
-                            boundType = provides.providesType,
-                            toType = null,
-                            scope = provides.scope,
-                            isMultibinding = provides.intoSet || provides.intoMap,
-                            bindingSource = when {
-                                provides.intoSet -> BindingSource.PROVIDES_INTO_SET
-                                provides.intoMap -> BindingSource.PROVIDES_INTO_MAP
-                                else -> BindingSource.PROVIDES
-                            }
-                        )
+                        moduleSummary.fqn to
+                            GuiceBinding(
+                                boundType = provides.providesType,
+                                toType = null,
+                                scope = provides.scope,
+                                isMultibinding = provides.intoSet || provides.intoMap,
+                                bindingSource =
+                                    when {
+                                        provides.intoSet -> BindingSource.PROVIDES_INTO_SET
+                                        provides.intoMap -> BindingSource.PROVIDES_INTO_MAP
+                                        else -> BindingSource.PROVIDES
+                                    },
+                            ),
                     )
                 }
             }
@@ -177,8 +181,8 @@ class GuiceModuleDetector(
     /**
      * Determine the type of Guice module.
      */
-    private fun determineModuleType(classInfo: ClassInfo): GuiceModuleType {
-        return when {
+    private fun determineModuleType(classInfo: ClassInfo): GuiceModuleType =
+        when {
             extendsClass(classInfo, RatpackTypes.CONFIGURABLE_MODULE) ->
                 GuiceModuleType.CONFIGURABLE_MODULE
 
@@ -187,12 +191,14 @@ class GuiceModuleDetector(
 
             else -> GuiceModuleType.PROVIDER_CLASS
         }
-    }
 
     /**
      * Check if a class extends a specific superclass (directly or indirectly).
      */
-    private fun extendsClass(classInfo: ClassInfo, targetSuperclass: String): Boolean {
+    private fun extendsClass(
+        classInfo: ClassInfo,
+        targetSuperclass: String,
+    ): Boolean {
         var current: ClassInfo? = classInfo
         val visited = mutableSetOf<String>()
 
@@ -211,15 +217,14 @@ class GuiceModuleDetector(
     /**
      * Count @Provides methods in a class.
      */
-    private fun countProvidesMethods(classInfo: ClassInfo): Int {
-        return classInfo.methods.count { method ->
+    private fun countProvidesMethods(classInfo: ClassInfo): Int =
+        classInfo.methods.count { method ->
             method.annotations.any { ann ->
                 ann.type == RatpackTypes.PROVIDES ||
                     ann.type == RatpackTypes.PROVIDES_INTO_SET ||
                     ann.type == RatpackTypes.PROVIDES_INTO_MAP
             }
         }
-    }
 
     /**
      * Estimate binding count from class structure.
@@ -227,25 +232,25 @@ class GuiceModuleDetector(
      */
     private fun estimateBindingCount(classInfo: ClassInfo): Int {
         // Look for configure() method - indicates module has bindings
-        val hasConfigure = classInfo.methods.any {
-            it.name == "configure" && it.parameters.isEmpty()
-        }
+        val hasConfigure =
+            classInfo.methods.any {
+                it.name == "configure" && it.parameters.isEmpty()
+            }
         return if (hasConfigure) 1 else 0 // Placeholder - real count would need bytecode analysis
     }
 
     /**
      * Extract @Provides method information.
      */
-    private fun extractProvidesMethods(classInfo: ClassInfo): List<ProvidesMethodInfo> {
-        return classInfo.methods
+    private fun extractProvidesMethods(classInfo: ClassInfo): List<ProvidesMethodInfo> =
+        classInfo.methods
             .filter { method ->
                 method.annotations.any { ann ->
                     ann.type == RatpackTypes.PROVIDES ||
                         ann.type == RatpackTypes.PROVIDES_INTO_SET ||
                         ann.type == RatpackTypes.PROVIDES_INTO_MAP
                 }
-            }
-            .map { method ->
+            }.map { method ->
                 val isIntoSet = method.annotations.any { it.type == RatpackTypes.PROVIDES_INTO_SET }
                 val isIntoMap = method.annotations.any { it.type == RatpackTypes.PROVIDES_INTO_MAP }
 
@@ -257,10 +262,9 @@ class GuiceModuleDetector(
                     scope = scope,
                     intoSet = isIntoSet,
                     intoMap = isIntoMap,
-                    dependencies = method.parameters.map { cleanTypeName(it.type) }
+                    dependencies = method.parameters.map { cleanTypeName(it.type) },
                 )
             }
-    }
 
     /**
      * Extract bindings from module.
@@ -283,8 +287,8 @@ class GuiceModuleDetector(
                             toType = null,
                             scope = null,
                             isMultibinding = false,
-                            bindingSource = BindingSource.BIND_TO_PROVIDER
-                        )
+                            bindingSource = BindingSource.BIND_TO_PROVIDER,
+                        ),
                     )
                 }
             }
@@ -361,12 +365,11 @@ class GuiceModuleDetector(
     /**
      * Clean up a type name (remove generics, arrays, etc. for comparison).
      */
-    private fun cleanTypeName(type: String): String {
-        return type
+    private fun cleanTypeName(type: String): String =
+        type
             .substringBefore("<")
             .substringBefore("[")
             .trim()
-    }
 
     /**
      * Extract generic type parameter from a parameterized type.

@@ -16,86 +16,86 @@ import kotlinx.serialization.Serializable
 data class HandlerListResponse(
     val handlers: List<HandlerSummary>,
     val totalCount: Int,
-    val appliedFilters: HandlerFilterSummary
+    val appliedFilters: HandlerFilterSummary,
 )
 
 @Serializable
 data class HandlerFilterSummary(
     val handlerType: String?,
-    val tier: String?
+    val tier: String?,
 )
 
 @Serializable
 data class HandlerDetailResponse(
-    val handler: HandlerInfo
+    val handler: HandlerInfo,
 )
 
 @Serializable
 data class PromiseSummaryResponse(
-    val summary: PromiseSummary
+    val summary: PromiseSummary,
 )
 
 @Serializable
 data class PromiseUsageResponse(
-    val usage: PromiseUsageInfo
+    val usage: PromiseUsageInfo,
 )
 
 @Serializable
 data class PromiseSearchResponse(
     val results: List<PromiseUsageInfo>,
-    val totalCount: Int
+    val totalCount: Int,
 )
 
 @Serializable
 data class ComplexitySummaryResponse(
-    val summary: ComplexitySummary
+    val summary: ComplexitySummary,
 )
 
 @Serializable
 data class ComplexityDetailResponse(
-    val complexity: ComplexityResult
+    val complexity: ComplexityResult,
 )
 
 @Serializable
 data class MigrationOrderResponse(
     val order: List<MigrationOrderItem>,
     val totalCount: Int,
-    val totalEstimatedHours: Double
+    val totalEstimatedHours: Double,
 )
 
 @Serializable
 data class ModuleListResponse(
     val modules: List<GuiceModuleSummary>,
-    val totalCount: Int
+    val totalCount: Int,
 )
 
 @Serializable
 data class ModuleDetailResponse(
-    val module: GuiceModuleInfo
+    val module: GuiceModuleInfo,
 )
 
 @Serializable
 data class BindingSearchResponse(
     val typeFqn: String,
     val bindings: List<TypeBindingResult>,
-    val totalCount: Int
+    val totalCount: Int,
 )
 
 @Serializable
 data class TypeBindingResult(
     val moduleFqn: String,
-    val binding: GuiceBinding
+    val binding: GuiceBinding,
 )
 
 @Serializable
 data class IntegrationsResponse(
     val summary: ProjectIntegrationSummary,
-    val filter: IntegrationFilterApplied? = null
+    val filter: IntegrationFilterApplied? = null,
 )
 
 @Serializable
 data class ClassIntegrationsDetailResponse(
-    val classIntegrations: ClassIntegrations
+    val classIntegrations: ClassIntegrations,
 )
 
 @Serializable
@@ -103,37 +103,37 @@ data class IntegrationsByTypeResponse(
     val type: IntegrationType,
     val subType: IntegrationSubType? = null,
     val classes: List<ClassIntegrations>,
-    val totalCount: Int
+    val totalCount: Int,
 )
 
 @Serializable
 data class AntiPatternSummaryResponse(
     val summary: AntiPatternSummary,
-    val appliedFilters: AntiPatternFilterApplied
+    val appliedFilters: AntiPatternFilterApplied,
 )
 
 @Serializable
 data class AntiPatternFilterApplied(
     val severity: String? = null,
     val type: String? = null,
-    val includeLibraries: Boolean = false
+    val includeLibraries: Boolean = false,
 )
 
 @Serializable
 data class ClassAntiPatternsResponse(
     val classFqn: String,
     val antiPatterns: List<AntiPatternInstance>,
-    val totalCount: Int
+    val totalCount: Int,
 )
 
 @Serializable
 data class RoutingSummaryResponse(
-    val summary: RoutingSummary
+    val summary: RoutingSummary,
 )
 
 @Serializable
 data class RouteTreeResponse(
-    val tree: RouteTreeNode
+    val tree: RouteTreeNode,
 )
 
 // ============================================================================
@@ -164,54 +164,62 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
 
             // Validate type parameter
-            val handlerType = if (typeParam != null) {
-                try {
-                    HandlerType.valueOf(typeParam.uppercase())
-                } catch (e: IllegalArgumentException) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        ErrorResponse(
-                            code = 400,
-                            type = "BadRequest",
-                            message = "Invalid handler type: $typeParam. Valid values: ${HandlerType.entries.joinToString()}"
+            val handlerType =
+                if (typeParam != null) {
+                    try {
+                        HandlerType.valueOf(typeParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid handler type: $typeParam. Valid values: ${HandlerType.entries.joinToString()}",
+                            ),
                         )
-                    )
-                    return@get
+                        return@get
+                    }
+                } else {
+                    null
                 }
-            } else null
 
             // Validate tier parameter
-            val tier = if (tierParam != null) {
-                try {
-                    ComplexityTier.valueOf(tierParam.uppercase())
-                } catch (e: IllegalArgumentException) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        ErrorResponse(
-                            code = 400,
-                            type = "BadRequest",
-                            message = "Invalid complexity tier: $tierParam. Valid values: ${ComplexityTier.entries.joinToString()}"
+            val tier =
+                if (tierParam != null) {
+                    try {
+                        ComplexityTier.valueOf(tierParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid complexity tier: $tierParam. Valid values: ${ComplexityTier.entries.joinToString()}",
+                            ),
                         )
-                    )
-                    return@get
+                        return@get
+                    }
+                } else {
+                    null
                 }
-            } else null
 
-            val handlers = ratpackService.listHandlers(
-                handlerType = handlerType,
-                tier = tier,
-                includeLibraries = includeLibraries
-            )
+            val handlers =
+                ratpackService.listHandlers(
+                    handlerType = handlerType,
+                    tier = tier,
+                    includeLibraries = includeLibraries,
+                )
 
             call.respond(
                 HandlerListResponse(
                     handlers = handlers,
                     totalCount = handlers.size,
-                    appliedFilters = HandlerFilterSummary(
-                        handlerType = typeParam,
-                        tier = tierParam
-                    )
-                )
+                    appliedFilters =
+                        HandlerFilterSummary(
+                            handlerType = typeParam,
+                            tier = tierParam,
+                        ),
+                ),
             )
         }
 
@@ -224,7 +232,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (fqn.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Handler FQN is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Handler FQN is required"),
                 )
                 return@get
             }
@@ -235,7 +243,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             } else {
                 call.respond(
                     HttpStatusCode.NotFound,
-                    ErrorResponse(code = 404, type = "NotFound", message = "Handler not found: $fqn")
+                    ErrorResponse(code = 404, type = "NotFound", message = "Handler not found: $fqn"),
                 )
             }
         }
@@ -274,18 +282,19 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             val usesFork = call.request.queryParameters["usesFork"]?.toBoolean()
             val minOperations = call.request.queryParameters["minOperations"]?.toIntOrNull() ?: 0
 
-            val results = ratpackService.searchPromiseUsage(
-                usesBlocking = usesBlocking,
-                usesAsync = usesAsync,
-                usesFork = usesFork,
-                minOperations = minOperations
-            )
+            val results =
+                ratpackService.searchPromiseUsage(
+                    usesBlocking = usesBlocking,
+                    usesAsync = usesAsync,
+                    usesFork = usesFork,
+                    minOperations = minOperations,
+                )
 
             call.respond(
                 PromiseSearchResponse(
                     results = results,
-                    totalCount = results.size
-                )
+                    totalCount = results.size,
+                ),
             )
         }
 
@@ -298,7 +307,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (fqn.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required"),
                 )
                 return@get
             }
@@ -329,7 +338,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (fqn.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required"),
                 )
                 return@get
             }
@@ -348,8 +357,8 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
                 MigrationOrderResponse(
                     order = summary.migrationOrder,
                     totalCount = summary.migrationOrder.size,
-                    totalEstimatedHours = summary.totalEstimatedHours
-                )
+                    totalEstimatedHours = summary.totalEstimatedHours,
+                ),
             )
         }
 
@@ -371,8 +380,8 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             call.respond(
                 ModuleListResponse(
                     modules = modules,
-                    totalCount = modules.size
-                )
+                    totalCount = modules.size,
+                ),
             )
         }
 
@@ -385,7 +394,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (fqn.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Module FQN is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Module FQN is required"),
                 )
                 return@get
             }
@@ -396,7 +405,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             } else {
                 call.respond(
                     HttpStatusCode.NotFound,
-                    ErrorResponse(code = 404, type = "NotFound", message = "Module not found: $fqn")
+                    ErrorResponse(code = 404, type = "NotFound", message = "Module not found: $fqn"),
                 )
             }
         }
@@ -410,7 +419,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (fqn.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Type FQN is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Type FQN is required"),
                 )
                 return@get
             }
@@ -419,11 +428,12 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             call.respond(
                 BindingSearchResponse(
                     typeFqn = fqn,
-                    bindings = bindings.map { (moduleFqn, binding) ->
-                        TypeBindingResult(moduleFqn = moduleFqn, binding = binding)
-                    },
-                    totalCount = bindings.size
-                )
+                    bindings =
+                        bindings.map { (moduleFqn, binding) ->
+                            TypeBindingResult(moduleFqn = moduleFqn, binding = binding)
+                        },
+                    totalCount = bindings.size,
+                ),
             )
         }
 
@@ -447,35 +457,39 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
 
             // If filtering by type, use findByType
             if (typeParam != null) {
-                val type = try {
-                    IntegrationType.valueOf(typeParam.uppercase())
-                } catch (e: IllegalArgumentException) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        ErrorResponse(
-                            code = 400,
-                            type = "BadRequest",
-                            message = "Invalid integration type: $typeParam. Valid values: ${IntegrationType.entries.joinToString()}"
-                        )
-                    )
-                    return@get
-                }
-
-                val subType = if (subTypeParam != null) {
+                val type =
                     try {
-                        IntegrationSubType.valueOf(subTypeParam.uppercase())
+                        IntegrationType.valueOf(typeParam.uppercase())
                     } catch (e: IllegalArgumentException) {
                         call.respond(
                             HttpStatusCode.BadRequest,
                             ErrorResponse(
                                 code = 400,
                                 type = "BadRequest",
-                                message = "Invalid integration sub-type: $subTypeParam"
-                            )
+                                message = "Invalid integration type: $typeParam. Valid values: ${IntegrationType.entries.joinToString()}",
+                            ),
                         )
                         return@get
                     }
-                } else null
+
+                val subType =
+                    if (subTypeParam != null) {
+                        try {
+                            IntegrationSubType.valueOf(subTypeParam.uppercase())
+                        } catch (e: IllegalArgumentException) {
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                ErrorResponse(
+                                    code = 400,
+                                    type = "BadRequest",
+                                    message = "Invalid integration sub-type: $subTypeParam",
+                                ),
+                            )
+                            return@get
+                        }
+                    } else {
+                        null
+                    }
 
                 val classes = ratpackService.findIntegrationsByType(type, subType, includeLibraries)
                 call.respond(
@@ -483,8 +497,8 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
                         type = type,
                         subType = subType,
                         classes = classes,
-                        totalCount = classes.size
-                    )
+                        totalCount = classes.size,
+                    ),
                 )
             } else {
                 // Return full summary
@@ -502,7 +516,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (fqn.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required"),
                 )
                 return@get
             }
@@ -513,7 +527,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             } else {
                 call.respond(
                     HttpStatusCode.NotFound,
-                    ErrorResponse(code = 404, type = "NotFound", message = "Class not found: $fqn")
+                    ErrorResponse(code = 404, type = "NotFound", message = "Class not found: $fqn"),
                 )
             }
         }
@@ -531,41 +545,45 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (typeParam.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Integration type is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Integration type is required"),
                 )
                 return@get
             }
 
-            val type = try {
-                IntegrationType.valueOf(typeParam.uppercase())
-            } catch (e: IllegalArgumentException) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        code = 400,
-                        type = "BadRequest",
-                        message = "Invalid integration type: $typeParam. Valid values: ${IntegrationType.entries.joinToString()}"
-                    )
-                )
-                return@get
-            }
-
-            val subTypeParam = call.request.queryParameters["subType"]
-            val subType = if (subTypeParam != null) {
+            val type =
                 try {
-                    IntegrationSubType.valueOf(subTypeParam.uppercase())
+                    IntegrationType.valueOf(typeParam.uppercase())
                 } catch (e: IllegalArgumentException) {
                     call.respond(
                         HttpStatusCode.BadRequest,
                         ErrorResponse(
                             code = 400,
                             type = "BadRequest",
-                            message = "Invalid integration sub-type: $subTypeParam"
-                        )
+                            message = "Invalid integration type: $typeParam. Valid values: ${IntegrationType.entries.joinToString()}",
+                        ),
                     )
                     return@get
                 }
-            } else null
+
+            val subTypeParam = call.request.queryParameters["subType"]
+            val subType =
+                if (subTypeParam != null) {
+                    try {
+                        IntegrationSubType.valueOf(subTypeParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid integration sub-type: $subTypeParam",
+                            ),
+                        )
+                        return@get
+                    }
+                } else {
+                    null
+                }
 
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
             val classes = ratpackService.findIntegrationsByType(type, subType, includeLibraries)
@@ -575,8 +593,8 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
                     type = type,
                     subType = subType,
                     classes = classes,
-                    totalCount = classes.size
-                )
+                    totalCount = classes.size,
+                ),
             )
         }
 
@@ -599,54 +617,62 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
 
             // Validate severity parameter
-            val severity = if (severityParam != null) {
-                try {
-                    AntiPatternSeverity.valueOf(severityParam.uppercase())
-                } catch (e: IllegalArgumentException) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        ErrorResponse(
-                            code = 400,
-                            type = "BadRequest",
-                            message = "Invalid severity: $severityParam. Valid values: ${AntiPatternSeverity.entries.joinToString()}"
+            val severity =
+                if (severityParam != null) {
+                    try {
+                        AntiPatternSeverity.valueOf(severityParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid severity: $severityParam. Valid values: ${AntiPatternSeverity.entries.joinToString()}",
+                            ),
                         )
-                    )
-                    return@get
+                        return@get
+                    }
+                } else {
+                    null
                 }
-            } else null
 
             // Validate type parameter
-            val antiPatternType = if (typeParam != null) {
-                try {
-                    AntiPatternType.valueOf(typeParam.uppercase())
-                } catch (e: IllegalArgumentException) {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        ErrorResponse(
-                            code = 400,
-                            type = "BadRequest",
-                            message = "Invalid anti-pattern type: $typeParam. Valid values: ${AntiPatternType.entries.joinToString()}"
+            val antiPatternType =
+                if (typeParam != null) {
+                    try {
+                        AntiPatternType.valueOf(typeParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid anti-pattern type: $typeParam. Valid values: ${AntiPatternType.entries.joinToString()}",
+                            ),
                         )
-                    )
-                    return@get
+                        return@get
+                    }
+                } else {
+                    null
                 }
-            } else null
 
-            val summary = ratpackService.getAntiPatternSummary(
-                severity = severity,
-                type = antiPatternType,
-                includeLibraries = includeLibraries
-            )
+            val summary =
+                ratpackService.getAntiPatternSummary(
+                    severity = severity,
+                    type = antiPatternType,
+                    includeLibraries = includeLibraries,
+                )
 
             call.respond(
                 AntiPatternSummaryResponse(
                     summary = summary,
-                    appliedFilters = AntiPatternFilterApplied(
-                        severity = severityParam,
-                        type = typeParam,
-                        includeLibraries = includeLibraries
-                    )
-                )
+                    appliedFilters =
+                        AntiPatternFilterApplied(
+                            severity = severityParam,
+                            type = typeParam,
+                            includeLibraries = includeLibraries,
+                        ),
+                ),
             )
         }
 
@@ -659,7 +685,7 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             if (fqn.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required")
+                    ErrorResponse(code = 400, type = "BadRequest", message = "Class FQN is required"),
                 )
                 return@get
             }
@@ -669,8 +695,8 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
                 ClassAntiPatternsResponse(
                     classFqn = fqn,
                     antiPatterns = antiPatterns,
-                    totalCount = antiPatterns.size
-                )
+                    totalCount = antiPatterns.size,
+                ),
             )
         }
 
@@ -755,8 +781,8 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             call.respond(
                 FoundationClassesResponse(
                     foundationClasses = foundationClasses,
-                    count = foundationClasses.size
-                )
+                    count = foundationClasses.size,
+                ),
             )
         }
 
@@ -769,8 +795,8 @@ fun Route.ratpackRoutes(ratpackService: RatpackAnalysisService) {
             call.respond(
                 QuickWinsResponse(
                     quickWins = quickWins,
-                    count = quickWins.size
-                )
+                    count = quickWins.size,
+                ),
             )
         }
 

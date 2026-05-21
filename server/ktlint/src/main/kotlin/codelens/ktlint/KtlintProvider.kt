@@ -1,6 +1,9 @@
 package codelens.ktlint
 
-import codelens.core.model.*
+import codelens.core.model.FormatFileResponse
+import codelens.core.model.FormatProjectResponse
+import codelens.core.model.LintFileResponse
+import codelens.core.model.LintProjectResponse
 import java.io.File
 import java.nio.file.Path
 
@@ -31,7 +34,10 @@ interface KtlintProvider {
      * @param includeTests Whether to include test files
      * @return Lint results for all files
      */
-    fun lintProject(pattern: String? = null, includeTests: Boolean = true): LintProjectResponse
+    fun lintProject(
+        pattern: String? = null,
+        includeTests: Boolean = true,
+    ): LintProjectResponse
 
     /**
      * Format a single file.
@@ -40,7 +46,10 @@ interface KtlintProvider {
      * @param writeToFile If true, writes changes back to file
      * @return Format results with formatted content
      */
-    fun formatFile(filePath: Path, writeToFile: Boolean = false): FormatFileResponse
+    fun formatFile(
+        filePath: Path,
+        writeToFile: Boolean = false,
+    ): FormatFileResponse
 
     /**
      * Format all Kotlin files in the project.
@@ -53,7 +62,7 @@ interface KtlintProvider {
     fun formatProject(
         pattern: String? = null,
         includeTests: Boolean = true,
-        dryRun: Boolean = false
+        dryRun: Boolean = false,
     ): FormatProjectResponse
 
     /**

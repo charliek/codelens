@@ -8,7 +8,7 @@ object RatpackTypes {
     const val HANDLER = "ratpack.handling.Handler"
     const val CONTEXT = "ratpack.handling.Context"
     const val CHAIN = "ratpack.handling.Chain"
-    const val CHAIN_ACTION = "ratpack.func.Action"  // Action<Chain>
+    const val CHAIN_ACTION = "ratpack.func.Action" // Action<Chain>
     const val GROOVY_HANDLER = "ratpack.groovy.handling.GroovyHandler"
 
     // Promise types
@@ -31,29 +31,52 @@ object RatpackTypes {
     const val JAVAX_INJECT = "javax.inject.Inject"
 
     // Scope annotations
-    val SCOPE_ANNOTATIONS = setOf(
-        SINGLETON,
-        "com.google.inject.servlet.RequestScoped",
-        "com.google.inject.servlet.SessionScoped",
-        "ratpack.handling.RequestScoped"
-    )
+    val SCOPE_ANNOTATIONS =
+        setOf(
+            SINGLETON,
+            "com.google.inject.servlet.RequestScoped",
+            "com.google.inject.servlet.SessionScoped",
+            "ratpack.handling.RequestScoped",
+        )
 
     // Inject annotations
-    val INJECT_ANNOTATIONS = setOf(
-        INJECT,
-        JAKARTA_INJECT,
-        JAVAX_INJECT
-    )
+    val INJECT_ANNOTATIONS =
+        setOf(
+            INJECT,
+            JAKARTA_INJECT,
+            JAVAX_INJECT,
+        )
 
     // Promise operators (method names on Promise)
-    val PROMISE_OPERATORS = setOf(
-        "map", "flatMap", "then", "onError", "route",
-        "cache", "retry", "transform", "apply", "flatOp",
-        "mapError", "onYield", "wiretap", "throttle",
-        "time", "close", "result", "next", "nextOp",
-        "flatRight", "right", "left", "flatLeft",
-        "mapIf", "flatMapIf", "retryIf"
-    )
+    val PROMISE_OPERATORS =
+        setOf(
+            "map",
+            "flatMap",
+            "then",
+            "onError",
+            "route",
+            "cache",
+            "retry",
+            "transform",
+            "apply",
+            "flatOp",
+            "mapError",
+            "onYield",
+            "wiretap",
+            "throttle",
+            "time",
+            "close",
+            "result",
+            "next",
+            "nextOp",
+            "flatRight",
+            "right",
+            "left",
+            "flatLeft",
+            "mapIf",
+            "flatMapIf",
+            "retryIf",
+        )
 
     // Blocking method names
     val BLOCKING_METHODS = setOf("get", "on", "exec")

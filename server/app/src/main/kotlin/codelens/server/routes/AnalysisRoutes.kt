@@ -12,7 +12,7 @@ import io.ktor.server.routing.*
  */
 private suspend fun RoutingContext.getFqnOrRespond(
     paramName: String = "fqn",
-    errorMessage: String = "Class FQN is required"
+    errorMessage: String = "Class FQN is required",
 ): String? {
     val fqn = call.parameters.getAll(paramName)?.joinToString(".")
     if (fqn.isNullOrBlank()) {
@@ -21,8 +21,8 @@ private suspend fun RoutingContext.getFqnOrRespond(
             ErrorResponse(
                 code = 400,
                 type = "BadRequest",
-                message = errorMessage
-            )
+                message = errorMessage,
+            ),
         )
         return null
     }
@@ -48,8 +48,8 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                     ErrorResponse(
                         code = 503,
                         type = "ScanNotReady",
-                        message = "Scan has not completed yet"
-                    )
+                        message = "Scan has not completed yet",
+                    ),
                 )
             }
         }
@@ -80,15 +80,16 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
             val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
             val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
 
-            val filter = ClassFilter(
-                packagePattern = packagePattern,
-                namePattern = namePattern,
-                hasAnnotation = annotation,
-                extendsClass = extendsClass,
-                implementsInterface = implementsInterface,
-                onlyInterfaces = onlyInterfaces,
-                includeLibraries = includeLibraries
-            )
+            val filter =
+                ClassFilter(
+                    packagePattern = packagePattern,
+                    namePattern = namePattern,
+                    hasAnnotation = annotation,
+                    extendsClass = extendsClass,
+                    implementsInterface = implementsInterface,
+                    onlyInterfaces = onlyInterfaces,
+                    includeLibraries = includeLibraries,
+                )
 
             val allClasses = analysisService.listClasses(filter)
             val totalCount = allClasses.size
@@ -97,27 +98,30 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
             // Apply pagination
             val startIndex = page * size
             val endIndex = minOf(startIndex + size, totalCount)
-            val pagedClasses = if (startIndex < totalCount) {
-                allClasses.subList(startIndex, endIndex)
-            } else {
-                emptyList()
-            }
+            val pagedClasses =
+                if (startIndex < totalCount) {
+                    allClasses.subList(startIndex, endIndex)
+                } else {
+                    emptyList()
+                }
 
-            val response = ClassListResponse(
-                classes = pagedClasses,
-                totalCount = totalCount,
-                page = page,
-                pageSize = size,
-                totalPages = totalPages,
-                appliedFilter = ClassFilterSummary(
-                    packagePattern = packagePattern,
-                    namePattern = namePattern,
-                    source = if (includeLibraries) null else "PROJECT",
-                    hasAnnotation = annotation,
-                    extendsClass = extendsClass,
-                    implementsInterface = implementsInterface
+            val response =
+                ClassListResponse(
+                    classes = pagedClasses,
+                    totalCount = totalCount,
+                    page = page,
+                    pageSize = size,
+                    totalPages = totalPages,
+                    appliedFilter =
+                        ClassFilterSummary(
+                            packagePattern = packagePattern,
+                            namePattern = namePattern,
+                            source = if (includeLibraries) null else "PROJECT",
+                            hasAnnotation = annotation,
+                            extendsClass = extendsClass,
+                            implementsInterface = implementsInterface,
+                        ),
                 )
-            )
 
             call.respond(response)
         }
@@ -138,8 +142,8 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                     ErrorResponse(
                         code = 404,
                         type = "NotFound",
-                        message = "Class not found: $fqn"
-                    )
+                        message = "Class not found: $fqn",
+                    ),
                 )
             }
         }
@@ -163,8 +167,8 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                     targetClass = fqn,
                     directImplementations = direct,
                     indirectImplementations = indirect,
-                    totalCount = direct.size + indirect.size
-                )
+                    totalCount = direct.size + indirect.size,
+                ),
             )
         }
 
@@ -184,8 +188,8 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                     ErrorResponse(
                         code = 404,
                         type = "NotFound",
-                        message = "Class not found: $fqn"
-                    )
+                        message = "Class not found: $fqn",
+                    ),
                 )
             }
         }
@@ -208,8 +212,8 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 DependenciesResponse(
                     targetClass = fqn,
                     outgoing = outgoing,
-                    incoming = incoming
-                )
+                    incoming = incoming,
+                ),
             )
         }
 
@@ -231,8 +235,8 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 AnnotationUsagesResponse(
                     annotationFqn = fqn,
                     usages = usages,
-                    totalCount = usages.size
-                )
+                    totalCount = usages.size,
+                ),
             )
         }
 
@@ -260,14 +264,15 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
             val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
             val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
 
-            val filter = MethodFilter(
-                namePattern = namePattern,
-                returnType = returnType,
-                hasAnnotation = annotation,
-                inClass = inClass,
-                inPackage = inPackage,
-                includeLibraries = includeLibraries
-            )
+            val filter =
+                MethodFilter(
+                    namePattern = namePattern,
+                    returnType = returnType,
+                    hasAnnotation = annotation,
+                    inClass = inClass,
+                    inPackage = inPackage,
+                    includeLibraries = includeLibraries,
+                )
 
             val allMethods = analysisService.searchMethods(filter)
             val totalCount = allMethods.size
@@ -276,11 +281,12 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
             // Apply pagination
             val startIndex = page * size
             val endIndex = minOf(startIndex + size, totalCount)
-            val pagedMethods = if (startIndex < totalCount) {
-                allMethods.subList(startIndex, endIndex)
-            } else {
-                emptyList()
-            }
+            val pagedMethods =
+                if (startIndex < totalCount) {
+                    allMethods.subList(startIndex, endIndex)
+                } else {
+                    emptyList()
+                }
 
             call.respond(
                 MethodSearchResponse(
@@ -288,8 +294,8 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                     totalCount = totalCount,
                     page = page,
                     pageSize = size,
-                    totalPages = totalPages
-                )
+                    totalPages = totalPages,
+                ),
             )
         }
     }

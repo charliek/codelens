@@ -20,7 +20,7 @@ class DependencyAnalyzer(
     private val classGraphProvider: ClassGraphProvider,
     // Optional parameters for testing
     ratpackDetectorOverride: RatpackDetector? = null,
-    complexityCalculatorOverride: ComplexityCalculator? = null
+    complexityCalculatorOverride: ComplexityCalculator? = null,
 ) {
     private val logger = LoggerFactory.getLogger(DependencyAnalyzer::class.java)
 
@@ -65,7 +65,7 @@ class DependencyAnalyzer(
             quickWins = quickWins,
             cycles = cycles,
             handlerTiers = tiers,
-            stats = stats
+            stats = stats,
         )
     }
 
@@ -124,7 +124,7 @@ class DependencyAnalyzer(
         /** Reverse adjacency: target -> set of dependents */
         val reverseEdges: Map<String, Set<String>>,
         /** Edge metadata */
-        val edgeTypes: Map<Pair<String, String>, DependencyEdgeType>
+        val edgeTypes: Map<Pair<String, String>, DependencyEdgeType>,
     )
 
     /**
@@ -164,7 +164,7 @@ class DependencyAnalyzer(
             nodes = nodes,
             edges = edges,
             reverseEdges = reverseEdges,
-            edgeTypes = edgeTypes
+            edgeTypes = edgeTypes,
         )
     }
 
@@ -222,9 +222,7 @@ class DependencyAnalyzer(
     /**
      * Extract base type from potentially generic type string.
      */
-    private fun extractBaseType(type: String): String {
-        return type.substringBefore("<").substringBefore("[").trim()
-    }
+    private fun extractBaseType(type: String): String = type.substringBefore("<").substringBefore("[").trim()
 
     // ========================================================================
     // Foundation Classes
@@ -232,7 +230,7 @@ class DependencyAnalyzer(
 
     private fun findFoundationClasses(
         graph: InternalGraph,
-        handlerFqns: Set<String>
+        handlerFqns: Set<String>,
     ): List<FoundationClass> {
         val foundationClasses = mutableListOf<FoundationClass>()
 
@@ -245,15 +243,19 @@ class DependencyAnalyzer(
                 val classInfo = classGraphProvider.getClass(fqn)
                 val classType = classifyClassType(fqn, classInfo)
 
-                foundationClasses.add(FoundationClass(
-                    fqn = fqn,
-                    simpleName = classInfo?.name?.simpleName ?: fqn.substringAfterLast("."),
-                    type = classType,
-                    dependentCount = handlerDependents.size,
-                    dependentHandlers = handlerDependents.map {
-                        classGraphProvider.getClass(it)?.name?.simpleName ?: it.substringAfterLast(".")
-                    }.sorted()
-                ))
+                foundationClasses.add(
+                    FoundationClass(
+                        fqn = fqn,
+                        simpleName = classInfo?.name?.simpleName ?: fqn.substringAfterLast("."),
+                        type = classType,
+                        dependentCount = handlerDependents.size,
+                        dependentHandlers =
+                            handlerDependents
+                                .map {
+                                    classGraphProvider.getClass(it)?.name?.simpleName ?: it.substringAfterLast(".")
+                                }.sorted(),
+                    ),
+                )
             }
         }
 
@@ -263,7 +265,10 @@ class DependencyAnalyzer(
     /**
      * Classify a class type based on naming conventions.
      */
-    private fun classifyClassType(fqn: String, classInfo: ClassInfo?): ClassType {
+    private fun classifyClassType(
+        fqn: String,
+        classInfo: ClassInfo?,
+    ): ClassType {
         val simpleName = classInfo?.name?.simpleName ?: fqn.substringAfterLast(".")
         val lowerName = simpleName.lowercase()
         val packageName = classInfo?.name?.packageName ?: ""
@@ -299,7 +304,7 @@ class DependencyAnalyzer(
 
     private fun findQuickWins(
         handlers: List<HandlerSummary>,
-        graph: InternalGraph
+        graph: InternalGraph,
     ): List<QuickWinHandler> {
         val quickWins = mutableListOf<QuickWinHandler>()
 
@@ -308,19 +313,22 @@ class DependencyAnalyzer(
 
             // Quick win: few dependencies and low complexity
             if (deps.size <= QUICK_WIN_MAX_DEPS &&
-                handler.complexityTier in listOf(ComplexityTier.LOW, ComplexityTier.MEDIUM)) {
-                quickWins.add(QuickWinHandler(
-                    fqn = handler.fqn,
-                    simpleName = handler.simpleName,
-                    dependencyCount = deps.size,
-                    complexity = handler.complexityTier
-                ))
+                handler.complexityTier in listOf(ComplexityTier.LOW, ComplexityTier.MEDIUM)
+            ) {
+                quickWins.add(
+                    QuickWinHandler(
+                        fqn = handler.fqn,
+                        simpleName = handler.simpleName,
+                        dependencyCount = deps.size,
+                        complexity = handler.complexityTier,
+                    ),
+                )
             }
         }
 
         // Sort by dependency count, then by complexity
         return quickWins.sortedWith(
-            compareBy({ it.dependencyCount }, { it.complexity.ordinal })
+            compareBy({ it.dependencyCount }, { it.complexity.ordinal }),
         )
     }
 
@@ -353,18 +361,21 @@ class DependencyAnalyzer(
                         cyclePath.add(neighbor) // Close the cycle
 
                         // Create description
-                        val simpleNames = cyclePath.map {
-                            classGraphProvider.getClass(it)?.name?.simpleName ?: it.substringAfterLast(".")
-                        }
+                        val simpleNames =
+                            cyclePath.map {
+                                classGraphProvider.getClass(it)?.name?.simpleName ?: it.substringAfterLast(".")
+                            }
                         val description = simpleNames.joinToString(" -> ")
 
                         // Avoid duplicate cycles (same cycle starting from different nodes)
                         val normalizedCycle = cyclePath.dropLast(1).sorted()
                         if (cycles.none { it.classes.sorted() == normalizedCycle }) {
-                            cycles.add(DependencyCycle(
-                                classes = cyclePath,
-                                description = description
-                            ))
+                            cycles.add(
+                                DependencyCycle(
+                                    classes = cyclePath,
+                                    description = description,
+                                ),
+                            )
                         }
                     }
                 }
@@ -397,7 +408,7 @@ class DependencyAnalyzer(
      */
     private fun groupIntoTiers(
         handlers: List<HandlerSummary>,
-        graph: InternalGraph
+        graph: InternalGraph,
     ): List<DependencyTier> {
         val handlerFqns = handlers.map { it.fqn }.toSet()
         val tierAssignments = mutableMapOf<String, Int>()
@@ -446,22 +457,26 @@ class DependencyAnalyzer(
         // Group by tier
         val tierGroups = tierAssignments.entries.groupBy { it.value }
 
-        return tierGroups.map { (tier, entries) ->
-            val description = when (tier) {
-                0 -> "No handler dependencies"
-                1 -> "Depends only on Tier 0 handlers"
-                else -> "Depends on Tier ${tier - 1} or lower handlers"
-            }
+        return tierGroups
+            .map { (tier, entries) ->
+                val description =
+                    when (tier) {
+                        0 -> "No handler dependencies"
+                        1 -> "Depends only on Tier 0 handlers"
+                        else -> "Depends on Tier ${tier - 1} or lower handlers"
+                    }
 
-            DependencyTier(
-                tier = tier,
-                description = description,
-                handlers = entries.map {
-                    classGraphProvider.getClass(it.key)?.name?.simpleName ?: it.key.substringAfterLast(".")
-                }.sorted(),
-                count = entries.size
-            )
-        }.sortedBy { it.tier }
+                DependencyTier(
+                    tier = tier,
+                    description = description,
+                    handlers =
+                        entries
+                            .map {
+                                classGraphProvider.getClass(it.key)?.name?.simpleName ?: it.key.substringAfterLast(".")
+                            }.sorted(),
+                    count = entries.size,
+                )
+            }.sortedBy { it.tier }
     }
 
     // ========================================================================
@@ -471,22 +486,23 @@ class DependencyAnalyzer(
     private fun calculateStats(
         handlers: List<HandlerSummary>,
         graph: InternalGraph,
-        cycles: List<DependencyCycle>
+        cycles: List<DependencyCycle>,
     ): DependencyStats {
         val totalDeps = graph.edges.values.sumOf { it.size }
         val maxDeps = graph.edges.values.maxOfOrNull { it.size } ?: 0
-        val avgDeps = if (handlers.isNotEmpty()) {
-            totalDeps.toDouble() / handlers.size
-        } else {
-            0.0
-        }
+        val avgDeps =
+            if (handlers.isNotEmpty()) {
+                totalDeps.toDouble() / handlers.size
+            } else {
+                0.0
+            }
 
         return DependencyStats(
             totalHandlers = handlers.size,
             totalDependencies = totalDeps,
             avgDependenciesPerHandler = kotlin.math.round(avgDeps * 100) / 100,
             maxDependencies = maxDeps,
-            cycleCount = cycles.size
+            cycleCount = cycles.size,
         )
     }
 
@@ -497,101 +513,111 @@ class DependencyAnalyzer(
     private fun buildVisualGraph(
         graph: InternalGraph,
         handlerFqns: Set<String>,
-        cycles: List<DependencyCycle>
+        cycles: List<DependencyCycle>,
     ): DependencyGraph {
-        val nodes = graph.nodes.map { fqn ->
-            val classInfo = classGraphProvider.getClass(fqn)
-            val inDegree = graph.reverseEdges[fqn]?.size ?: 0
-            val outDegree = graph.edges[fqn]?.size ?: 0
+        val nodes =
+            graph.nodes.map { fqn ->
+                val classInfo = classGraphProvider.getClass(fqn)
+                val inDegree = graph.reverseEdges[fqn]?.size ?: 0
+                val outDegree = graph.edges[fqn]?.size ?: 0
 
-            val complexity = if (fqn in handlerFqns) {
-                classInfo?.let {
-                    complexityCalculator.calculate(fqn).tier
-                }
-            } else null
+                val complexity =
+                    if (fqn in handlerFqns) {
+                        classInfo?.let {
+                            complexityCalculator.calculate(fqn).tier
+                        }
+                    } else {
+                        null
+                    }
 
-            DependencyNode(
-                fqn = fqn,
-                label = classInfo?.name?.simpleName ?: fqn.substringAfterLast("."),
-                type = classifyClassType(fqn, classInfo),
-                complexity = complexity,
-                inDegree = inDegree,
-                outDegree = outDegree
-            )
-        }
+                DependencyNode(
+                    fqn = fqn,
+                    label = classInfo?.name?.simpleName ?: fqn.substringAfterLast("."),
+                    type = classifyClassType(fqn, classInfo),
+                    complexity = complexity,
+                    inDegree = inDegree,
+                    outDegree = outDegree,
+                )
+            }
 
-        val edges = graph.edgeTypes.map { (pair, type) ->
-            DependencyEdge(
-                source = pair.first,
-                target = pair.second,
-                type = type
-            )
-        }
+        val edges =
+            graph.edgeTypes.map { (pair, type) ->
+                DependencyEdge(
+                    source = pair.first,
+                    target = pair.second,
+                    type = type,
+                )
+            }
 
         return DependencyGraph(
             nodes = nodes,
             edges = edges,
             cycles = cycles,
-            isAcyclic = cycles.isEmpty()
+            isAcyclic = cycles.isEmpty(),
         )
     }
 
     /**
      * Escape special characters for DOT format strings.
      */
-    private fun escapeDotString(s: String): String {
-        return s.replace("\\", "\\\\")
+    private fun escapeDotString(s: String): String =
+        s
+            .replace("\\", "\\\\")
             .replace("\"", "\\\"")
             .replace("\n", "\\n")
-    }
 
-    private fun generateDotFormat(graph: DependencyGraph): String = buildString {
-        appendLine("digraph Dependencies {")
-        appendLine("  rankdir=TB;")
-        appendLine("  node [shape=box, style=rounded];")
-        appendLine()
+    private fun generateDotFormat(graph: DependencyGraph): String =
+        buildString {
+            appendLine("digraph Dependencies {")
+            appendLine("  rankdir=TB;")
+            appendLine("  node [shape=box, style=rounded];")
+            appendLine()
 
-        // Define node colors based on type and complexity
-        for (node in graph.nodes) {
-            val color = when {
-                node.type == ClassType.HANDLER -> when (node.complexity) {
-                    ComplexityTier.LOW -> "lightgreen"
-                    ComplexityTier.MEDIUM -> "lightyellow"
-                    ComplexityTier.HIGH -> "orange"
-                    ComplexityTier.CRITICAL -> "lightcoral"
-                    null -> "lightblue"
-                }
-                node.type == ClassType.SERVICE -> "lightblue"
-                node.type == ClassType.REPOSITORY -> "lavender"
-                else -> "lightgray"
+            // Define node colors based on type and complexity
+            for (node in graph.nodes) {
+                val color =
+                    when {
+                        node.type == ClassType.HANDLER ->
+                            when (node.complexity) {
+                                ComplexityTier.LOW -> "lightgreen"
+                                ComplexityTier.MEDIUM -> "lightyellow"
+                                ComplexityTier.HIGH -> "orange"
+                                ComplexityTier.CRITICAL -> "lightcoral"
+                                null -> "lightblue"
+                            }
+                        node.type == ClassType.SERVICE -> "lightblue"
+                        node.type == ClassType.REPOSITORY -> "lavender"
+                        else -> "lightgray"
+                    }
+
+                val shape =
+                    when (node.type) {
+                        ClassType.HANDLER -> "box"
+                        ClassType.SERVICE -> "ellipse"
+                        ClassType.REPOSITORY -> "cylinder"
+                        else -> "box"
+                    }
+
+                val escapedFqn = escapeDotString(node.fqn)
+                val escapedLabel = escapeDotString(node.label)
+                appendLine("  \"$escapedFqn\" [label=\"$escapedLabel\", fillcolor=$color, style=filled, shape=$shape];")
             }
 
-            val shape = when (node.type) {
-                ClassType.HANDLER -> "box"
-                ClassType.SERVICE -> "ellipse"
-                ClassType.REPOSITORY -> "cylinder"
-                else -> "box"
+            appendLine()
+
+            // Define edges
+            for (edge in graph.edges) {
+                val style =
+                    when (edge.type) {
+                        DependencyEdgeType.EXTENDS -> "bold"
+                        DependencyEdgeType.IMPLEMENTS -> "dashed"
+                        else -> "solid"
+                    }
+                val escapedSource = escapeDotString(edge.source)
+                val escapedTarget = escapeDotString(edge.target)
+                appendLine("  \"$escapedSource\" -> \"$escapedTarget\" [style=$style];")
             }
 
-            val escapedFqn = escapeDotString(node.fqn)
-            val escapedLabel = escapeDotString(node.label)
-            appendLine("  \"$escapedFqn\" [label=\"$escapedLabel\", fillcolor=$color, style=filled, shape=$shape];")
+            appendLine("}")
         }
-
-        appendLine()
-
-        // Define edges
-        for (edge in graph.edges) {
-            val style = when (edge.type) {
-                DependencyEdgeType.EXTENDS -> "bold"
-                DependencyEdgeType.IMPLEMENTS -> "dashed"
-                else -> "solid"
-            }
-            val escapedSource = escapeDotString(edge.source)
-            val escapedTarget = escapeDotString(edge.target)
-            appendLine("  \"$escapedSource\" -> \"$escapedTarget\" [style=$style];")
-        }
-
-        appendLine("}")
-    }
 }

@@ -9,14 +9,14 @@ data class ProjectInfo(
     val status: ProjectStatus,
     val classCount: Int? = null,
     val handlerCount: Int? = null,
-    val scannedAt: String? = null
+    val scannedAt: String? = null,
 )
 
 @Serializable
 enum class ProjectStatus {
     LOADING,
     READY,
-    ERROR
+    ERROR,
 }
 
 @Serializable
@@ -32,20 +32,20 @@ data class ServerInfo(
     val uptime: String,
     val lastActivityAt: String,
     val idleDuration: String,
-    val idleTimeout: String
+    val idleTimeout: String,
 )
 
 @Serializable
 data class HealthResponse(
     val status: String,
-    val timestamp: String
+    val timestamp: String,
 )
 
 @Serializable
 data class ReadyResponse(
     val ready: Boolean,
     val status: String,
-    val project: String
+    val project: String,
 )
 
 @Serializable
@@ -53,5 +53,5 @@ data class ErrorResponse(
     val error: Boolean = true,
     val code: Int,
     val type: String,
-    val message: String
+    val message: String,
 )

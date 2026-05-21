@@ -8,7 +8,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class JavadocExtractorTest {
-
     private lateinit var extractor: JavadocExtractor
 
     @BeforeEach
@@ -20,13 +19,14 @@ class JavadocExtractorTest {
 
     @Test
     fun `extracts package declaration`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
                 public void doSomething() { }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -37,7 +37,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `extracts class with javadoc`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             /**
@@ -46,7 +47,7 @@ class JavadocExtractorTest {
             public class MyClass {
                 public void method() { }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -56,7 +57,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `extracts method with javadoc`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
@@ -69,7 +71,7 @@ class JavadocExtractorTest {
                     return name.toUpperCase();
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -80,7 +82,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `strips method body`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
@@ -91,7 +94,7 @@ class JavadocExtractorTest {
                     }
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -104,7 +107,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `public filter includes only public members`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
@@ -113,7 +117,7 @@ class JavadocExtractorTest {
                 private void privateMethod() { }
                 void packageMethod() { }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source, visibility = VisibilityFilter.PUBLIC)
 
@@ -124,7 +128,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `public_protected filter excludes private members`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
@@ -132,7 +137,7 @@ class JavadocExtractorTest {
                 protected void protectedMethod() { }
                 private void privateMethod() { }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source, visibility = VisibilityFilter.PUBLIC_PROTECTED)
 
@@ -143,7 +148,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `all filter includes all members`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
@@ -151,7 +157,7 @@ class JavadocExtractorTest {
                 protected void protectedMethod() { }
                 private void privateMethod() { }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source, visibility = VisibilityFilter.ALL)
 
@@ -164,7 +170,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `extracts interface declaration`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             /**
@@ -176,7 +183,7 @@ class JavadocExtractorTest {
                  */
                 void process(String input);
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -189,7 +196,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `extracts field with javadoc`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
@@ -198,7 +206,7 @@ class JavadocExtractorTest {
                  */
                 public String name;
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -210,7 +218,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `extracts abstract class and methods`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             /**
@@ -222,7 +231,7 @@ class JavadocExtractorTest {
                  */
                 public abstract void handle();
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -235,7 +244,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `extracts Kotlin class with KDoc`() {
-        val source = """
+        val source =
+            """
             package com.example
 
             /**
@@ -249,7 +259,7 @@ class JavadocExtractorTest {
                     println("Hello")
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source, language = "kotlin")
 
@@ -264,22 +274,24 @@ class JavadocExtractorTest {
 
     @Test
     fun `hasDocComments returns true when doc comments exist`() {
-        val source = """
+        val source =
+            """
             /**
              * Has docs.
              */
             public class MyClass { }
-        """.trimIndent()
+            """.trimIndent()
 
         assertTrue(JavadocExtractor.hasDocComments(source))
     }
 
     @Test
     fun `hasDocComments returns false when no doc comments`() {
-        val source = """
+        val source =
+            """
             // Regular comment
             public class MyClass { }
-        """.trimIndent()
+            """.trimIndent()
 
         assertFalse(JavadocExtractor.hasDocComments(source))
     }
@@ -296,11 +308,12 @@ class JavadocExtractorTest {
 
     @Test
     fun `handles source without class declaration`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             // Just a package with comments
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -309,7 +322,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `preserves annotation on class`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             /**
@@ -319,7 +333,7 @@ class JavadocExtractorTest {
             public class OldClass {
                 public void method() { }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -328,7 +342,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `handles nested classes`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             /**
@@ -342,7 +357,7 @@ class JavadocExtractorTest {
                     public void innerMethod() { }
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 
@@ -352,7 +367,8 @@ class JavadocExtractorTest {
 
     @Test
     fun `handles generic methods`() {
-        val source = """
+        val source =
+            """
             package com.example;
 
             public class MyClass {
@@ -363,7 +379,7 @@ class JavadocExtractorTest {
                     return input;
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val result = extractor.extractWithDocs(source)
 

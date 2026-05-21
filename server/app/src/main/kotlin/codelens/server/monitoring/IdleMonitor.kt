@@ -10,7 +10,7 @@ class IdleMonitor(
     private val tracker: ActivityTracker,
     private val timeout: Duration,
     private val checkIntervalMs: Long = 60_000,
-    private val onIdle: () -> Unit
+    private val onIdle: () -> Unit,
 ) {
     @Volatile
     private var running = true
@@ -45,6 +45,10 @@ class IdleMonitor(
  * @param timeout Duration of inactivity before triggering shutdown
  * @param onIdle Callback to invoke when idle timeout is reached
  */
-fun startIdleMonitor(tracker: ActivityTracker, timeout: Duration, onIdle: () -> Unit) {
+fun startIdleMonitor(
+    tracker: ActivityTracker,
+    timeout: Duration,
+    onIdle: () -> Unit,
+) {
     IdleMonitor(tracker, timeout, onIdle = onIdle).start()
 }

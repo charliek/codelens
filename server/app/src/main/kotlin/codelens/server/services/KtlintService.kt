@@ -12,7 +12,7 @@ import java.nio.file.Paths
  * Service for ktlint operations.
  */
 class KtlintService(
-    private val projectDir: File
+    private val projectDir: File,
 ) {
     private val logger = LoggerFactory.getLogger(KtlintService::class.java)
     private val ktlintProvider: KtlintProvider = KtlintProviderImpl()
@@ -33,14 +33,18 @@ class KtlintService(
     /**
      * Lint the entire project.
      */
-    fun lintProject(pattern: String?, includeTests: Boolean): LintProjectResponse {
-        return ktlintProvider.lintProject(pattern, includeTests)
-    }
+    fun lintProject(
+        pattern: String?,
+        includeTests: Boolean,
+    ): LintProjectResponse = ktlintProvider.lintProject(pattern, includeTests)
 
     /**
      * Format a single file.
      */
-    fun formatFile(filePath: String, writeToFile: Boolean): FormatFileResponse {
+    fun formatFile(
+        filePath: String,
+        writeToFile: Boolean,
+    ): FormatFileResponse {
         val path = resolvePath(filePath)
         return ktlintProvider.formatFile(path, writeToFile)
     }
@@ -48,9 +52,11 @@ class KtlintService(
     /**
      * Format the entire project.
      */
-    fun formatProject(pattern: String?, includeTests: Boolean, dryRun: Boolean): FormatProjectResponse {
-        return ktlintProvider.formatProject(pattern, includeTests, dryRun)
-    }
+    fun formatProject(
+        pattern: String?,
+        includeTests: Boolean,
+        dryRun: Boolean,
+    ): FormatProjectResponse = ktlintProvider.formatProject(pattern, includeTests, dryRun)
 
     /**
      * Resolve a file path relative to the project directory if needed.

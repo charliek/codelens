@@ -15,7 +15,7 @@ import codelens.core.model.ratpack.*
  * - Promise chain operations (map, flatMap, then, etc.)
  */
 class PromiseDetector(
-    private val classGraphProvider: ClassGraphProvider
+    private val classGraphProvider: ClassGraphProvider,
 ) {
     /**
      * Analyze Promise usage in a specific class.
@@ -24,8 +24,9 @@ class PromiseDetector(
      * @return Promise usage info for the class
      */
     fun analyzeClass(fqn: String): PromiseUsageInfo {
-        val classInfo = classGraphProvider.getClass(fqn)
-            ?: return emptyPromiseUsageInfo(fqn)
+        val classInfo =
+            classGraphProvider.getClass(fqn)
+                ?: return emptyPromiseUsageInfo(fqn)
 
         val operations = mutableListOf<PromiseOperation>()
         val promiseReturningMethods = mutableListOf<String>()
@@ -49,8 +50,8 @@ class PromiseDetector(
                     PromiseOperation(
                         operationType = PromiseOperationType.PROMISE_VALUE,
                         methodName = "<field:${field.name}>",
-                        chainDepth = 0
-                    )
+                        chainDepth = 0,
+                    ),
                 )
             }
         }
@@ -59,15 +60,16 @@ class PromiseDetector(
             classFqn = fqn,
             operations = operations,
             totalOperationCount = operations.size,
-            usesBlocking = operations.any {
-                it.operationType == PromiseOperationType.BLOCKING_GET ||
-                    it.operationType == PromiseOperationType.BLOCKING_ON
-            },
+            usesBlocking =
+                operations.any {
+                    it.operationType == PromiseOperationType.BLOCKING_GET ||
+                        it.operationType == PromiseOperationType.BLOCKING_ON
+                },
             usesAsync = operations.any { it.operationType == PromiseOperationType.PROMISE_ASYNC },
             usesFork = operations.any { it.operationType == PromiseOperationType.EXECUTION_FORK },
             usesParallelBatch = operations.any { it.operationType == PromiseOperationType.PARALLEL_BATCH },
             maxChainDepth = operations.maxOfOrNull { it.chainDepth } ?: 0,
-            promiseReturningMethods = promiseReturningMethods
+            promiseReturningMethods = promiseReturningMethods,
         )
     }
 
@@ -98,9 +100,10 @@ class PromiseDetector(
         }
 
         // Sort by complexity to find top complex classes
-        val topComplexClasses = allUsages
-            .sortedByDescending { it.totalOperationCount }
-            .take(10)
+        val topComplexClasses =
+            allUsages
+                .sortedByDescending { it.totalOperationCount }
+                .take(10)
 
         return PromiseSummary(
             classesUsingPromises = allUsages.size,
@@ -108,11 +111,12 @@ class PromiseDetector(
             promiseAsyncCount = operationCounts[PromiseOperationType.PROMISE_ASYNC] ?: 0,
             executionForkCount = operationCounts[PromiseOperationType.EXECUTION_FORK] ?: 0,
             parallelBatchCount = operationCounts[PromiseOperationType.PARALLEL_BATCH] ?: 0,
-            operatorCount = operationCounts.entries
-                .filter { it.key.name.startsWith("PROMISE_") }
-                .sumOf { it.value },
+            operatorCount =
+                operationCounts.entries
+                    .filter { it.key.name.startsWith("PROMISE_") }
+                    .sumOf { it.value },
             operationBreakdown = operationCounts,
-            topComplexClasses = topComplexClasses
+            topComplexClasses = topComplexClasses,
         )
     }
 
@@ -129,7 +133,7 @@ class PromiseDetector(
         usesBlocking: Boolean? = null,
         usesAsync: Boolean? = null,
         usesFork: Boolean? = null,
-        minOperations: Int = 0
+        minOperations: Int = 0,
     ): List<PromiseUsageInfo> {
         val filter = codelens.core.model.ClassFilter(includeLibraries = false)
         val classes = classGraphProvider.listClasses(filter)
@@ -170,8 +174,8 @@ class PromiseDetector(
                     PromiseOperation(
                         operationType = detectPromiseReturnType(method),
                         methodName = method.name,
-                        chainDepth = estimateChainDepth(method)
-                    )
+                        chainDepth = estimateChainDepth(method),
+                    ),
                 )
             }
 
@@ -180,8 +184,8 @@ class PromiseDetector(
                     PromiseOperation(
                         operationType = PromiseOperationType.PROMISE_THEN,
                         methodName = method.name,
-                        chainDepth = 1
-                    )
+                        chainDepth = 1,
+                    ),
                 )
             }
         }
@@ -199,8 +203,8 @@ class PromiseDetector(
                         PromiseOperation(
                             operationType = PromiseOperationType.EXECUTION_FORK,
                             methodName = method.name,
-                            chainDepth = 1
-                        )
+                            chainDepth = 1,
+                        ),
                     )
                 }
 
@@ -210,8 +214,8 @@ class PromiseDetector(
                         PromiseOperation(
                             operationType = PromiseOperationType.PROMISE_TRANSFORM,
                             methodName = method.name,
-                            chainDepth = 1
-                        )
+                            chainDepth = 1,
+                        ),
                     )
                 }
             }
@@ -255,17 +259,16 @@ class PromiseDetector(
     /**
      * Check if a type string represents a Promise type.
      */
-    private fun isPromiseType(type: String): Boolean {
-        return type.contains(RatpackTypes.PROMISE) ||
+    private fun isPromiseType(type: String): Boolean =
+        type.contains(RatpackTypes.PROMISE) ||
             type.contains(RatpackTypes.OPERATION) ||
             type.contains(RatpackTypes.BLOCKING)
-    }
 
     /**
      * Create empty Promise usage info for a class.
      */
-    private fun emptyPromiseUsageInfo(fqn: String): PromiseUsageInfo {
-        return PromiseUsageInfo(
+    private fun emptyPromiseUsageInfo(fqn: String): PromiseUsageInfo =
+        PromiseUsageInfo(
             classFqn = fqn,
             operations = emptyList(),
             totalOperationCount = 0,
@@ -274,7 +277,6 @@ class PromiseDetector(
             usesFork = false,
             usesParallelBatch = false,
             maxChainDepth = 0,
-            promiseReturningMethods = emptyList()
+            promiseReturningMethods = emptyList(),
         )
-    }
 }

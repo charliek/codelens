@@ -10,7 +10,7 @@ import java.util.zip.ZipFile
  */
 class JdkSourceResolver(
     private val cache: SourceCache,
-    private val decompiler: Decompiler = Decompiler()
+    private val decompiler: Decompiler = Decompiler(),
 ) {
     private val logger = LoggerFactory.getLogger(JdkSourceResolver::class.java)
 
@@ -24,7 +24,10 @@ class JdkSourceResolver(
      * @param allowDecompilation Whether to fall back to decompilation if src.zip is not available
      * @return Result containing the source code on success, or an error on failure
      */
-    fun resolveSource(className: String, allowDecompilation: Boolean = true): Result<String> {
+    fun resolveSource(
+        className: String,
+        allowDecompilation: Boolean = true,
+    ): Result<String> {
         // Check cache first
         cache.getJdkSource(jdkVersion, className)?.let { cachedSource ->
             logger.debug("Using cached JDK source for: {}", className)
@@ -113,32 +116,36 @@ class JdkSourceResolver(
     /**
      * Extracts source from src.zip for a specific class.
      */
-    private fun extractFromSrcZip(srcZip: File, className: String): String? {
+    private fun extractFromSrcZip(
+        srcZip: File,
+        className: String,
+    ): String? {
         val sourcePath = classToSourcePath(className)
 
         return try {
             ZipFile(srcZip).use { zip ->
                 // JDK 9+ structure: java.base/java/lang/String.java
                 // JDK 8 structure: java/lang/String.java
-                val modulePrefixes = listOf(
-                    "java.base/",
-                    "java.desktop/",
-                    "java.logging/",
-                    "java.management/",
-                    "java.naming/",
-                    "java.net.http/",
-                    "java.prefs/",
-                    "java.rmi/",
-                    "java.scripting/",
-                    "java.security.jgss/",
-                    "java.security.sasl/",
-                    "java.sql/",
-                    "java.sql.rowset/",
-                    "java.transaction.xa/",
-                    "java.xml/",
-                    "java.xml.crypto/",
-                    ""  // Try without module prefix (JDK 8)
-                )
+                val modulePrefixes =
+                    listOf(
+                        "java.base/",
+                        "java.desktop/",
+                        "java.logging/",
+                        "java.management/",
+                        "java.naming/",
+                        "java.net.http/",
+                        "java.prefs/",
+                        "java.rmi/",
+                        "java.scripting/",
+                        "java.security.jgss/",
+                        "java.security.sasl/",
+                        "java.sql/",
+                        "java.sql.rowset/",
+                        "java.transaction.xa/",
+                        "java.xml/",
+                        "java.xml.crypto/",
+                        "", // Try without module prefix (JDK 8)
+                    )
 
                 for (prefix in modulePrefixes) {
                     val entryPath = prefix + sourcePath
@@ -160,7 +167,10 @@ class JdkSourceResolver(
     /**
      * Checks if a class exists in src.zip.
      */
-    private fun hasClassInSrcZip(srcZip: File, className: String): Boolean {
+    private fun hasClassInSrcZip(
+        srcZip: File,
+        className: String,
+    ): Boolean {
         val sourcePath = classToSourcePath(className)
 
         return try {
@@ -190,9 +200,17 @@ class JdkSourceResolver(
     private fun findJrtModule(className: String): String? {
         // JRT filesystem is available in JDK 9+
         return try {
-            val jrtPath = java.nio.file.FileSystems.getFileSystem(java.net.URI.create("jrt:/"))
-                .getPath("modules", "java.base", className.replace('.', '/') + ".class")
-            if (java.nio.file.Files.exists(jrtPath)) "java.base" else null
+            val jrtPath =
+                java.nio.file.FileSystems
+                    .getFileSystem(java.net.URI.create("jrt:/"))
+                    .getPath("modules", "java.base", className.replace('.', '/') + ".class")
+            if (java.nio.file.Files
+                    .exists(jrtPath)
+            ) {
+                "java.base"
+            } else {
+                null
+            }
         } catch (e: Exception) {
             null
         }
@@ -211,9 +229,7 @@ class JdkSourceResolver(
     /**
      * Detects the JDK version.
      */
-    private fun detectJdkVersion(): String {
-        return System.getProperty("java.version") ?: "unknown"
-    }
+    private fun detectJdkVersion(): String = System.getProperty("java.version") ?: "unknown"
 
     /**
      * Converts a class name to source file path.
@@ -229,5 +245,5 @@ class JdkSourceResolver(
  */
 class JdkSourceNotFoundException(
     val className: String,
-    message: String
+    message: String,
 ) : Exception("JDK source not found for $className: $message")

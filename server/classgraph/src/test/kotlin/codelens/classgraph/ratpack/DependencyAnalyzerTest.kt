@@ -20,7 +20,6 @@ import kotlin.test.assertTrue
  * - Quick win identification
  */
 class DependencyAnalyzerTest {
-
     private lateinit var mockProvider: ClassGraphProvider
     private lateinit var mockDetector: RatpackDetector
     private lateinit var mockComplexityCalculator: ComplexityCalculator
@@ -31,11 +30,12 @@ class DependencyAnalyzerTest {
         mockProvider = mockk(relaxed = true)
         mockDetector = mockk(relaxed = true)
         mockComplexityCalculator = mockk(relaxed = true)
-        analyzer = DependencyAnalyzer(
-            mockProvider,
-            ratpackDetectorOverride = mockDetector,
-            complexityCalculatorOverride = mockComplexityCalculator
-        )
+        analyzer =
+            DependencyAnalyzer(
+                mockProvider,
+                ratpackDetectorOverride = mockDetector,
+                complexityCalculatorOverride = mockComplexityCalculator,
+            )
     }
 
     // ========================================================================
@@ -44,16 +44,23 @@ class DependencyAnalyzerTest {
 
     @Nested
     inner class CycleDetectionTests {
-
         @Test
         fun `should detect simple two-node cycle`() {
             // Setup: A -> B -> A
             setupHandlers(listOf("com.example.HandlerA", "com.example.HandlerB"))
 
-            val handlerA = createHandlerClass("com.example.HandlerA", "HandlerA",
-                fields = listOf(createField("serviceB", "com.example.HandlerB")))
-            val handlerB = createHandlerClass("com.example.HandlerB", "HandlerB",
-                fields = listOf(createField("serviceA", "com.example.HandlerA")))
+            val handlerA =
+                createHandlerClass(
+                    "com.example.HandlerA",
+                    "HandlerA",
+                    fields = listOf(createField("serviceB", "com.example.HandlerB")),
+                )
+            val handlerB =
+                createHandlerClass(
+                    "com.example.HandlerB",
+                    "HandlerB",
+                    fields = listOf(createField("serviceA", "com.example.HandlerA")),
+                )
 
             every { mockProvider.getClass("com.example.HandlerA") } returns handlerA
             every { mockProvider.getClass("com.example.HandlerB") } returns handlerB
@@ -70,12 +77,24 @@ class DependencyAnalyzerTest {
             // Setup: A -> B -> C -> A
             setupHandlers(listOf("com.example.A", "com.example.B", "com.example.C"))
 
-            val handlerA = createHandlerClass("com.example.A", "A",
-                fields = listOf(createField("depB", "com.example.B")))
-            val handlerB = createHandlerClass("com.example.B", "B",
-                fields = listOf(createField("depC", "com.example.C")))
-            val handlerC = createHandlerClass("com.example.C", "C",
-                fields = listOf(createField("depA", "com.example.A")))
+            val handlerA =
+                createHandlerClass(
+                    "com.example.A",
+                    "A",
+                    fields = listOf(createField("depB", "com.example.B")),
+                )
+            val handlerB =
+                createHandlerClass(
+                    "com.example.B",
+                    "B",
+                    fields = listOf(createField("depC", "com.example.C")),
+                )
+            val handlerC =
+                createHandlerClass(
+                    "com.example.C",
+                    "C",
+                    fields = listOf(createField("depA", "com.example.A")),
+                )
 
             every { mockProvider.getClass("com.example.A") } returns handlerA
             every { mockProvider.getClass("com.example.B") } returns handlerB
@@ -93,11 +112,16 @@ class DependencyAnalyzerTest {
             // Setup: A -> B, A -> C (no cycles)
             setupHandlers(listOf("com.example.A", "com.example.B", "com.example.C"))
 
-            val handlerA = createHandlerClass("com.example.A", "A",
-                fields = listOf(
-                    createField("depB", "com.example.B"),
-                    createField("depC", "com.example.C")
-                ))
+            val handlerA =
+                createHandlerClass(
+                    "com.example.A",
+                    "A",
+                    fields =
+                        listOf(
+                            createField("depB", "com.example.B"),
+                            createField("depC", "com.example.C"),
+                        ),
+                )
             val handlerB = createHandlerClass("com.example.B", "B")
             val handlerC = createHandlerClass("com.example.C", "C")
 
@@ -116,10 +140,18 @@ class DependencyAnalyzerTest {
             // A -> B -> A should only be reported once, not twice
             setupHandlers(listOf("com.example.A", "com.example.B"))
 
-            val handlerA = createHandlerClass("com.example.A", "A",
-                fields = listOf(createField("depB", "com.example.B")))
-            val handlerB = createHandlerClass("com.example.B", "B",
-                fields = listOf(createField("depA", "com.example.A")))
+            val handlerA =
+                createHandlerClass(
+                    "com.example.A",
+                    "A",
+                    fields = listOf(createField("depB", "com.example.B")),
+                )
+            val handlerB =
+                createHandlerClass(
+                    "com.example.B",
+                    "B",
+                    fields = listOf(createField("depA", "com.example.A")),
+                )
 
             every { mockProvider.getClass("com.example.A") } returns handlerA
             every { mockProvider.getClass("com.example.B") } returns handlerB
@@ -136,7 +168,6 @@ class DependencyAnalyzerTest {
 
     @Nested
     inner class TierGroupingTests {
-
         @Test
         fun `should place handlers with no dependencies in tier 0`() {
             setupHandlers(listOf("com.example.IndependentHandler"))
@@ -156,8 +187,12 @@ class DependencyAnalyzerTest {
             setupHandlers(listOf("com.example.Tier0Handler", "com.example.Tier1Handler"))
 
             val tier0 = createHandlerClass("com.example.Tier0Handler", "Tier0Handler")
-            val tier1 = createHandlerClass("com.example.Tier1Handler", "Tier1Handler",
-                fields = listOf(createField("dep", "com.example.Tier0Handler")))
+            val tier1 =
+                createHandlerClass(
+                    "com.example.Tier1Handler",
+                    "Tier1Handler",
+                    fields = listOf(createField("dep", "com.example.Tier0Handler")),
+                )
 
             every { mockProvider.getClass("com.example.Tier0Handler") } returns tier0
             every { mockProvider.getClass("com.example.Tier1Handler") } returns tier1
@@ -174,17 +209,27 @@ class DependencyAnalyzerTest {
         @Test
         fun `should correctly assign multi-level tiers`() {
             // Tier0 (no deps) <- Tier1 <- Tier2
-            setupHandlers(listOf(
-                "com.example.Tier0",
-                "com.example.Tier1",
-                "com.example.Tier2"
-            ))
+            setupHandlers(
+                listOf(
+                    "com.example.Tier0",
+                    "com.example.Tier1",
+                    "com.example.Tier2",
+                ),
+            )
 
             val tier0 = createHandlerClass("com.example.Tier0", "Tier0")
-            val tier1 = createHandlerClass("com.example.Tier1", "Tier1",
-                fields = listOf(createField("dep", "com.example.Tier0")))
-            val tier2 = createHandlerClass("com.example.Tier2", "Tier2",
-                fields = listOf(createField("dep", "com.example.Tier1")))
+            val tier1 =
+                createHandlerClass(
+                    "com.example.Tier1",
+                    "Tier1",
+                    fields = listOf(createField("dep", "com.example.Tier0")),
+                )
+            val tier2 =
+                createHandlerClass(
+                    "com.example.Tier2",
+                    "Tier2",
+                    fields = listOf(createField("dep", "com.example.Tier1")),
+                )
 
             every { mockProvider.getClass("com.example.Tier0") } returns tier0
             every { mockProvider.getClass("com.example.Tier1") } returns tier1
@@ -204,8 +249,12 @@ class DependencyAnalyzerTest {
             setupHandlers(listOf("com.example.MyHandler"))
 
             val service = createServiceClass("com.example.MyService", "MyService")
-            val handler = createHandlerClass("com.example.MyHandler", "MyHandler",
-                fields = listOf(createField("service", "com.example.MyService")))
+            val handler =
+                createHandlerClass(
+                    "com.example.MyHandler",
+                    "MyHandler",
+                    fields = listOf(createField("service", "com.example.MyService")),
+                )
 
             every { mockProvider.getClass("com.example.MyHandler") } returns handler
             every { mockProvider.getClass("com.example.MyService") } returns service
@@ -214,8 +263,10 @@ class DependencyAnalyzerTest {
 
             // Handler should be tier 0 since it has no *handler* dependencies
             val tier0 = analysis.handlerTiers.find { it.tier == 0 }
-            assertTrue(tier0?.handlers?.contains("MyHandler") == true,
-                "Handler with only service dependencies should be tier 0")
+            assertTrue(
+                tier0?.handlers?.contains("MyHandler") == true,
+                "Handler with only service dependencies should be tier 0",
+            )
         }
     }
 
@@ -225,23 +276,36 @@ class DependencyAnalyzerTest {
 
     @Nested
     inner class FoundationClassTests {
-
         @Test
         fun `should identify class with many handler dependents as foundation`() {
             // Service used by 3+ handlers is a foundation class
-            setupHandlers(listOf(
-                "com.example.Handler1",
-                "com.example.Handler2",
-                "com.example.Handler3"
-            ))
+            setupHandlers(
+                listOf(
+                    "com.example.Handler1",
+                    "com.example.Handler2",
+                    "com.example.Handler3",
+                ),
+            )
 
             val sharedService = createServiceClass("com.example.SharedService", "SharedService")
-            val handler1 = createHandlerClass("com.example.Handler1", "Handler1",
-                fields = listOf(createField("svc", "com.example.SharedService")))
-            val handler2 = createHandlerClass("com.example.Handler2", "Handler2",
-                fields = listOf(createField("svc", "com.example.SharedService")))
-            val handler3 = createHandlerClass("com.example.Handler3", "Handler3",
-                fields = listOf(createField("svc", "com.example.SharedService")))
+            val handler1 =
+                createHandlerClass(
+                    "com.example.Handler1",
+                    "Handler1",
+                    fields = listOf(createField("svc", "com.example.SharedService")),
+                )
+            val handler2 =
+                createHandlerClass(
+                    "com.example.Handler2",
+                    "Handler2",
+                    fields = listOf(createField("svc", "com.example.SharedService")),
+                )
+            val handler3 =
+                createHandlerClass(
+                    "com.example.Handler3",
+                    "Handler3",
+                    fields = listOf(createField("svc", "com.example.SharedService")),
+                )
 
             every { mockProvider.getClass("com.example.SharedService") } returns sharedService
             every { mockProvider.getClass("com.example.Handler1") } returns handler1
@@ -261,8 +325,12 @@ class DependencyAnalyzerTest {
             setupHandlers(listOf("com.example.Handler"))
 
             val service = createServiceClass("com.example.SomeService", "SomeService")
-            val handler = createHandlerClass("com.example.Handler", "Handler",
-                fields = listOf(createField("svc", "com.example.SomeService")))
+            val handler =
+                createHandlerClass(
+                    "com.example.Handler",
+                    "Handler",
+                    fields = listOf(createField("svc", "com.example.SomeService")),
+                )
 
             every { mockProvider.getClass("com.example.SomeService") } returns service
             every { mockProvider.getClass("com.example.Handler") } returns handler
@@ -274,34 +342,62 @@ class DependencyAnalyzerTest {
 
         @Test
         fun `should sort foundation classes by dependent count descending`() {
-            setupHandlers(listOf(
-                "com.example.H1", "com.example.H2", "com.example.H3",
-                "com.example.H4", "com.example.H5"
-            ))
+            setupHandlers(
+                listOf(
+                    "com.example.H1",
+                    "com.example.H2",
+                    "com.example.H3",
+                    "com.example.H4",
+                    "com.example.H5",
+                ),
+            )
 
             val svc3 = createServiceClass("com.example.Svc3Deps", "Svc3Deps")
             val svc5 = createServiceClass("com.example.Svc5Deps", "Svc5Deps")
 
             // 5 handlers depend on Svc5Deps, 3 on Svc3Deps
-            val h1 = createHandlerClass("com.example.H1", "H1",
-                fields = listOf(createField("s1", "com.example.Svc5Deps")))
-            val h2 = createHandlerClass("com.example.H2", "H2",
-                fields = listOf(createField("s1", "com.example.Svc5Deps")))
-            val h3 = createHandlerClass("com.example.H3", "H3",
-                fields = listOf(
-                    createField("s1", "com.example.Svc5Deps"),
-                    createField("s2", "com.example.Svc3Deps")
-                ))
-            val h4 = createHandlerClass("com.example.H4", "H4",
-                fields = listOf(
-                    createField("s1", "com.example.Svc5Deps"),
-                    createField("s2", "com.example.Svc3Deps")
-                ))
-            val h5 = createHandlerClass("com.example.H5", "H5",
-                fields = listOf(
-                    createField("s1", "com.example.Svc5Deps"),
-                    createField("s2", "com.example.Svc3Deps")
-                ))
+            val h1 =
+                createHandlerClass(
+                    "com.example.H1",
+                    "H1",
+                    fields = listOf(createField("s1", "com.example.Svc5Deps")),
+                )
+            val h2 =
+                createHandlerClass(
+                    "com.example.H2",
+                    "H2",
+                    fields = listOf(createField("s1", "com.example.Svc5Deps")),
+                )
+            val h3 =
+                createHandlerClass(
+                    "com.example.H3",
+                    "H3",
+                    fields =
+                        listOf(
+                            createField("s1", "com.example.Svc5Deps"),
+                            createField("s2", "com.example.Svc3Deps"),
+                        ),
+                )
+            val h4 =
+                createHandlerClass(
+                    "com.example.H4",
+                    "H4",
+                    fields =
+                        listOf(
+                            createField("s1", "com.example.Svc5Deps"),
+                            createField("s2", "com.example.Svc3Deps"),
+                        ),
+                )
+            val h5 =
+                createHandlerClass(
+                    "com.example.H5",
+                    "H5",
+                    fields =
+                        listOf(
+                            createField("s1", "com.example.Svc5Deps"),
+                            createField("s2", "com.example.Svc3Deps"),
+                        ),
+                )
 
             every { mockProvider.getClass("com.example.Svc3Deps") } returns svc3
             every { mockProvider.getClass("com.example.Svc5Deps") } returns svc5
@@ -322,14 +418,30 @@ class DependencyAnalyzerTest {
         fun `should correctly classify repository class type`() {
             setupHandlers(listOf("com.example.H1", "com.example.H2", "com.example.H3"))
 
-            val repo = createClass("com.example.UserRepository", "UserRepository",
-                source = ClassSource.PROJECT)
-            val h1 = createHandlerClass("com.example.H1", "H1",
-                fields = listOf(createField("repo", "com.example.UserRepository")))
-            val h2 = createHandlerClass("com.example.H2", "H2",
-                fields = listOf(createField("repo", "com.example.UserRepository")))
-            val h3 = createHandlerClass("com.example.H3", "H3",
-                fields = listOf(createField("repo", "com.example.UserRepository")))
+            val repo =
+                createClass(
+                    "com.example.UserRepository",
+                    "UserRepository",
+                    source = ClassSource.PROJECT,
+                )
+            val h1 =
+                createHandlerClass(
+                    "com.example.H1",
+                    "H1",
+                    fields = listOf(createField("repo", "com.example.UserRepository")),
+                )
+            val h2 =
+                createHandlerClass(
+                    "com.example.H2",
+                    "H2",
+                    fields = listOf(createField("repo", "com.example.UserRepository")),
+                )
+            val h3 =
+                createHandlerClass(
+                    "com.example.H3",
+                    "H3",
+                    fields = listOf(createField("repo", "com.example.UserRepository")),
+                )
 
             every { mockProvider.getClass("com.example.UserRepository") } returns repo
             every { mockProvider.getClass("com.example.H1") } returns h1
@@ -349,7 +461,6 @@ class DependencyAnalyzerTest {
 
     @Nested
     inner class QuickWinsTests {
-
         @Test
         fun `should identify handler with zero dependencies as quick win`() {
             setupHandlers(listOf("com.example.SimpleHandler"), ComplexityTier.LOW)
@@ -369,8 +480,12 @@ class DependencyAnalyzerTest {
             setupHandlers(listOf("com.example.Handler"), ComplexityTier.LOW)
 
             val service = createServiceClass("com.example.Service", "Service")
-            val handler = createHandlerClass("com.example.Handler", "Handler",
-                fields = listOf(createField("svc", "com.example.Service")))
+            val handler =
+                createHandlerClass(
+                    "com.example.Handler",
+                    "Handler",
+                    fields = listOf(createField("svc", "com.example.Service")),
+                )
 
             every { mockProvider.getClass("com.example.Service") } returns service
             every { mockProvider.getClass("com.example.Handler") } returns handler
@@ -399,11 +514,16 @@ class DependencyAnalyzerTest {
 
             val svc1 = createServiceClass("com.example.Svc1", "Svc1")
             val svc2 = createServiceClass("com.example.Svc2", "Svc2")
-            val handler = createHandlerClass("com.example.DependentHandler", "DependentHandler",
-                fields = listOf(
-                    createField("s1", "com.example.Svc1"),
-                    createField("s2", "com.example.Svc2")
-                ))
+            val handler =
+                createHandlerClass(
+                    "com.example.DependentHandler",
+                    "DependentHandler",
+                    fields =
+                        listOf(
+                            createField("s1", "com.example.Svc1"),
+                            createField("s2", "com.example.Svc2"),
+                        ),
+                )
 
             every { mockProvider.getClass("com.example.Svc1") } returns svc1
             every { mockProvider.getClass("com.example.Svc2") } returns svc2
@@ -416,16 +536,23 @@ class DependencyAnalyzerTest {
 
         @Test
         fun `should sort quick wins by dependency count then complexity`() {
-            setupHandlers(listOf(
-                "com.example.ZeroDeps",
-                "com.example.OneDep",
-                "com.example.ZeroDepsMedium"
-            ), listOf(ComplexityTier.LOW, ComplexityTier.LOW, ComplexityTier.MEDIUM))
+            setupHandlers(
+                listOf(
+                    "com.example.ZeroDeps",
+                    "com.example.OneDep",
+                    "com.example.ZeroDepsMedium",
+                ),
+                listOf(ComplexityTier.LOW, ComplexityTier.LOW, ComplexityTier.MEDIUM),
+            )
 
             val service = createServiceClass("com.example.Service", "Service")
             val zeroDeps = createHandlerClass("com.example.ZeroDeps", "ZeroDeps")
-            val oneDep = createHandlerClass("com.example.OneDep", "OneDep",
-                fields = listOf(createField("svc", "com.example.Service")))
+            val oneDep =
+                createHandlerClass(
+                    "com.example.OneDep",
+                    "OneDep",
+                    fields = listOf(createField("svc", "com.example.Service")),
+                )
             val zeroDepsMedium = createHandlerClass("com.example.ZeroDepsMedium", "ZeroDepsMedium")
 
             every { mockProvider.getClass("com.example.Service") } returns service
@@ -451,7 +578,6 @@ class DependencyAnalyzerTest {
 
     @Nested
     inner class StatisticsTests {
-
         @Test
         fun `should calculate correct statistics`() {
             setupHandlers(listOf("com.example.H1", "com.example.H2", "com.example.H3"))
@@ -460,13 +586,22 @@ class DependencyAnalyzerTest {
             val svc2 = createServiceClass("com.example.S2", "S2")
 
             val h1 = createHandlerClass("com.example.H1", "H1") // 0 deps
-            val h2 = createHandlerClass("com.example.H2", "H2",
-                fields = listOf(createField("s1", "com.example.S1"))) // 1 dep
-            val h3 = createHandlerClass("com.example.H3", "H3",
-                fields = listOf(
-                    createField("s1", "com.example.S1"),
-                    createField("s2", "com.example.S2")
-                )) // 2 deps
+            val h2 =
+                createHandlerClass(
+                    "com.example.H2",
+                    "H2",
+                    fields = listOf(createField("s1", "com.example.S1")),
+                ) // 1 dep
+            val h3 =
+                createHandlerClass(
+                    "com.example.H3",
+                    "H3",
+                    fields =
+                        listOf(
+                            createField("s1", "com.example.S1"),
+                            createField("s2", "com.example.S2"),
+                        ),
+                ) // 2 deps
 
             every { mockProvider.getClass("com.example.S1") } returns svc1
             every { mockProvider.getClass("com.example.S2") } returns svc2
@@ -489,7 +624,6 @@ class DependencyAnalyzerTest {
 
     @Nested
     inner class DotFormatTests {
-
         @Test
         fun `should generate valid DOT format`() {
             setupHandlers(listOf("com.example.Handler"))
@@ -509,8 +643,12 @@ class DependencyAnalyzerTest {
             setupHandlers(listOf("com.example.Handler"))
 
             val service = createServiceClass("com.example.Service", "Service")
-            val handler = createHandlerClass("com.example.Handler", "Handler",
-                fields = listOf(createField("svc", "com.example.Service")))
+            val handler =
+                createHandlerClass(
+                    "com.example.Handler",
+                    "Handler",
+                    fields = listOf(createField("svc", "com.example.Service")),
+                )
 
             every { mockProvider.getClass("com.example.Service") } returns service
             every { mockProvider.getClass("com.example.Handler") } returns handler
@@ -541,7 +679,6 @@ class DependencyAnalyzerTest {
 
     @Nested
     inner class EdgeCaseTests {
-
         @Test
         fun `should handle empty handler list gracefully`() {
             every { mockDetector.findAllHandlers(any()) } returns emptyList()
@@ -563,8 +700,12 @@ class DependencyAnalyzerTest {
             setupHandlers(listOf("com.example.Handler"), ComplexityTier.LOW)
 
             val service = createServiceClass("com.example.Service", "Service")
-            val handler = createHandlerClass("com.example.Handler", "Handler",
-                fields = listOf(createField("services", "java.util.List<com.example.Service>")))
+            val handler =
+                createHandlerClass(
+                    "com.example.Handler",
+                    "Handler",
+                    fields = listOf(createField("services", "java.util.List<com.example.Service>")),
+                )
 
             every { mockProvider.getClass("com.example.Service") } returns service
             every { mockProvider.getClass("com.example.Handler") } returns handler
@@ -600,95 +741,102 @@ class DependencyAnalyzerTest {
 
     private fun setupHandlers(
         fqns: List<String>,
-        complexity: ComplexityTier = ComplexityTier.LOW
+        complexity: ComplexityTier = ComplexityTier.LOW,
     ) {
         setupHandlers(fqns, fqns.map { complexity })
     }
 
     private fun setupHandlers(
         fqns: List<String>,
-        complexities: List<ComplexityTier>
+        complexities: List<ComplexityTier>,
     ) {
-        val summaries = fqns.mapIndexed { index, fqn ->
-            val simpleName = fqn.substringAfterLast(".")
-            val packageName = fqn.substringBeforeLast(".")
-            HandlerSummary(
-                fqn = fqn,
-                simpleName = simpleName,
-                packageName = packageName,
-                handlerType = HandlerType.HANDLER,
-                source = ClassSource.PROJECT,
-                complexityScore = index * 10,
-                complexityTier = complexities.getOrElse(index) { ComplexityTier.LOW },
-                promiseOperationCount = 0,
-                usesBlocking = false,
-                hasInjectAnnotation = true
-            )
-        }
+        val summaries =
+            fqns.mapIndexed { index, fqn ->
+                val simpleName = fqn.substringAfterLast(".")
+                val packageName = fqn.substringBeforeLast(".")
+                HandlerSummary(
+                    fqn = fqn,
+                    simpleName = simpleName,
+                    packageName = packageName,
+                    handlerType = HandlerType.HANDLER,
+                    source = ClassSource.PROJECT,
+                    complexityScore = index * 10,
+                    complexityTier = complexities.getOrElse(index) { ComplexityTier.LOW },
+                    promiseOperationCount = 0,
+                    usesBlocking = false,
+                    hasInjectAnnotation = true,
+                )
+            }
 
         // Mock the RatpackDetector
         every { mockDetector.findAllHandlers(any()) } returns summaries
 
         // Mock ComplexityCalculator
         fqns.forEachIndexed { index, fqn ->
-            every { mockComplexityCalculator.calculate(fqn) } returns ComplexityResult(
-                classFqn = fqn,
-                score = index * 10,
-                tier = complexities.getOrElse(index) { ComplexityTier.LOW },
-                estimatedHours = 1.0,
-                factors = emptyList(),
-                migrationNotes = emptyList(),
-                migrationPriority = index + 1,
-                blockedBy = emptyList()
-            )
+            every { mockComplexityCalculator.calculate(fqn) } returns
+                ComplexityResult(
+                    classFqn = fqn,
+                    score = index * 10,
+                    tier = complexities.getOrElse(index) { ComplexityTier.LOW },
+                    estimatedHours = 1.0,
+                    factors = emptyList(),
+                    migrationNotes = emptyList(),
+                    migrationPriority = index + 1,
+                    blockedBy = emptyList(),
+                )
         }
     }
 
-    private fun createField(name: String, type: String, isFinal: Boolean = true): FieldInfo {
-        return FieldInfo(
+    private fun createField(
+        name: String,
+        type: String,
+        isFinal: Boolean = true,
+    ): FieldInfo =
+        FieldInfo(
             name = name,
             type = type,
             visibility = Visibility.PRIVATE,
             isFinal = isFinal,
-            isStatic = false
+            isStatic = false,
         )
-    }
 
     private fun createHandlerClass(
         fqn: String,
         simpleName: String,
-        fields: List<FieldInfo> = emptyList()
-    ): ClassInfo {
-        return createClass(
+        fields: List<FieldInfo> = emptyList(),
+    ): ClassInfo =
+        createClass(
             fqn = fqn,
             simpleName = simpleName,
             interfaces = listOf("ratpack.handling.Handler"),
             fields = fields,
-            source = ClassSource.PROJECT
+            source = ClassSource.PROJECT,
         )
-    }
 
-    private fun createServiceClass(fqn: String, simpleName: String): ClassInfo {
-        return createClass(
+    private fun createServiceClass(
+        fqn: String,
+        simpleName: String,
+    ): ClassInfo =
+        createClass(
             fqn = fqn,
             simpleName = simpleName,
-            source = ClassSource.PROJECT
+            source = ClassSource.PROJECT,
         )
-    }
 
     private fun createClass(
         fqn: String,
         simpleName: String,
         interfaces: List<String> = emptyList(),
         fields: List<FieldInfo> = emptyList(),
-        source: ClassSource = ClassSource.PROJECT
-    ): ClassInfo {
-        return ClassInfo(
-            name = ClassName(
-                fqn = fqn,
-                simpleName = simpleName,
-                packageName = fqn.substringBeforeLast(".")
-            ),
+        source: ClassSource = ClassSource.PROJECT,
+    ): ClassInfo =
+        ClassInfo(
+            name =
+                ClassName(
+                    fqn = fqn,
+                    simpleName = simpleName,
+                    packageName = fqn.substringBeforeLast("."),
+                ),
             source = source,
             visibility = Visibility.PUBLIC,
             isInterface = false,
@@ -696,7 +844,6 @@ class DependencyAnalyzerTest {
             superclass = "java.lang.Object",
             interfaces = interfaces,
             fields = fields,
-            methods = emptyList()
+            methods = emptyList(),
         )
-    }
 }

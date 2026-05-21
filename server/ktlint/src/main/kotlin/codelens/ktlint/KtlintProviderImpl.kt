@@ -1,10 +1,14 @@
 package codelens.ktlint
 
-import codelens.core.model.*
+import codelens.core.model.FileLintResult
+import codelens.core.model.FormatFileResponse
+import codelens.core.model.FormatProjectResponse
+import codelens.core.model.LintError
+import codelens.core.model.LintFileResponse
+import codelens.core.model.LintProjectResponse
 import com.pinterest.ktlint.rule.engine.api.Code
 import com.pinterest.ktlint.rule.engine.api.EditorConfigDefaults
 import com.pinterest.ktlint.rule.engine.api.KtLintRuleEngine
-import com.pinterest.ktlint.rule.engine.api.LintError as KtLintError
 import com.pinterest.ktlint.rule.engine.core.api.AutocorrectDecision
 import com.pinterest.ktlint.rule.engine.core.api.propertyTypes
 import com.pinterest.ktlint.ruleset.standard.StandardRuleSetProvider
@@ -16,6 +20,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.pathString
 import kotlin.streams.toList
+import com.pinterest.ktlint.rule.engine.api.LintError as KtLintError
 
 /**
  * Implementation of KtlintProvider using ktlint rule engine.
@@ -35,21 +40,23 @@ class KtlintProviderImpl : KtlintProvider {
 
         // Load .editorconfig if present
         val editorConfigPath = projectDir.resolve(".editorconfig").toPath()
-        val editorConfigDefaults = if (Files.exists(editorConfigPath)) {
-            logger.info("Loading .editorconfig from: $editorConfigPath")
-            EditorConfigDefaults.load(
-                path = editorConfigPath,
-                propertyTypes = ruleProviders.propertyTypes()
-            )
-        } else {
-            EditorConfigDefaults.EMPTY_EDITOR_CONFIG_DEFAULTS
-        }
+        val editorConfigDefaults =
+            if (Files.exists(editorConfigPath)) {
+                logger.info("Loading .editorconfig from: $editorConfigPath")
+                EditorConfigDefaults.load(
+                    path = editorConfigPath,
+                    propertyTypes = ruleProviders.propertyTypes(),
+                )
+            } else {
+                EditorConfigDefaults.EMPTY_EDITOR_CONFIG_DEFAULTS
+            }
 
         // Create rule engine with standard ruleset (reused for all operations)
-        ruleEngine = KtLintRuleEngine(
-            ruleProviders = ruleProviders,
-            editorConfigDefaults = editorConfigDefaults
-        )
+        ruleEngine =
+            KtLintRuleEngine(
+                ruleProviders = ruleProviders,
+                editorConfigDefaults = editorConfigDefaults,
+            )
 
         logger.info("ktlint initialized successfully")
     }
@@ -71,11 +78,14 @@ class KtlintProviderImpl : KtlintProvider {
             filePath = filePath.pathString,
             errors = errors,
             errorCount = errors.size,
-            durationMs = System.currentTimeMillis() - startTime
+            durationMs = System.currentTimeMillis() - startTime,
         )
     }
 
-    override fun lintProject(pattern: String?, includeTests: Boolean): LintProjectResponse {
+    override fun lintProject(
+        pattern: String?,
+        includeTests: Boolean,
+    ): LintProjectResponse {
         requireInitialized()
         val startTime = System.currentTimeMillis()
 
@@ -90,8 +100,8 @@ class KtlintProviderImpl : KtlintProvider {
                     FileLintResult(
                         filePath = result.filePath,
                         errors = result.errors,
-                        errorCount = result.errorCount
-                    )
+                        errorCount = result.errorCount,
+                    ),
                 )
                 totalErrors += result.errorCount
             }
@@ -103,11 +113,14 @@ class KtlintProviderImpl : KtlintProvider {
             filesScanned = files.size,
             filesWithErrors = fileResults.size,
             totalErrorCount = totalErrors,
-            durationMs = System.currentTimeMillis() - startTime
+            durationMs = System.currentTimeMillis() - startTime,
         )
     }
 
-    override fun formatFile(filePath: Path, writeToFile: Boolean): FormatFileResponse {
+    override fun formatFile(
+        filePath: Path,
+        writeToFile: Boolean,
+    ): FormatFileResponse {
         requireInitialized()
         val startTime = System.currentTimeMillis()
 
@@ -117,18 +130,19 @@ class KtlintProviderImpl : KtlintProvider {
         val remainingErrors = mutableListOf<LintError>()
 
         val code = Code.fromFile(filePath.toFile())
-        val formattedContent = ruleEngine!!.format(code) { error ->
-            if (error.canBeAutoCorrected) {
-                AutocorrectDecision.ALLOW_AUTOCORRECT
-            } else {
-                // Create a unique key for deduplication
-                val errorKey = "${error.line}:${error.col}:${error.ruleId.value}"
-                if (seenErrors.add(errorKey)) {
-                    remainingErrors.add(error.toModel())
+        val formattedContent =
+            ruleEngine!!.format(code) { error ->
+                if (error.canBeAutoCorrected) {
+                    AutocorrectDecision.ALLOW_AUTOCORRECT
+                } else {
+                    // Create a unique key for deduplication
+                    val errorKey = "${error.line}:${error.col}:${error.ruleId.value}"
+                    if (seenErrors.add(errorKey)) {
+                        remainingErrors.add(error.toModel())
+                    }
+                    AutocorrectDecision.NO_AUTOCORRECT
                 }
-                AutocorrectDecision.NO_AUTOCORRECT
             }
-        }
 
         val hasChanges = formattedContent != originalContent
 
@@ -142,14 +156,14 @@ class KtlintProviderImpl : KtlintProvider {
             formattedContent = if (!writeToFile) formattedContent else null,
             hasChanges = hasChanges,
             remainingErrors = remainingErrors,
-            durationMs = System.currentTimeMillis() - startTime
+            durationMs = System.currentTimeMillis() - startTime,
         )
     }
 
     override fun formatProject(
         pattern: String?,
         includeTests: Boolean,
-        dryRun: Boolean
+        dryRun: Boolean,
     ): FormatProjectResponse {
         requireInitialized()
         val startTime = System.currentTimeMillis()
@@ -169,11 +183,14 @@ class KtlintProviderImpl : KtlintProvider {
             filesFormatted = filesFormatted,
             filesScanned = files.size,
             filesWithChanges = filesFormatted.size,
-            durationMs = System.currentTimeMillis() - startTime
+            durationMs = System.currentTimeMillis() - startTime,
         )
     }
 
-    private fun findKotlinFiles(pattern: String?, includeTests: Boolean): List<Path> {
+    private fun findKotlinFiles(
+        pattern: String?,
+        includeTests: Boolean,
+    ): List<Path> {
         val dir = projectDir!!.toPath()
 
         // Use use {} to ensure the stream is properly closed
@@ -185,8 +202,7 @@ class KtlintProviderImpl : KtlintProvider {
                     // Exclude build directories
                     !path.pathString.contains("/build/") &&
                         !path.pathString.contains("\\build\\")
-                }
-                .filter { path ->
+                }.filter { path ->
                     if (!includeTests) {
                         !path.pathString.contains("/test/") &&
                             !path.pathString.contains("\\test\\") &&
@@ -195,19 +211,20 @@ class KtlintProviderImpl : KtlintProvider {
                     } else {
                         true
                     }
-                }
-                .filter { path ->
+                }.filter { path ->
                     if (pattern != null) {
                         matchesGlob(path, pattern)
                     } else {
                         true
                     }
-                }
-                .toList()
+                }.toList()
         }
     }
 
-    private fun matchesGlob(path: Path, pattern: String): Boolean {
+    private fun matchesGlob(
+        path: Path,
+        pattern: String,
+    ): Boolean {
         val matcher = path.fileSystem.getPathMatcher("glob:$pattern")
         return matcher.matches(path) || matcher.matches(path.fileName)
     }
@@ -216,13 +233,12 @@ class KtlintProviderImpl : KtlintProvider {
         check(ruleEngine != null) { "KtlintProvider not initialized. Call initialize() first." }
     }
 
-    private fun KtLintError.toModel(): LintError {
-        return LintError(
+    private fun KtLintError.toModel(): LintError =
+        LintError(
             line = this.line,
             col = this.col,
             ruleId = this.ruleId.value,
             detail = this.detail,
-            canBeAutoCorrected = this.canBeAutoCorrected
+            canBeAutoCorrected = this.canBeAutoCorrected,
         )
-    }
 }

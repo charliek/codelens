@@ -8,8 +8,9 @@ import codelens.core.model.*
  * Finds both outgoing dependencies (what the target class depends on) and
  * incoming dependencies (what depends on the target class).
  */
-class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
-
+class DependencyAnalyzer(
+    private val classes: Map<String, ClassInfo>,
+) {
     /**
      * Analyzes dependencies for the given class.
      *
@@ -17,7 +18,10 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
      * @param includeLibraries Whether to include library classes in results
      * @return Pair of (outgoing dependencies, incoming dependencies)
      */
-    fun analyze(fqn: String, includeLibraries: Boolean): Pair<List<DependencyInfo>, List<DependencyInfo>> {
+    fun analyze(
+        fqn: String,
+        includeLibraries: Boolean,
+    ): Pair<List<DependencyInfo>, List<DependencyInfo>> {
         val targetClass = classes[fqn] ?: return Pair(emptyList(), emptyList())
 
         val outgoing = mutableListOf<DependencyInfo>()
@@ -32,7 +36,7 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
         // Remove duplicates and sort
         return Pair(
             outgoing.distinctBy { "${it.classFqn}:${it.dependencyType}:${it.location}" }.sortedBy { it.classFqn },
-            incoming.distinctBy { "${it.classFqn}:${it.dependencyType}:${it.location}" }.sortedBy { it.classFqn }
+            incoming.distinctBy { "${it.classFqn}:${it.dependencyType}:${it.location}" }.sortedBy { it.classFqn },
         )
     }
 
@@ -40,7 +44,7 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
         targetClass: ClassInfo,
         fqn: String,
         includeLibraries: Boolean,
-        outgoing: MutableList<DependencyInfo>
+        outgoing: MutableList<DependencyInfo>,
     ) {
         // 1. Superclass
         targetClass.superclass?.let { superclass ->
@@ -51,8 +55,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                         DependencyInfo(
                             classFqn = superclass,
                             dependencyType = DependencyType.EXTENDS,
-                            source = superclassInfo?.source ?: ClassSource.LIBRARY
-                        )
+                            source = superclassInfo?.source ?: ClassSource.LIBRARY,
+                        ),
                     )
                 }
             }
@@ -66,8 +70,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                     DependencyInfo(
                         classFqn = iface,
                         dependencyType = DependencyType.IMPLEMENTS,
-                        source = ifaceInfo?.source ?: ClassSource.LIBRARY
-                    )
+                        source = ifaceInfo?.source ?: ClassSource.LIBRARY,
+                    ),
                 )
             }
         }
@@ -83,8 +87,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                             classFqn = fieldType,
                             dependencyType = DependencyType.FIELD_TYPE,
                             source = fieldTypeInfo?.source ?: ClassSource.LIBRARY,
-                            location = field.name
-                        )
+                            location = field.name,
+                        ),
                     )
                 }
             }
@@ -101,8 +105,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                             classFqn = returnType,
                             dependencyType = DependencyType.METHOD_RETURN_TYPE,
                             source = returnTypeInfo?.source ?: ClassSource.LIBRARY,
-                            location = "${method.name}()"
-                        )
+                            location = "${method.name}()",
+                        ),
                     )
                 }
             }
@@ -117,8 +121,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                                 classFqn = paramType,
                                 dependencyType = DependencyType.METHOD_PARAMETER,
                                 source = paramTypeInfo?.source ?: ClassSource.LIBRARY,
-                                location = "${method.name}()"
-                            )
+                                location = "${method.name}()",
+                            ),
                         )
                     }
                 }
@@ -129,7 +133,7 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
     private fun collectIncomingDependencies(
         fqn: String,
         includeLibraries: Boolean,
-        incoming: MutableList<DependencyInfo>
+        incoming: MutableList<DependencyInfo>,
     ) {
         for (classInfo in classes.values) {
             if (classInfo.name.fqn == fqn) continue
@@ -141,8 +145,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                     DependencyInfo(
                         classFqn = classInfo.name.fqn,
                         dependencyType = DependencyType.EXTENDS,
-                        source = classInfo.source
-                    )
+                        source = classInfo.source,
+                    ),
                 )
             }
 
@@ -152,8 +156,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                     DependencyInfo(
                         classFqn = classInfo.name.fqn,
                         dependencyType = DependencyType.IMPLEMENTS,
-                        source = classInfo.source
-                    )
+                        source = classInfo.source,
+                    ),
                 )
             }
 
@@ -165,8 +169,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                             classFqn = classInfo.name.fqn,
                             dependencyType = DependencyType.FIELD_TYPE,
                             source = classInfo.source,
-                            location = field.name
-                        )
+                            location = field.name,
+                        ),
                     )
                 }
             }
@@ -179,8 +183,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                             classFqn = classInfo.name.fqn,
                             dependencyType = DependencyType.METHOD_RETURN_TYPE,
                             source = classInfo.source,
-                            location = "${method.name}()"
-                        )
+                            location = "${method.name}()",
+                        ),
                     )
                 }
                 method.parameters.forEach { param ->
@@ -190,8 +194,8 @@ class DependencyAnalyzer(private val classes: Map<String, ClassInfo>) {
                                 classFqn = classInfo.name.fqn,
                                 dependencyType = DependencyType.METHOD_PARAMETER,
                                 source = classInfo.source,
-                                location = "${method.name}()"
-                            )
+                                location = "${method.name}()",
+                            ),
                         )
                     }
                 }

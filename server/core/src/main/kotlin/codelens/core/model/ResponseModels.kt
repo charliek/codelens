@@ -32,7 +32,7 @@ data class ScanStatistics(
     /** Scan duration in milliseconds */
     val scanDurationMs: Long,
     /** Timestamp when scan completed (ISO-8601) */
-    val scannedAt: String
+    val scannedAt: String,
 )
 
 /**
@@ -51,7 +51,7 @@ data class ClassListResponse(
     /** Total pages */
     val totalPages: Int,
     /** Filter that was applied */
-    val appliedFilter: ClassFilterSummary
+    val appliedFilter: ClassFilterSummary,
 )
 
 /**
@@ -64,7 +64,7 @@ data class ClassFilterSummary(
     val source: String?,
     val hasAnnotation: String?,
     val extendsClass: String?,
-    val implementsInterface: String?
+    val implementsInterface: String?,
 )
 
 /**
@@ -73,7 +73,7 @@ data class ClassFilterSummary(
 @Serializable
 data class ClassDetailResponse(
     /** Full class information */
-    val classInfo: ClassInfo
+    val classInfo: ClassInfo,
 )
 
 /**
@@ -88,7 +88,7 @@ data class ImplementationsResponse(
     /** Indirect implementations (implementations of implementations) */
     val indirectImplementations: List<ClassSummary>,
     /** Total count */
-    val totalCount: Int
+    val totalCount: Int,
 )
 
 /**
@@ -101,7 +101,7 @@ data class DependenciesResponse(
     /** Classes this class depends on (outgoing) */
     val outgoing: List<DependencyInfo>,
     /** Classes that depend on this class (incoming) */
-    val incoming: List<DependencyInfo>
+    val incoming: List<DependencyInfo>,
 )
 
 /**
@@ -116,7 +116,7 @@ data class DependencyInfo(
     /** Source of the class */
     val source: ClassSource,
     /** Location (method/field name) where dependency occurs */
-    val location: String? = null
+    val location: String? = null,
 )
 
 /**
@@ -126,16 +126,21 @@ data class DependencyInfo(
 enum class DependencyType {
     /** Class extends another class */
     EXTENDS,
+
     /** Class implements an interface */
     IMPLEMENTS,
+
     /** Field type */
     FIELD_TYPE,
+
     /** Method return type */
     METHOD_RETURN_TYPE,
+
     /** Method parameter type */
     METHOD_PARAMETER,
+
     /** Local variable or other reference */
-    TYPE_REFERENCE
+    TYPE_REFERENCE,
 }
 
 /**
@@ -146,7 +151,7 @@ data class HierarchyResponse(
     /** The class being queried */
     val targetClass: String,
     /** Hierarchy tree */
-    val hierarchy: HierarchyNode
+    val hierarchy: HierarchyNode,
 )
 
 /**
@@ -167,7 +172,7 @@ data class HierarchyNode(
     /** Implemented interfaces */
     val interfaces: List<HierarchyNode> = emptyList(),
     /** Child classes/implementations */
-    val children: List<HierarchyNode> = emptyList()
+    val children: List<HierarchyNode> = emptyList(),
 )
 
 /**
@@ -182,7 +187,7 @@ data class MethodSearchResult(
     /** Source of the containing class */
     val classSource: ClassSource,
     /** The method information */
-    val method: MethodInfo
+    val method: MethodInfo,
 )
 
 /**
@@ -199,7 +204,7 @@ data class MethodSearchResponse(
     /** Page size */
     val pageSize: Int,
     /** Total pages */
-    val totalPages: Int
+    val totalPages: Int,
 )
 
 /**
@@ -212,5 +217,5 @@ data class AnnotationUsagesResponse(
     /** Classes using this annotation */
     val usages: List<ClassSummary>,
     /** Total count */
-    val totalCount: Int
+    val totalCount: Int,
 )

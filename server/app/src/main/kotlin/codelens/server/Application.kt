@@ -41,8 +41,9 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
 
-    val hasBuildFile = projectDir.resolve("build.gradle").exists() ||
-                       projectDir.resolve("build.gradle.kts").exists()
+    val hasBuildFile =
+        projectDir.resolve("build.gradle").exists() ||
+            projectDir.resolve("build.gradle.kts").exists()
     if (!hasBuildFile) {
         logger.error("No build.gradle or build.gradle.kts found in ${config.projectPath}")
         exitProcess(1)
@@ -56,9 +57,10 @@ fun main(args: Array<String>) {
     // Find available port
     val port = config.port ?: findAvailablePort(config.portRangeStart, config.portRangeEnd)
 
-    val server = embeddedServer(Netty, port = port, host = config.host) {
-        configureServer(analysisService, ratpackAnalysisService, ktlintService, activityTracker, config)
-    }
+    val server =
+        embeddedServer(Netty, port = port, host = config.host) {
+            configureServer(analysisService, ratpackAnalysisService, ktlintService, activityTracker, config)
+        }
 
     // Start idle shutdown monitor
     if (config.idleTimeoutMinutes > 0) {
@@ -70,10 +72,12 @@ fun main(args: Array<String>) {
     }
 
     // Add shutdown hook
-    Runtime.getRuntime().addShutdownHook(Thread {
-        logger.info("Shutting down...")
-        server.stop(1000, 5000)
-    })
+    Runtime.getRuntime().addShutdownHook(
+        Thread {
+            logger.info("Shutting down...")
+            server.stop(1000, 5000)
+        },
+    )
 
     // Start server
     server.start(wait = false)
@@ -94,13 +98,15 @@ fun Application.configureServer(
     ratpackAnalysisService: RatpackAnalysisService,
     ktlintService: KtlintService,
     activityTracker: ActivityTracker,
-    config: ServerConfig
+    config: ServerConfig,
 ) {
     install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            encodeDefaults = true
-        })
+        json(
+            Json {
+                prettyPrint = true
+                encodeDefaults = true
+            },
+        )
     }
 
     install(StatusPages) {
@@ -111,8 +117,8 @@ fun Application.configureServer(
                 codelens.core.model.ErrorResponse(
                     code = 500,
                     type = cause::class.simpleName ?: "Unknown",
-                    message = cause.message ?: "Internal server error"
-                )
+                    message = cause.message ?: "Internal server error",
+                ),
             )
         }
     }

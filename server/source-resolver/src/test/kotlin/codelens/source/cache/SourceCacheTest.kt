@@ -14,7 +14,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class SourceCacheTest {
-
     @TempDir
     lateinit var tempDir: File
 
@@ -175,7 +174,7 @@ class SourceCacheTest {
     @Test
     fun `putDecompiledSource rejects class name with invalid characters`() {
         val jarPath = "/path/to/lib.jar"
-        val maliciousClassName = "com/example/MyClass"  // Contains forward slash
+        val maliciousClassName = "com/example/MyClass" // Contains forward slash
 
         assertThrows<IllegalArgumentException> {
             cache.putDecompiledSource(jarPath, maliciousClassName, "source")

@@ -10,10 +10,12 @@ import codelens.core.model.source.SourceOrigin
 enum class VisibilityFilter {
     /** Include all members */
     ALL,
+
     /** Include only public members */
     PUBLIC,
+
     /** Include public and protected members */
-    PUBLIC_PROTECTED
+    PUBLIC_PROTECTED,
 }
 
 /**
@@ -21,7 +23,7 @@ enum class VisibilityFilter {
  */
 enum class StubLanguage {
     JAVA,
-    KOTLIN
+    KOTLIN,
 }
 
 /**
@@ -34,5 +36,5 @@ data class LibrarySourceInfo(
     val mavenCoordinates: MavenCoordinates? = null,
     val isDecompiled: Boolean = false,
     val format: SourceFormat = SourceFormat.FULL,
-    val language: String = "JAVA"
+    val language: String = "JAVA",
 )

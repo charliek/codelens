@@ -15,7 +15,7 @@ data class SourceRootInfo(
     /** Source set name: "main", "test", etc. */
     val sourceSet: String,
     /** Module path in multi-module project (e.g., ":server:app") */
-    val module: String
+    val module: String,
 )
 
 /**
@@ -30,7 +30,7 @@ data class SourceRoot(
     /** Source set name: "main", "test", etc. */
     val sourceSet: String,
     /** Module path in multi-module project (e.g., ":server:app") */
-    val module: String
+    val module: String,
 )
 
 /**
@@ -40,7 +40,7 @@ data class SourceRoot(
 enum class SourceLanguage {
     JAVA,
     KOTLIN,
-    UNKNOWN
+    UNKNOWN,
 }
 
 /**
@@ -50,12 +50,15 @@ enum class SourceLanguage {
 enum class SourceOrigin {
     /** Source from project source roots */
     PROJECT_SOURCE,
+
     /** Source from library -sources.jar */
     SOURCE_JAR,
+
     /** Source from bytecode decompilation */
     DECOMPILED,
+
     /** Source from JDK src.zip */
-    JDK_SOURCE
+    JDK_SOURCE,
 }
 
 /**
@@ -65,12 +68,15 @@ enum class SourceOrigin {
 enum class SourceFormat {
     /** Complete source code */
     FULL,
+
     /** Stub with placeholder method bodies */
     STUB,
+
     /** Just method/field signatures */
     SIGNATURES,
+
     /** Signatures with doc comments only */
-    JAVADOC
+    JAVADOC,
 }
 
 /**
@@ -97,7 +103,7 @@ data class SourceInfo(
     /** Whether the source was decompiled from bytecode */
     val isDecompiled: Boolean = false,
     /** Format of the returned content */
-    val format: SourceFormat = SourceFormat.FULL
+    val format: SourceFormat = SourceFormat.FULL,
 )
 
 /**
@@ -120,7 +126,7 @@ data class MethodSourceInfo(
     /** Context lines before the method (if requested) */
     val contextBefore: String? = null,
     /** Context lines after the method (if requested) */
-    val contextAfter: String? = null
+    val contextAfter: String? = null,
 )
 
 /**
@@ -133,21 +139,25 @@ data class SourceResolutionError(
     /** Reason for failure */
     val reason: SourceResolutionErrorReason,
     /** Human-readable message */
-    val message: String
+    val message: String,
 )
 
 @Serializable
 enum class SourceResolutionErrorReason {
     /** Class is from a library, source not available */
     LIBRARY_CLASS,
+
     /** Class is from JDK, source not available */
     JDK_CLASS,
+
     /** Source file not found in any source root */
     FILE_NOT_FOUND,
+
     /** Class not found in scan results */
     CLASS_NOT_FOUND,
+
     /** Method not found in class */
-    METHOD_NOT_FOUND
+    METHOD_NOT_FOUND,
 }
 
 /**
@@ -156,5 +166,5 @@ enum class SourceResolutionErrorReason {
 class SourceResolutionException(
     val fqn: String,
     val reason: SourceResolutionErrorReason,
-    message: String
+    message: String,
 ) : Exception(message)

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  * HTTP client for downloading source JARs from Maven Central.
  */
 class MavenCentralClient(
-    private val httpClient: OkHttpClient = defaultHttpClient()
+    private val httpClient: OkHttpClient = defaultHttpClient(),
 ) {
     private val logger = LoggerFactory.getLogger(MavenCentralClient::class.java)
 
@@ -25,10 +25,12 @@ class MavenCentralClient(
         val url = coords.sourceJarUrl()
         logger.info("Downloading source JAR from: {}", url)
 
-        val request = Request.Builder()
-            .url(url)
-            .header("User-Agent", "CodeLens/1.0")
-            .build()
+        val request =
+            Request
+                .Builder()
+                .url(url)
+                .header("User-Agent", "CodeLens/1.0")
+                .build()
 
         return try {
             httpClient.newCall(request).execute().use { response ->
@@ -77,11 +79,13 @@ class MavenCentralClient(
         val url = coords.sourceJarUrl()
         logger.debug("Checking if source JAR exists: {}", url)
 
-        val request = Request.Builder()
-            .url(url)
-            .head()
-            .header("User-Agent", "CodeLens/1.0")
-            .build()
+        val request =
+            Request
+                .Builder()
+                .url(url)
+                .head()
+                .header("User-Agent", "CodeLens/1.0")
+                .build()
 
         return try {
             httpClient.newCall(request).execute().use { response ->
@@ -100,19 +104,23 @@ class MavenCentralClient(
     private fun isValidZipFile(bytes: ByteArray): Boolean {
         if (bytes.size < 4) return false
         // ZIP files start with "PK\x03\x04" magic number
-        return bytes[0] == 0x50.toByte() &&  // 'P'
-               bytes[1] == 0x4B.toByte() &&  // 'K'
-               bytes[2] == 0x03.toByte() &&
-               bytes[3] == 0x04.toByte()
+        return bytes[0] == 0x50.toByte() &&
+            // 'P'
+            bytes[1] == 0x4B.toByte() &&
+            // 'K'
+            bytes[2] == 0x03.toByte() &&
+            bytes[3] == 0x04.toByte()
     }
 
     companion object {
-        private fun defaultHttpClient(): OkHttpClient = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
-            .followRedirects(true)
-            .build()
+        private fun defaultHttpClient(): OkHttpClient =
+            OkHttpClient
+                .Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .followRedirects(true)
+                .build()
     }
 }
 
@@ -121,7 +129,7 @@ class MavenCentralClient(
  */
 class SourceJarNotFoundException(
     val coordinates: MavenCoordinates,
-    message: String
+    message: String,
 ) : Exception("Source JAR not found for ${coordinates.toGradleNotation()}: $message")
 
 /**
@@ -130,5 +138,5 @@ class SourceJarNotFoundException(
 class SourceJarDownloadException(
     val coordinates: MavenCoordinates,
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : Exception("Failed to download source JAR for ${coordinates.toGradleNotation()}: $message", cause)

@@ -14,18 +14,24 @@ import kotlinx.serialization.Serializable
 enum class IntegrationType {
     /** HTTP client for outbound requests */
     HTTP_CLIENT,
+
     /** Database access */
     DATABASE,
+
     /** Message queue (SQS, Kafka, RabbitMQ, etc.) */
     MESSAGE_QUEUE,
+
     /** Cache (Redis, Memcached, etc.) */
     CACHE,
+
     /** gRPC client */
     GRPC,
+
     /** File/object storage (S3, etc.) */
     FILE_STORAGE,
+
     /** Other external service */
-    OTHER
+    OTHER,
 }
 
 /**
@@ -74,7 +80,7 @@ enum class IntegrationSubType {
     GCS,
 
     // Other
-    UNKNOWN
+    UNKNOWN,
 }
 
 /**
@@ -84,12 +90,15 @@ enum class IntegrationSubType {
 enum class IntegrationLocation {
     /** Field in the class */
     FIELD,
+
     /** Constructor parameter */
     CONSTRUCTOR_PARAMETER,
+
     /** Method parameter */
     METHOD_PARAMETER,
+
     /** Method return type */
-    METHOD_RETURN_TYPE
+    METHOD_RETURN_TYPE,
 }
 
 /**
@@ -108,7 +117,7 @@ data class IntegrationUsage(
     /** Detected integration type */
     val integrationType: IntegrationType,
     /** Detected subtype */
-    val subType: IntegrationSubType
+    val subType: IntegrationSubType,
 )
 
 /**
@@ -127,7 +136,7 @@ data class ClassIntegrations(
     /** All detected integrations */
     val integrations: List<IntegrationUsage>,
     /** Summary by type */
-    val typeSummary: Map<IntegrationType, Int>
+    val typeSummary: Map<IntegrationType, Int>,
 )
 
 /**
@@ -146,7 +155,7 @@ data class IntegrationSummary(
     /** Number of classes using this integration */
     val classCount: Int,
     /** Sample classes using this integration (up to 5) */
-    val sampleClasses: List<String>
+    val sampleClasses: List<String>,
 )
 
 /**
@@ -161,7 +170,7 @@ data class ProjectIntegrationSummary(
     /** Breakdown by type */
     val typeBreakdown: Map<IntegrationType, Int>,
     /** All detected integrations grouped by type */
-    val integrations: List<IntegrationSummary>
+    val integrations: List<IntegrationSummary>,
 )
 
 // ============================================================================
@@ -176,7 +185,7 @@ data class IntegrationsListResponse(
     /** Summary of integrations */
     val summary: ProjectIntegrationSummary,
     /** Filter applied (if any) */
-    val filter: IntegrationFilterApplied? = null
+    val filter: IntegrationFilterApplied? = null,
 )
 
 /**
@@ -187,7 +196,7 @@ data class IntegrationFilterApplied(
     /** Type filter */
     val type: IntegrationType? = null,
     /** SubType filter */
-    val subType: IntegrationSubType? = null
+    val subType: IntegrationSubType? = null,
 )
 
 /**
@@ -196,7 +205,7 @@ data class IntegrationFilterApplied(
 @Serializable
 data class ClassIntegrationsResponse(
     /** Class integrations */
-    val classIntegrations: ClassIntegrations
+    val classIntegrations: ClassIntegrations,
 )
 
 /**
@@ -211,5 +220,5 @@ data class IntegrationUsagesResponse(
     /** Classes using this integration */
     val classes: List<ClassIntegrations>,
     /** Total count */
-    val totalCount: Int
+    val totalCount: Int,
 )

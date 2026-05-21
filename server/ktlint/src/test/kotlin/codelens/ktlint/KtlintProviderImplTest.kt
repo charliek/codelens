@@ -3,7 +3,6 @@ package codelens.ktlint
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertEquals
@@ -14,7 +13,6 @@ import kotlin.test.assertTrue
  * Unit tests for KtlintProviderImpl.
  */
 class KtlintProviderImplTest {
-
     private lateinit var provider: KtlintProviderImpl
     private lateinit var tempDir: Path
 
@@ -43,14 +41,15 @@ class KtlintProviderImplTest {
     @Test
     fun `lintFile should detect style violations`() {
         // Create a file with ktlint violations
-        val badCode = """
+        val badCode =
+            """
             fun badFunction( x:Int,y:Int ){
                 val z=x+y
                 if(z>0){
                     println( "result" )
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("BadCode.kt")
         Files.writeString(testFile, badCode)
@@ -69,7 +68,8 @@ class KtlintProviderImplTest {
         // Create a properly formatted file - ktlint requires:
         // - File ends with newline
         // - Single parameter functions are fine on one line
-        val goodCode = """
+        val goodCode =
+            """
             fun goodFunction(x: Int): Int {
                 val z = x + 1
                 if (z > 0) {
@@ -78,7 +78,7 @@ class KtlintProviderImplTest {
                 return z
             }
 
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("GoodCode.kt")
         Files.writeString(testFile, goodCode)
@@ -94,12 +94,13 @@ class KtlintProviderImplTest {
     @Test
     fun `formatFile should fix auto-correctable issues`() {
         // Create a file with auto-correctable violations
-        val badCode = """
+        val badCode =
+            """
             fun badFunction( x:Int,y:Int ){
                 val z=x+y
                 println(z)
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("ToFormat.kt")
         Files.writeString(testFile, badCode)
@@ -120,12 +121,13 @@ class KtlintProviderImplTest {
     @Test
     fun `formatFile with writeToFile true should modify file`() {
         // Create a file with auto-correctable violations
-        val badCode = """
+        val badCode =
+            """
             fun badFunction( x:Int,y:Int ){
                 val z=x+y
                 println(z)
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("ToFormat2.kt")
         Files.writeString(testFile, badCode)
@@ -144,10 +146,11 @@ class KtlintProviderImplTest {
     @Test
     fun `formatFile with compliant code should report no changes`() {
         // Create a properly formatted file - using expression body which ktlint won't change
-        val goodCode = """
+        val goodCode =
+            """
             fun goodFunction(x: Int): Int = x + 1
 
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("AlreadyFormatted.kt")
         Files.writeString(testFile, goodCode)
@@ -201,7 +204,7 @@ class KtlintProviderImplTest {
         // The test directory file should be excluded when includeTests is false
         assertTrue(
             resultWithTests.filesScanned >= resultNoTests.filesScanned,
-            "Should scan more files when including tests"
+            "Should scan more files when including tests",
         )
     }
 
@@ -226,7 +229,7 @@ class KtlintProviderImplTest {
         val filesWithErrors = result.fileResults.map { it.filePath }
         assertFalse(
             filesWithErrors.any { it.contains("/build/") },
-            "Should exclude files in build directory"
+            "Should exclude files in build directory",
         )
     }
 
@@ -285,12 +288,12 @@ class KtlintProviderImplTest {
             Files.writeString(
                 newTempDir.resolve(".editorconfig"),
                 """
-                    root = true
+                root = true
 
-                    [*.kt]
-                    indent_size = 4
-                    max_line_length = 120
-                """.trimIndent()
+                [*.kt]
+                indent_size = 4
+                max_line_length = 120
+                """.trimIndent(),
             )
 
             // Initialize new provider
@@ -307,11 +310,12 @@ class KtlintProviderImplTest {
     @Test
     fun `lintFile should report correct line and column numbers`() {
         // Create a file with a known violation
-        val code = """
+        val code =
+            """
             fun test() {
                 val x=1
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("LineColTest.kt")
         Files.writeString(testFile, code)
@@ -331,7 +335,8 @@ class KtlintProviderImplTest {
     fun `formatFile remaining errors should not contain duplicates`() {
         // Create a file with multiple wildcard imports that cannot be auto-corrected
         // This is the scenario that was causing duplicate errors
-        val code = """
+        val code =
+            """
             import java.util.*
             import java.io.*
             import java.net.*
@@ -339,7 +344,7 @@ class KtlintProviderImplTest {
             fun test() {
                 println("test")
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("WildcardImports.kt")
         Files.writeString(testFile, code)
@@ -352,7 +357,7 @@ class KtlintProviderImplTest {
         assertEquals(
             errorKeys.distinct().size,
             errorKeys.size,
-            "Remaining errors should not contain duplicates. Found: ${result.remainingErrors.map { "${it.line}:${it.col}:${it.ruleId}" }}"
+            "Remaining errors should not contain duplicates. Found: ${result.remainingErrors.map { "${it.line}:${it.col}:${it.ruleId}" }}",
         )
 
         // Additionally verify we have the expected number of unique errors
@@ -361,21 +366,22 @@ class KtlintProviderImplTest {
         assertEquals(
             3,
             wildcardErrors.size,
-            "Should have exactly 3 wildcard import errors (one per import)"
+            "Should have exactly 3 wildcard import errors (one per import)",
         )
     }
 
     @Test
     fun `formatFile should not duplicate errors even when callback is invoked multiple times`() {
         // Create a file with code that triggers multiple violations
-        val code = """
+        val code =
+            """
             import java.util.*
 
             fun messyFunction( x:Int,y:Int ){
                 val z=x+y
                 println(z)
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val testFile = tempDir.resolve("MultiErrors.kt")
         Files.writeString(testFile, code)
@@ -390,7 +396,7 @@ class KtlintProviderImplTest {
         assertEquals(
             uniqueKeys.size,
             errorKeys.size,
-            "Should have no duplicate errors. Duplicates: ${errorKeys.groupBy { it }.filter { it.value.size > 1 }}"
+            "Should have no duplicate errors. Duplicates: ${errorKeys.groupBy { it }.filter { it.value.size > 1 }}",
         )
     }
 }

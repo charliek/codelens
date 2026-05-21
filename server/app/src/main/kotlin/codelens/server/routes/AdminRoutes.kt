@@ -12,14 +12,16 @@ import java.time.Instant
 fun Route.adminRoutes(
     analysisService: AnalysisService,
     activityTracker: ActivityTracker,
-    config: ServerConfig
+    config: ServerConfig,
 ) {
     route("/admin") {
         get("/health") {
-            call.respond(HealthResponse(
-                status = "UP",
-                timestamp = Instant.now().toString()
-            ))
+            call.respond(
+                HealthResponse(
+                    status = "UP",
+                    timestamp = Instant.now().toString(),
+                ),
+            )
         }
 
         get("/ready") {
@@ -27,19 +29,21 @@ fun Route.adminRoutes(
             val isReady = projectInfo.status == ProjectStatus.READY
 
             if (isReady) {
-                call.respond(ReadyResponse(
-                    ready = true,
-                    status = "READY",
-                    project = projectInfo.name
-                ))
+                call.respond(
+                    ReadyResponse(
+                        ready = true,
+                        status = "READY",
+                        project = projectInfo.name,
+                    ),
+                )
             } else {
                 call.respond(
                     HttpStatusCode.ServiceUnavailable,
                     ReadyResponse(
                         ready = false,
                         status = projectInfo.status.name,
-                        project = projectInfo.name
-                    )
+                        project = projectInfo.name,
+                    ),
                 )
             }
         }
@@ -49,20 +53,22 @@ fun Route.adminRoutes(
             val uptime = activityTracker.getUptime()
             val idle = activityTracker.getIdleDuration()
 
-            call.respond(ServerInfo(
-                version = "0.1.0",
-                apiVersion = "v1",
-                projectPath = config.projectPath,
-                projectName = projectInfo.name,
-                port = call.request.local.serverPort,
-                host = config.host,
-                status = projectInfo.status.name,
-                startedAt = activityTracker.getStartedAt().toString(),
-                uptime = formatDuration(uptime),
-                lastActivityAt = activityTracker.getLastActivity().toString(),
-                idleDuration = formatDuration(idle),
-                idleTimeout = "${config.idleTimeoutMinutes}m"
-            ))
+            call.respond(
+                ServerInfo(
+                    version = "0.1.0",
+                    apiVersion = "v1",
+                    projectPath = config.projectPath,
+                    projectName = projectInfo.name,
+                    port = call.request.local.serverPort,
+                    host = config.host,
+                    status = projectInfo.status.name,
+                    startedAt = activityTracker.getStartedAt().toString(),
+                    uptime = formatDuration(uptime),
+                    lastActivityAt = activityTracker.getLastActivity().toString(),
+                    idleDuration = formatDuration(idle),
+                    idleTimeout = "${config.idleTimeoutMinutes}m",
+                ),
+            )
         }
 
         post("/activity") {
@@ -74,11 +80,14 @@ fun Route.adminRoutes(
             // Verify request is from localhost
             val remoteHost = call.request.local.remoteHost
             if (remoteHost != "127.0.0.1" && remoteHost != "localhost" && remoteHost != "0:0:0:0:0:0:0:1") {
-                call.respond(HttpStatusCode.Forbidden, ErrorResponse(
-                    code = 403,
-                    type = "Forbidden",
-                    message = "Shutdown only allowed from localhost"
-                ))
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    ErrorResponse(
+                        code = 403,
+                        type = "Forbidden",
+                        message = "Shutdown only allowed from localhost",
+                    ),
+                )
                 return@post
             }
 

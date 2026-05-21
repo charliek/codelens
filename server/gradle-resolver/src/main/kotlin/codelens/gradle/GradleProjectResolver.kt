@@ -19,7 +19,10 @@ import java.io.File
 class GradleProjectResolver : ClasspathResolver {
     private val logger = LoggerFactory.getLogger(GradleProjectResolver::class.java)
 
-    override fun resolve(projectDir: File, javaHome: File?): ResolvedClasspath {
+    override fun resolve(
+        projectDir: File,
+        javaHome: File?,
+    ): ResolvedClasspath {
         logger.info("Resolving classpath via Gradle Tooling API for: ${projectDir.absolutePath}")
         if (javaHome != null) {
             logger.info("Using Java home for Gradle: ${javaHome.absolutePath}")
@@ -28,9 +31,11 @@ class GradleProjectResolver : ClasspathResolver {
         // Create a temp file for the init script
         val initScript = createTempInitScript()
 
-        val connector = GradleConnector.newConnector()
-            .forProjectDirectory(projectDir)
-            .useBuildDistribution()
+        val connector =
+            GradleConnector
+                .newConnector()
+                .forProjectDirectory(projectDir)
+                .useBuildDistribution()
 
         var outputFile: File? = null
         try {
@@ -42,15 +47,17 @@ class GradleProjectResolver : ClasspathResolver {
 
                 // Run the classpath-extracting task via init script
                 try {
-                    val buildLauncher = connection.newBuild()
-                        .withArguments(
-                            "--init-script", initScript.absolutePath,
-                            "-PcodelensOutputFile=${outputFile!!.absolutePath}",
-                            "codelensWriteClasspath",
-                            "--quiet"
-                        )
-                        .setStandardOutput(stdout)
-                        .setStandardError(stderr)
+                    val buildLauncher =
+                        connection
+                            .newBuild()
+                            .withArguments(
+                                "--init-script",
+                                initScript.absolutePath,
+                                "-PcodelensOutputFile=${outputFile!!.absolutePath}",
+                                "codelensWriteClasspath",
+                                "--quiet",
+                            ).setStandardOutput(stdout)
+                            .setStandardError(stderr)
 
                     // Set Java home if provided (for older Gradle versions)
                     if (javaHome != null) {
@@ -64,16 +71,17 @@ class GradleProjectResolver : ClasspathResolver {
 
                     // Provide helpful error message for Java version incompatibility
                     if (stderrStr.contains("Unsupported class file major version") ||
-                        e.message?.contains("Unsupported class file major version") == true) {
+                        e.message?.contains("Unsupported class file major version") == true
+                    ) {
                         throw ClasspathResolutionException(
                             buildJavaVersionErrorMessage(e.message),
-                            e
+                            e,
                         )
                     }
 
                     throw ClasspathResolutionException(
                         "Failed to run Gradle classpath resolution task: ${e.message}\nStderr: $stderrStr",
-                        e
+                        e,
                     )
                 }
 
@@ -86,7 +94,7 @@ class GradleProjectResolver : ClasspathResolver {
             logger.error("Failed to resolve classpath via Tooling API: ${e.message}", e)
             throw ClasspathResolutionException(
                 "Failed to resolve classpath via Gradle Tooling API: ${e.message}",
-                e
+                e,
             )
         } finally {
             connector.disconnect()
@@ -98,8 +106,8 @@ class GradleProjectResolver : ClasspathResolver {
     /**
      * Builds a helpful error message for Java version incompatibility errors.
      */
-    private fun buildJavaVersionErrorMessage(originalMessage: String?): String {
-        return """
+    private fun buildJavaVersionErrorMessage(originalMessage: String?): String =
+        """
             |Java version incompatibility: The target project's Gradle version cannot run with Java 21.
             |
             |This typically occurs when analyzing projects using Gradle < 8.5 while running on Java 21.
@@ -115,14 +123,14 @@ class GradleProjectResolver : ClasspathResolver {
             |
             |Original error: $originalMessage
         """.trimMargin()
-    }
 
     /**
      * Creates a temporary Gradle init script that defines a task to write the classpath.
      * This aggregates classpath from ALL subprojects in a multi-module build.
      */
     private fun createTempInitScript(): File {
-        val script = """
+        val script =
+            """
             // Initialize shared collections on rootProject during configuration phase
             rootProject {
                 ext.codelensClasspathEntries = new LinkedHashSet()
@@ -246,7 +254,7 @@ class GradleProjectResolver : ClasspathResolver {
                     }
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val initScript = File.createTempFile("codelens-init", ".gradle")
         initScript.writeText(script)
@@ -257,7 +265,10 @@ class GradleProjectResolver : ClasspathResolver {
     /**
      * Parses the classpath output file.
      */
-    private fun parseClasspathOutput(outputFile: File, projectDir: File): ResolvedClasspath {
+    private fun parseClasspathOutput(
+        outputFile: File,
+        projectDir: File,
+    ): ResolvedClasspath {
         if (!outputFile.exists()) {
             throw ClasspathResolutionException("Classpath output file was not created")
         }
@@ -288,10 +299,12 @@ class GradleProjectResolver : ClasspathResolver {
                     if (parts.size >= 2) {
                         val coordinates = MavenCoordinates.parse(parts[0])
                         if (coordinates != null) {
-                            artifactMappings.add(ArtifactMapping(
-                                jarPath = parts[1],
-                                coordinates = coordinates
-                            ))
+                            artifactMappings.add(
+                                ArtifactMapping(
+                                    jarPath = parts[1],
+                                    coordinates = coordinates,
+                                ),
+                            )
                         }
                     }
                 }
@@ -301,12 +314,14 @@ class GradleProjectResolver : ClasspathResolver {
                     if (parts.size >= 4) {
                         val file = File(parts[0])
                         if (file.exists()) {
-                            sourceRoots.add(SourceRootInfo(
-                                path = file,
-                                language = parts[1],
-                                sourceSet = parts[2],
-                                module = parts[3]
-                            ))
+                            sourceRoots.add(
+                                SourceRootInfo(
+                                    path = file,
+                                    language = parts[1],
+                                    sourceSet = parts[2],
+                                    module = parts[3],
+                                ),
+                            )
                         }
                     }
                 }
@@ -327,14 +342,16 @@ class GradleProjectResolver : ClasspathResolver {
         // Add standard source roots that might not be detected
         addStandardSourceRoots(projectDir, sourceRoots)
 
-        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots, ${artifactMappings.size} artifact mappings")
+        logger.info(
+            "Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots, ${artifactMappings.size} artifact mappings",
+        )
 
         return ResolvedClasspath(
             entries = classpathEntries.distinctBy { it.absolutePath },
             projectOutputDirs = projectOutputDirs,
             sourceRoots = sourceRoots.distinctBy { it.path.absolutePath },
             resolvedBy = "Gradle Tooling API",
-            artifactMappings = artifactMappings.distinctBy { it.jarPath }
+            artifactMappings = artifactMappings.distinctBy { it.jarPath },
         )
     }
 
@@ -344,7 +361,7 @@ class GradleProjectResolver : ClasspathResolver {
     private fun addStandardOutputDirs(
         projectDir: File,
         projectOutputDirs: MutableSet<File>,
-        classpathEntries: MutableList<File>
+        classpathEntries: MutableList<File>,
     ) {
         val buildDir = projectDir.resolve("build")
         val classesDir = buildDir.resolve("classes")
@@ -353,7 +370,7 @@ class GradleProjectResolver : ClasspathResolver {
             classesDir.resolve("java/main"),
             classesDir.resolve("kotlin/main"),
             classesDir.resolve("groovy/main"),
-            buildDir.resolve("resources/main")
+            buildDir.resolve("resources/main"),
         ).filter { it.exists() }.forEach {
             if (projectOutputDirs.add(it) && it !in classpathEntries) {
                 classpathEntries.add(it)
@@ -366,7 +383,7 @@ class GradleProjectResolver : ClasspathResolver {
      */
     private fun addStandardSourceRoots(
         projectDir: File,
-        sourceRoots: MutableList<SourceRootInfo>
+        sourceRoots: MutableList<SourceRootInfo>,
     ) {
         val srcDir = projectDir.resolve("src")
         val existingPaths = sourceRoots.map { it.path.absolutePath }.toSet()
@@ -376,15 +393,17 @@ class GradleProjectResolver : ClasspathResolver {
             Triple(srcDir.resolve("main/java"), "java", "main"),
             Triple(srcDir.resolve("main/kotlin"), "kotlin", "main"),
             Triple(srcDir.resolve("test/java"), "java", "test"),
-            Triple(srcDir.resolve("test/kotlin"), "kotlin", "test")
+            Triple(srcDir.resolve("test/kotlin"), "kotlin", "test"),
         ).filter { (dir, _, _) -> dir.exists() && dir.absolutePath !in existingPaths }
             .forEach { (dir, language, sourceSet) ->
-                sourceRoots.add(SourceRootInfo(
-                    path = dir,
-                    language = language,
-                    sourceSet = sourceSet,
-                    module = ":"
-                ))
+                sourceRoots.add(
+                    SourceRootInfo(
+                        path = dir,
+                        language = language,
+                        sourceSet = sourceSet,
+                        module = ":",
+                    ),
+                )
             }
     }
 }

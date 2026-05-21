@@ -32,11 +32,14 @@ import java.io.File
  * ```
  */
 class ClasspathFileResolver(
-    private val classpathFile: File
+    private val classpathFile: File,
 ) : ClasspathResolver {
     private val logger = LoggerFactory.getLogger(ClasspathFileResolver::class.java)
 
-    override fun resolve(projectDir: File, javaHome: File?): ResolvedClasspath {
+    override fun resolve(
+        projectDir: File,
+        javaHome: File?,
+    ): ResolvedClasspath {
         // javaHome is not used for file-based resolution (Gradle already ran with the correct Java)
         logger.info("Resolving classpath from file: ${classpathFile.absolutePath}")
 
@@ -44,7 +47,7 @@ class ClasspathFileResolver(
             throw ClasspathResolutionException(
                 "Classpath file not found: ${classpathFile.absolutePath}\n" +
                     "Generate it by running: ./gradlew writeClasspath\n" +
-                    "See documentation for how to add the writeClasspath task."
+                    "See documentation for how to add the writeClasspath task.",
             )
         }
 
@@ -52,7 +55,8 @@ class ClasspathFileResolver(
         val projectOutputDirs = mutableSetOf<File>()
 
         // Read entries from file
-        classpathFile.readLines()
+        classpathFile
+            .readLines()
             .filter { it.isNotBlank() && !it.startsWith("#") }
             .forEach { line ->
                 val file = File(line.trim())
@@ -78,13 +82,15 @@ class ClasspathFileResolver(
         // Detect standard source roots
         val sourceRoots = detectStandardSourceRoots(projectDir)
 
-        logger.info("Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots")
+        logger.info(
+            "Resolved ${classpathEntries.size} classpath entries, ${projectOutputDirs.size} project output dirs, ${sourceRoots.size} source roots",
+        )
 
         return ResolvedClasspath(
             entries = classpathEntries.distinctBy { it.absolutePath },
             projectOutputDirs = projectOutputDirs,
             sourceRoots = sourceRoots,
-            resolvedBy = "Classpath file: ${classpathFile.name}"
+            resolvedBy = "Classpath file: ${classpathFile.name}",
         )
     }
 
@@ -94,7 +100,7 @@ class ClasspathFileResolver(
     private fun addStandardOutputDirs(
         projectDir: File,
         projectOutputDirs: MutableSet<File>,
-        classpathEntries: MutableList<File>
+        classpathEntries: MutableList<File>,
     ) {
         val buildDir = projectDir.resolve("build")
         val classesDir = buildDir.resolve("classes")
@@ -103,7 +109,7 @@ class ClasspathFileResolver(
             classesDir.resolve("java/main"),
             classesDir.resolve("kotlin/main"),
             classesDir.resolve("groovy/main"),
-            buildDir.resolve("resources/main")
+            buildDir.resolve("resources/main"),
         ).filter { it.exists() }.forEach {
             if (projectOutputDirs.add(it) && it !in classpathEntries) {
                 classpathEntries.add(it)
@@ -122,15 +128,17 @@ class ClasspathFileResolver(
             Triple(srcDir.resolve("main/java"), "java", "main"),
             Triple(srcDir.resolve("main/kotlin"), "kotlin", "main"),
             Triple(srcDir.resolve("test/java"), "java", "test"),
-            Triple(srcDir.resolve("test/kotlin"), "kotlin", "test")
+            Triple(srcDir.resolve("test/kotlin"), "kotlin", "test"),
         ).filter { (dir, _, _) -> dir.exists() }
             .forEach { (dir, language, sourceSet) ->
-                sourceRoots.add(SourceRootInfo(
-                    path = dir,
-                    language = language,
-                    sourceSet = sourceSet,
-                    module = ":"
-                ))
+                sourceRoots.add(
+                    SourceRootInfo(
+                        path = dir,
+                        language = language,
+                        sourceSet = sourceSet,
+                        module = ":",
+                    ),
+                )
             }
 
         return sourceRoots

@@ -15,12 +15,15 @@ import kotlinx.serialization.Serializable
 enum class HandlerType {
     /** Implements ratpack.handling.Handler directly */
     HANDLER,
+
     /** Implements ratpack.func.Action<Chain> */
     CHAIN_ACTION,
+
     /** Has a method that accepts Context and calls next() */
     INLINE_HANDLER,
+
     /** Extends GroovyHandler or similar base class */
-    GROOVY_HANDLER
+    GROOVY_HANDLER,
 }
 
 /**
@@ -47,7 +50,7 @@ data class HandlerSummary(
     /** Whether this handler uses Blocking.get() */
     val usesBlocking: Boolean,
     /** Whether constructor has @Inject annotation */
-    val hasInjectAnnotation: Boolean
+    val hasInjectAnnotation: Boolean,
 )
 
 /**
@@ -78,7 +81,7 @@ data class HandlerInfo(
     /** Complexity result for this handler */
     val complexity: ComplexityResult,
     /** Guice dependencies injected into this handler */
-    val injectedDependencies: List<InjectedDependency>
+    val injectedDependencies: List<InjectedDependency>,
 )
 
 /**
@@ -91,14 +94,14 @@ data class InjectedDependency(
     /** Type FQN */
     val typeFqn: String,
     /** Injection source: CONSTRUCTOR, FIELD, METHOD */
-    val injectionType: InjectionType
+    val injectionType: InjectionType,
 )
 
 @Serializable
 enum class InjectionType {
     CONSTRUCTOR,
     FIELD,
-    METHOD
+    METHOD,
 }
 
 // ============================================================================
@@ -112,34 +115,48 @@ enum class InjectionType {
 enum class PromiseOperationType {
     /** ratpack.exec.Blocking.get() */
     BLOCKING_GET,
+
     /** ratpack.exec.Blocking.on() */
     BLOCKING_ON,
+
     /** ratpack.exec.Promise.async() */
     PROMISE_ASYNC,
+
     /** ratpack.exec.Promise.sync() */
     PROMISE_SYNC,
+
     /** ratpack.exec.Promise.value() */
     PROMISE_VALUE,
+
     /** ratpack.exec.Execution.fork() */
     EXECUTION_FORK,
+
     /** ratpack.exec.ParallelBatch */
     PARALLEL_BATCH,
+
     /** .map() on Promise */
     PROMISE_MAP,
+
     /** .flatMap() on Promise */
     PROMISE_FLAT_MAP,
+
     /** .then() on Promise */
     PROMISE_THEN,
+
     /** .onError() on Promise */
     PROMISE_ON_ERROR,
+
     /** .route() on Promise */
     PROMISE_ROUTE,
+
     /** .cache() on Promise */
     PROMISE_CACHE,
+
     /** .retry() on Promise */
     PROMISE_RETRY,
+
     /** .transform() on Promise */
-    PROMISE_TRANSFORM
+    PROMISE_TRANSFORM,
 }
 
 /**
@@ -152,7 +169,7 @@ data class PromiseOperation(
     /** Method where this was detected */
     val methodName: String,
     /** Estimated chain depth (how many operations chained) */
-    val chainDepth: Int
+    val chainDepth: Int,
 )
 
 /**
@@ -177,7 +194,7 @@ data class PromiseUsageInfo(
     /** Maximum detected chain depth */
     val maxChainDepth: Int,
     /** Methods with Promise return types */
-    val promiseReturningMethods: List<String>
+    val promiseReturningMethods: List<String>,
 )
 
 /**
@@ -200,7 +217,7 @@ data class PromiseSummary(
     /** Breakdown by operation type */
     val operationBreakdown: Map<PromiseOperationType, Int>,
     /** Classes with highest Promise complexity */
-    val topComplexClasses: List<PromiseUsageInfo>
+    val topComplexClasses: List<PromiseUsageInfo>,
 )
 
 // ============================================================================
@@ -214,12 +231,15 @@ data class PromiseSummary(
 enum class ComplexityTier {
     /** Score 0-25: Simple migration, likely 1-2 hours */
     LOW,
+
     /** Score 26-50: Moderate migration, likely 2-4 hours */
     MEDIUM,
+
     /** Score 51-75: Complex migration, likely 4-8 hours */
     HIGH,
+
     /** Score 76-100: Critical complexity, likely 8+ hours */
-    CRITICAL
+    CRITICAL,
 }
 
 /**
@@ -236,7 +256,7 @@ data class ComplexityFactor(
     /** Maximum possible points for this factor */
     val maxPoints: Int,
     /** Details about why points were assigned */
-    val details: String
+    val details: String,
 )
 
 /**
@@ -259,7 +279,7 @@ data class ComplexityResult(
     /** Suggested migration order priority (1 = first) */
     val migrationPriority: Int,
     /** Dependencies that should be migrated first */
-    val blockedBy: List<String>
+    val blockedBy: List<String>,
 )
 
 /**
@@ -276,7 +296,7 @@ data class ComplexitySummary(
     /** Average complexity score */
     val averageScore: Double,
     /** Suggested migration order */
-    val migrationOrder: List<MigrationOrderItem>
+    val migrationOrder: List<MigrationOrderItem>,
 )
 
 /**
@@ -295,7 +315,7 @@ data class MigrationOrderItem(
     /** Order number */
     val order: Int,
     /** Reason for this position */
-    val reason: String
+    val reason: String,
 )
 
 // ============================================================================
@@ -309,10 +329,12 @@ data class MigrationOrderItem(
 enum class GuiceModuleType {
     /** Extends com.google.inject.AbstractModule */
     ABSTRACT_MODULE,
+
     /** Extends ratpack.guice.ConfigurableModule */
     CONFIGURABLE_MODULE,
+
     /** Has @Provides methods but doesn't extend Module */
-    PROVIDER_CLASS
+    PROVIDER_CLASS,
 }
 
 /**
@@ -329,23 +351,28 @@ data class GuiceBinding(
     /** Is this a multibinding (Set/Map) */
     val isMultibinding: Boolean,
     /** Binding source: BIND, PROVIDES, PROVIDES_INTO_SET, etc */
-    val bindingSource: BindingSource
+    val bindingSource: BindingSource,
 )
 
 @Serializable
 enum class BindingSource {
     /** bind(X).to(Y) */
     BIND_TO,
+
     /** bind(X).toInstance(y) */
     BIND_TO_INSTANCE,
+
     /** bind(X).toProvider(P) */
     BIND_TO_PROVIDER,
+
     /** @Provides method */
     PROVIDES,
+
     /** @ProvidesIntoSet method */
     PROVIDES_INTO_SET,
+
     /** @ProvidesIntoMap method */
-    PROVIDES_INTO_MAP
+    PROVIDES_INTO_MAP,
 }
 
 /**
@@ -364,7 +391,7 @@ data class GuiceModuleSummary(
     /** Number of bindings */
     val bindingCount: Int,
     /** Number of @Provides methods */
-    val providesMethodCount: Int
+    val providesMethodCount: Int,
 )
 
 /**
@@ -387,7 +414,7 @@ data class GuiceModuleInfo(
     /** All @Provides methods */
     val providesMethods: List<ProvidesMethodInfo>,
     /** Other modules installed by this module */
-    val installedModules: List<String>
+    val installedModules: List<String>,
 )
 
 /**
@@ -406,5 +433,5 @@ data class ProvidesMethodInfo(
     /** Is @ProvidesIntoMap */
     val intoMap: Boolean,
     /** Dependencies (method parameters) */
-    val dependencies: List<String>
+    val dependencies: List<String>,
 )

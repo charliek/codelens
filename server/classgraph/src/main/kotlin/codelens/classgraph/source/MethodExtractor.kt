@@ -6,14 +6,13 @@ import codelens.core.model.source.SourceLanguage
  * Extracts method source code from file content.
  */
 class MethodExtractor {
-
     /**
      * Result of method extraction.
      */
     data class Extraction(
         val content: String,
-        val startLine: Int,  // 1-based
-        val endLine: Int     // 1-based
+        val startLine: Int, // 1-based
+        val endLine: Int, // 1-based
     )
 
     /**
@@ -24,7 +23,11 @@ class MethodExtractor {
      * @param language Source language
      * @return Extraction result or null if extraction fails
      */
-    fun extractByLineNumber(lines: List<String>, startLine: Int, language: SourceLanguage): Extraction? {
+    fun extractByLineNumber(
+        lines: List<String>,
+        startLine: Int,
+        language: SourceLanguage,
+    ): Extraction? {
         if (startLine < 1 || startLine > lines.size) return null
 
         // Try to find method declaration by walking back from startLine
@@ -36,8 +39,8 @@ class MethodExtractor {
 
         return Extraction(
             content = lines.subList(actualStart, endLine).joinToString("\n"),
-            startLine = actualStart + 1,  // Convert to 1-based
-            endLine = endLine
+            startLine = actualStart + 1, // Convert to 1-based
+            endLine = endLine,
         )
     }
 
@@ -54,14 +57,15 @@ class MethodExtractor {
         lines: List<String>,
         methodName: String,
         paramTypes: List<String>,
-        language: SourceLanguage
+        language: SourceLanguage,
     ): Extraction? {
         // Build pattern based on language
-        val methodPattern = when (language) {
-            SourceLanguage.KOTLIN -> Regex("""(fun\s+)?$methodName\s*\(""")
-            SourceLanguage.JAVA -> Regex("""\b$methodName\s*\(""")
-            else -> Regex("""\b$methodName\s*\(""")
-        }
+        val methodPattern =
+            when (language) {
+                SourceLanguage.KOTLIN -> Regex("""(fun\s+)?$methodName\s*\(""")
+                SourceLanguage.JAVA -> Regex("""\b$methodName\s*\(""")
+                else -> Regex("""\b$methodName\s*\(""")
+            }
 
         // Search for method declaration
         for (i in lines.indices) {
@@ -73,7 +77,7 @@ class MethodExtractor {
                     return Extraction(
                         content = lines.subList(i, endLine).joinToString("\n"),
                         startLine = i + 1,
-                        endLine = endLine
+                        endLine = endLine,
                     )
                 }
             }
@@ -87,12 +91,17 @@ class MethodExtractor {
      * This handles cases where the bytecode line number points to the method body
      * rather than the declaration.
      */
-    private fun findMethodDeclarationStart(lines: List<String>, fromIndex: Int, language: SourceLanguage): Int {
-        val methodKeywords = when (language) {
-            SourceLanguage.KOTLIN -> listOf("fun ", "override fun ", "private fun ", "public fun ", "internal fun ", "protected fun ")
-            SourceLanguage.JAVA -> listOf("void ", "public ", "private ", "protected ", "static ", "final ", "abstract ")
-            else -> listOf("fun ", "void ", "public ", "private ")
-        }
+    private fun findMethodDeclarationStart(
+        lines: List<String>,
+        fromIndex: Int,
+        language: SourceLanguage,
+    ): Int {
+        val methodKeywords =
+            when (language) {
+                SourceLanguage.KOTLIN -> listOf("fun ", "override fun ", "private fun ", "public fun ", "internal fun ", "protected fun ")
+                SourceLanguage.JAVA -> listOf("void ", "public ", "private ", "protected ", "static ", "final ", "abstract ")
+                else -> listOf("fun ", "void ", "public ", "private ")
+            }
 
         // Walk backwards to find method declaration
         var current = fromIndex
@@ -124,7 +133,10 @@ class MethodExtractor {
     /**
      * Finds the end of a method by tracking brace nesting.
      */
-    private fun findMethodEnd(lines: List<String>, startIndex: Int): Int {
+    private fun findMethodEnd(
+        lines: List<String>,
+        startIndex: Int,
+    ): Int {
         var braceCount = 0
         var foundStart = false
         var inString = false
@@ -152,7 +164,7 @@ class MethodExtractor {
                         '}' -> {
                             braceCount--
                             if (foundStart && braceCount == 0) {
-                                return i + 1  // Return 1-based end line (exclusive)
+                                return i + 1 // Return 1-based end line (exclusive)
                             }
                         }
                     }
@@ -169,7 +181,12 @@ class MethodExtractor {
      * Checks if a line containing a method name is actually a method declaration
      * rather than a method call.
      */
-    private fun isMethodDeclaration(lines: List<String>, index: Int, methodName: String, language: SourceLanguage): Boolean {
+    private fun isMethodDeclaration(
+        lines: List<String>,
+        index: Int,
+        methodName: String,
+        language: SourceLanguage,
+    ): Boolean {
         val line = lines[index].trim()
 
         // Check for common declaration patterns
@@ -182,8 +199,11 @@ class MethodExtractor {
                 // Check previous lines for annotations/modifiers
                 if (index > 0) {
                     val prevLine = lines[index - 1].trim()
-                    if (prevLine.startsWith("@") || prevLine == "override" ||
-                        prevLine.endsWith("fun") || prevLine.contains(" fun ")) {
+                    if (prevLine.startsWith("@") ||
+                        prevLine == "override" ||
+                        prevLine.endsWith("fun") ||
+                        prevLine.contains(" fun ")
+                    ) {
                         return true
                     }
                 }

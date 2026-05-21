@@ -26,7 +26,7 @@ class LibrarySourceResolver(
     private val mavenClient: MavenCentralClient = MavenCentralClient(),
     private val extractor: SourceJarExtractor = SourceJarExtractor(),
     private val decompiler: Decompiler = Decompiler(),
-    private val jdkResolver: JdkSourceResolver = JdkSourceResolver(cache, decompiler)
+    private val jdkResolver: JdkSourceResolver = JdkSourceResolver(cache, decompiler),
 ) {
     private val logger = LoggerFactory.getLogger(LibrarySourceResolver::class.java)
 
@@ -45,7 +45,7 @@ class LibrarySourceResolver(
         jarPath: String?,
         isJdkClass: Boolean,
         allowDecompilation: Boolean = true,
-        forceRefresh: Boolean = false
+        forceRefresh: Boolean = false,
     ): Result<LibrarySourceInfo> {
         logger.info("Resolving source for: {} (JDK: {}, decompile: {})", fqn, isJdkClass, allowDecompilation)
 
@@ -56,11 +56,13 @@ class LibrarySourceResolver(
 
         // Handle library classes
         if (jarPath == null) {
-            return Result.failure(SourceResolutionException(
-                fqn,
-                SourceResolutionErrorReason.FILE_NOT_FOUND,
-                "JAR path not available for $fqn"
-            ))
+            return Result.failure(
+                SourceResolutionException(
+                    fqn,
+                    SourceResolutionErrorReason.FILE_NOT_FOUND,
+                    "JAR path not available for $fqn",
+                ),
+            )
         }
 
         return resolveLibrarySource(fqn, jarPath, allowDecompilation, forceRefresh)
@@ -69,23 +71,27 @@ class LibrarySourceResolver(
     /**
      * Resolves source for a JDK class.
      */
-    private fun resolveJdkSource(fqn: String, allowDecompilation: Boolean): Result<LibrarySourceInfo> {
-        return jdkResolver.resolveSource(fqn, allowDecompilation).map { source ->
-            val isDecompiled = !jdkResolver.hasSource(fqn)
-            LibrarySourceInfo(
-                fqn = fqn,
-                source = source,
-                sourceOrigin = if (isDecompiled) SourceOrigin.DECOMPILED else SourceOrigin.JDK_SOURCE,
-                isDecompiled = isDecompiled
-            )
-        }.recoverCatching { error ->
-            throw SourceResolutionException(
-                fqn,
-                SourceResolutionErrorReason.JDK_CLASS,
-                error.message ?: "Unknown error resolving JDK source for $fqn"
-            )
-        }
-    }
+    private fun resolveJdkSource(
+        fqn: String,
+        allowDecompilation: Boolean,
+    ): Result<LibrarySourceInfo> =
+        jdkResolver
+            .resolveSource(fqn, allowDecompilation)
+            .map { source ->
+                val isDecompiled = !jdkResolver.hasSource(fqn)
+                LibrarySourceInfo(
+                    fqn = fqn,
+                    source = source,
+                    sourceOrigin = if (isDecompiled) SourceOrigin.DECOMPILED else SourceOrigin.JDK_SOURCE,
+                    isDecompiled = isDecompiled,
+                )
+            }.recoverCatching { error ->
+                throw SourceResolutionException(
+                    fqn,
+                    SourceResolutionErrorReason.JDK_CLASS,
+                    error.message ?: "Unknown error resolving JDK source for $fqn",
+                )
+            }
 
     /**
      * Resolves source for a library class.
@@ -94,7 +100,7 @@ class LibrarySourceResolver(
         fqn: String,
         jarPath: String,
         allowDecompilation: Boolean,
-        forceRefresh: Boolean
+        forceRefresh: Boolean,
     ): Result<LibrarySourceInfo> {
         val jarFile = File(jarPath)
 
@@ -118,11 +124,13 @@ class LibrarySourceResolver(
             return resolveFromDecompilation(fqn, jarFile, coordinates)
         }
 
-        return Result.failure(SourceResolutionException(
-            fqn,
-            SourceResolutionErrorReason.LIBRARY_CLASS,
-            "Source JAR not available and decompilation disabled for $fqn"
-        ))
+        return Result.failure(
+            SourceResolutionException(
+                fqn,
+                SourceResolutionErrorReason.LIBRARY_CLASS,
+                "Source JAR not available and decompilation disabled for $fqn",
+            ),
+        )
     }
 
     /**
@@ -131,32 +139,37 @@ class LibrarySourceResolver(
     private fun resolveFromSourceJar(
         fqn: String,
         coordinates: MavenCoordinates,
-        forceRefresh: Boolean
+        forceRefresh: Boolean,
     ): Result<LibrarySourceInfo> {
         // Check cache (unless forcing refresh)
-        val cachedJar = if (forceRefresh) {
-            cache.clearSourceJar(coordinates)
-            null
-        } else {
-            cache.getSourceJar(coordinates)
-        }
-
-        val sourceJar = if (cachedJar != null) {
-            cachedJar
-        } else {
-            // Download from Maven Central
-            val downloadResult = mavenClient.downloadSourceJar(coordinates)
-            if (downloadResult.isFailure) {
-                val error = downloadResult.exceptionOrNull()
-                    ?: Exception("Download failed with unknown error")
-                return Result.failure(SourceResolutionException(
-                    fqn,
-                    SourceResolutionErrorReason.LIBRARY_CLASS,
-                    "Failed to download source JAR for ${coordinates.toGradleNotation()}: ${error.message}"
-                ))
+        val cachedJar =
+            if (forceRefresh) {
+                cache.clearSourceJar(coordinates)
+                null
+            } else {
+                cache.getSourceJar(coordinates)
             }
-            cache.putSourceJar(coordinates, downloadResult.getOrThrow())
-        }
+
+        val sourceJar =
+            if (cachedJar != null) {
+                cachedJar
+            } else {
+                // Download from Maven Central
+                val downloadResult = mavenClient.downloadSourceJar(coordinates)
+                if (downloadResult.isFailure) {
+                    val error =
+                        downloadResult.exceptionOrNull()
+                            ?: Exception("Download failed with unknown error")
+                    return Result.failure(
+                        SourceResolutionException(
+                            fqn,
+                            SourceResolutionErrorReason.LIBRARY_CLASS,
+                            "Failed to download source JAR for ${coordinates.toGradleNotation()}: ${error.message}",
+                        ),
+                    )
+                }
+                cache.putSourceJar(coordinates, downloadResult.getOrThrow())
+            }
 
         // Extract source from JAR
         val source = extractor.extractSource(sourceJar, fqn)
@@ -167,15 +180,17 @@ class LibrarySourceResolver(
                     source = source,
                     sourceOrigin = SourceOrigin.SOURCE_JAR,
                     mavenCoordinates = coordinates,
-                    isDecompiled = false
-                )
+                    isDecompiled = false,
+                ),
             )
         } else {
-            Result.failure(SourceResolutionException(
-                fqn,
-                SourceResolutionErrorReason.FILE_NOT_FOUND,
-                "Class $fqn not found in source JAR"
-            ))
+            Result.failure(
+                SourceResolutionException(
+                    fqn,
+                    SourceResolutionErrorReason.FILE_NOT_FOUND,
+                    "Class $fqn not found in source JAR",
+                ),
+            )
         }
     }
 
@@ -185,7 +200,7 @@ class LibrarySourceResolver(
     private fun resolveFromDecompilation(
         fqn: String,
         jarFile: File,
-        coordinates: MavenCoordinates?
+        coordinates: MavenCoordinates?,
     ): Result<LibrarySourceInfo> {
         // Check decompilation cache
         val cachedSource = cache.getDecompiledSource(jarFile.absolutePath, fqn)
@@ -196,28 +211,30 @@ class LibrarySourceResolver(
                     source = cachedSource,
                     sourceOrigin = SourceOrigin.DECOMPILED,
                     mavenCoordinates = coordinates,
-                    isDecompiled = true
-                )
+                    isDecompiled = true,
+                ),
             )
         }
 
         // Decompile
-        return decompiler.decompile(jarFile, fqn).map { source ->
-            cache.putDecompiledSource(jarFile.absolutePath, fqn, source)
-            LibrarySourceInfo(
-                fqn = fqn,
-                source = source,
-                sourceOrigin = SourceOrigin.DECOMPILED,
-                mavenCoordinates = coordinates,
-                isDecompiled = true
-            )
-        }.recoverCatching { error ->
-            throw SourceResolutionException(
-                fqn,
-                SourceResolutionErrorReason.LIBRARY_CLASS,
-                "Decompilation failed for $fqn: ${error.message ?: "Unknown error"}"
-            )
-        }
+        return decompiler
+            .decompile(jarFile, fqn)
+            .map { source ->
+                cache.putDecompiledSource(jarFile.absolutePath, fqn, source)
+                LibrarySourceInfo(
+                    fqn = fqn,
+                    source = source,
+                    sourceOrigin = SourceOrigin.DECOMPILED,
+                    mavenCoordinates = coordinates,
+                    isDecompiled = true,
+                )
+            }.recoverCatching { error ->
+                throw SourceResolutionException(
+                    fqn,
+                    SourceResolutionErrorReason.LIBRARY_CLASS,
+                    "Decompilation failed for $fqn: ${error.message ?: "Unknown error"}",
+                )
+            }
     }
 
     /**
@@ -227,7 +244,7 @@ class LibrarySourceResolver(
         fqn: String,
         jarPath: String?,
         isJdkClass: Boolean,
-        allowDecompilation: Boolean = true
+        allowDecompilation: Boolean = true,
     ): Boolean {
         if (isJdkClass) {
             return jdkResolver.hasSource(fqn) || allowDecompilation
