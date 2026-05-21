@@ -38,8 +38,6 @@ tasks.test {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set("codelens-server")
-    archiveClassifier.set("all")
-    archiveVersion.set("")
+    archiveFileName = "codelens-server-all.jar"
     mergeServiceFiles()
 }

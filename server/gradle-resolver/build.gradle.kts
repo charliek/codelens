@@ -2,12 +2,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
-repositories {
-    maven {
-        url = uri("https://repo.gradle.org/gradle/libs-releases")
-    }
-}
-
 dependencies {
     implementation(project(":server:core"))
     implementation(libs.gradle.tooling.api)
