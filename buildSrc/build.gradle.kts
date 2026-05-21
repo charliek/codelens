@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(libs.kotlin.gradle.plugin)
+    implementation("org.jlleitschuh.gradle:ktlint-gradle:${libs.versions.ktlint.gradle.get()}")
 
     // Workaround so precompiled script plugins can use the version catalog
     // (`libs.*`) without redeclaring versions. See:

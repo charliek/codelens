@@ -5,10 +5,19 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     kotlin("jvm")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 kotlin {
     jvmToolchain(21)
+}
+
+ktlint {
+    version.set(extensions.getByType<VersionCatalogsExtension>().named("libs").findVersion("ktlint").get().requiredVersion)
+    filter {
+        exclude { it.file.path.contains("/generated/") }
+        exclude { it.file.path.contains("/build/") }
+    }
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {
