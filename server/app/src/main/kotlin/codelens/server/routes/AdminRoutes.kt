@@ -5,6 +5,7 @@ import codelens.core.model.*
 import codelens.server.config.ServerConfig
 import codelens.server.monitoring.ActivityTracker
 import codelens.server.services.AnalysisService
+import codelens.server.util.formatDuration
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -100,17 +101,5 @@ fun Route.adminRoutes(
                 System.exit(0)
             }.start()
         }
-    }
-}
-
-private fun formatDuration(duration: java.time.Duration): String {
-    val hours = duration.toHours()
-    val minutes = duration.toMinutesPart()
-    val seconds = duration.toSecondsPart()
-
-    return when {
-        hours > 0 -> "${hours}h ${minutes}m ${seconds}s"
-        minutes > 0 -> "${minutes}m ${seconds}s"
-        else -> "${seconds}s"
     }
 }
