@@ -1,5 +1,6 @@
 package codelens.server.routes
 
+import codelens.core.BuildConfig
 import codelens.core.model.*
 import codelens.server.config.ServerConfig
 import codelens.server.monitoring.ActivityTracker
@@ -55,7 +56,7 @@ fun Route.adminRoutes(
 
             call.respond(
                 ServerInfo(
-                    version = "0.1.0",
+                    version = BuildConfig.VERSION,
                     apiVersion = "v1",
                     projectPath = config.projectPath,
                     projectName = projectInfo.name,
@@ -73,7 +74,7 @@ fun Route.adminRoutes(
 
         post("/activity") {
             activityTracker.touch()
-            call.respond(mapOf("lastActivityAt" to Instant.now().toString()))
+            call.respond(ActivityResponse(lastActivityAt = Instant.now().toString()))
         }
 
         post("/shutdown") {
@@ -91,7 +92,7 @@ fun Route.adminRoutes(
                 return@post
             }
 
-            call.respond(mapOf("status" to "shutting_down"))
+            call.respond(ShutdownResponse(status = "shutting_down"))
 
             // Shutdown in background thread
             Thread {

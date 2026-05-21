@@ -1,5 +1,6 @@
 package codelens.server
 
+import codelens.core.BuildConfig
 import codelens.server.config.ServerConfig
 import codelens.server.config.findAvailablePort
 import codelens.server.config.parseArgs
@@ -83,7 +84,7 @@ fun main(args: Array<String>) {
     server.start(wait = false)
 
     // Print ready signal (CLI watches for this on stdout)
-    println("CODELENS_READY port=$port host=${config.host} version=0.1.0")
+    println("CODELENS_READY port=$port host=${config.host} version=${BuildConfig.VERSION}")
     System.out.flush()
 
     // Block main thread
@@ -105,6 +106,10 @@ fun Application.configureServer(
             Json {
                 prettyPrint = true
                 encodeDefaults = true
+                // Forward-compatible deserialization: ignore fields the server
+                // doesn't know about yet, so a newer client can talk to an
+                // older server (and during rolling upgrades, vice versa).
+                ignoreUnknownKeys = true
             },
         )
     }

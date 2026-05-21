@@ -55,3 +55,13 @@ data class ErrorResponse(
     val type: String,
     val message: String,
 )
+
+@Serializable
+data class ActivityResponse(
+    val lastActivityAt: String,
+)
+
+@Serializable
+data class ShutdownResponse(
+    val status: String,
+)
