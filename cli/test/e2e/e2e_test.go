@@ -64,6 +64,15 @@ func setup() error {
 		return err
 	}
 	fixture.goBin = filepath.Join(tmp, "codelens-go")
+	// Embed version.txt (gitignored, regenerated each build) before building,
+	// matching `make build`, so the suite is self-contained even on a clean
+	// checkout where the embed file doesn't exist yet.
+	gen := exec.Command("go", "generate", "./...")
+	gen.Dir = filepath.Join(repo, "cli")
+	gen.Env = os.Environ()
+	if out, err := gen.CombinedOutput(); err != nil {
+		return fmt.Errorf("go generate failed: %v\n%s", err, out)
+	}
 	build := exec.Command("go", "build", "-o", fixture.goBin, "./cmd/codelens")
 	build.Dir = filepath.Join(repo, "cli")
 	build.Env = os.Environ()
