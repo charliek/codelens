@@ -62,7 +62,7 @@ codelens handlers list [options]
 **Options:**
 - `--type <type>` - Filter by handler type (HANDLER, CHAIN_ACTION, INLINE_HANDLER, GROOVY_HANDLER)
 - `--tier <tier>` - Filter by complexity tier (LOW, MEDIUM, HIGH, CRITICAL)
-- `--inject` - Show only handlers with @Inject dependencies
+- `--missing-inject`, `-I` - Show only handlers **without** an `@Inject` annotation (candidates for DI refactoring)
 
 **Examples:**
 ```bash
@@ -72,8 +72,8 @@ codelens handlers list
 # High complexity handlers only
 codelens handlers list --tier HIGH
 
-# Handlers with injected dependencies
-codelens handlers list --inject
+# Handlers that still need @Inject wired up
+codelens handlers list --missing-inject
 ```
 
 ### Handler Details

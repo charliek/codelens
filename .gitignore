@@ -45,6 +45,9 @@ Thumbs.db
 # CodeLens state (development)
 .codelens/
 
+# Claude Code local session state
+.claude/
+
 # Environment
 .env
 .env.local

@@ -28,6 +28,9 @@ Ensure the CodeLens server is running for your project:
 codelens start --project /path/to/project
 ```
 
+Several examples below pipe JSON output through `jq` — install it via your
+package manager if you want to follow those verbatim.
+
 ## Class Discovery
 
 ### List Classes
@@ -42,7 +45,7 @@ codelens classes list [options]
 - `--annotation <fqn>` - Classes annotated with specific annotation
 - `--extends <fqn>` - Classes extending a specific class
 - `--implements <fqn>` - Classes implementing a specific interface
-- `--interfaces-only` - Show only interfaces
+- `--interfaces`, `-i` - Show only interfaces
 - `--include-libraries` - Include library classes (project-only by default)
 
 **Examples:**
@@ -159,18 +162,19 @@ Analyze class-level dependencies:
 codelens classes dependencies <fully-qualified-name>
 ```
 
-**Options:**
-- `--direction incoming` - Classes that depend on this class
-- `--direction outgoing` - Classes this class depends on (default)
-- `--direction both` - Both directions
+A single call returns both directions in one response: the JSON body has
+separate `incoming` and `outgoing` arrays. Use `jq` to pick the side you want.
 
 **Examples:**
 ```bash
-# What does UserService depend on?
+# Both directions in one call (default)
 codelens classes dependencies com.example.UserService
 
+# What does UserService depend on?
+codelens classes dependencies com.example.UserService | jq '.outgoing'
+
 # What depends on UserService?
-codelens classes dependencies com.example.UserService --direction incoming
+codelens classes dependencies com.example.UserService | jq '.incoming'
 ```
 
 ## Annotation Usages
@@ -211,8 +215,8 @@ codelens classes list --implements ratpack.handling.Handler
 # 1. Find implementations
 codelens classes implementations com.example.UserRepository
 
-# 2. Find incoming dependencies
-codelens classes dependencies com.example.UserRepository --direction incoming
+# 2. Find incoming dependencies (one call returns both directions)
+codelens classes dependencies com.example.UserRepository | jq '.incoming'
 
 # 3. View the source (use codelens-source-lookup skill)
 codelens source show com.example.UserRepositoryImpl
@@ -233,7 +237,7 @@ codelens annotations usages javax.inject.Singleton
 - Use `--include-libraries` sparingly - it can return many results
 - Combine with `codelens-source-lookup` to view discovered classes
 - Pattern matching uses glob syntax (`*` for any characters)
-- Results are paginated by default; use `--limit` and `--offset` for large result sets
+- Results are paginated by default; use `--page` and `--size` for large result sets
 
 ## Related Skills
 
