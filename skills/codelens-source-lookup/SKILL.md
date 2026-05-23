@@ -56,7 +56,7 @@ codelens source method <class-fqn> <method-name>
 ```
 
 **Options:**
-- `--params <types>` - Disambiguate overloaded methods (comma-separated parameter types)
+- `--param-types <types>` - Disambiguate overloaded methods (comma-separated parameter types)
 - `--context <n>` - Include n lines before/after the method
 
 **Examples:**
@@ -65,7 +65,7 @@ codelens source method <class-fqn> <method-name>
 codelens source method com.example.UserService getUser
 
 # Overloaded method - specify parameter types
-codelens source method com.example.UserService findUsers --params "String,int"
+codelens source method com.example.UserService findUsers --param-types "String,int"
 
 # With surrounding context
 codelens source method com.example.MyHandler handle --context 5
@@ -89,9 +89,10 @@ CodeLens resolves source in this order:
 3. **JDK source** - From `src.zip` or JDK modules
 4. **Decompilation** - Fallback when source unavailable
 
-**Options:**
-- `--no-decompile` - Disable decompilation fallback
-- `--refresh` - Force re-download of source JARs
+The server endpoint accepts query parameters to disable decompilation
+fallback or force a fresh source-JAR download, but those toggles are not
+yet exposed on the CLI. They are queued alongside the format/visibility
+flags in the follow-up Go-CLI enhancement noted above.
 
 ## Tips
 

@@ -42,7 +42,7 @@ codelens classes list [options]
 - `--annotation <fqn>` - Classes annotated with specific annotation
 - `--extends <fqn>` - Classes extending a specific class
 - `--implements <fqn>` - Classes implementing a specific interface
-- `--interfaces-only` - Show only interfaces
+- `--interfaces`, `-i` - Show only interfaces
 - `--include-libraries` - Include library classes (project-only by default)
 
 **Examples:**
@@ -234,7 +234,7 @@ codelens annotations usages javax.inject.Singleton
 - Use `--include-libraries` sparingly - it can return many results
 - Combine with `codelens-source-lookup` to view discovered classes
 - Pattern matching uses glob syntax (`*` for any characters)
-- Results are paginated by default; use `--limit` and `--offset` for large result sets
+- Results are paginated by default; use `--page` and `--size` for large result sets
 
 ## Related Skills
 
