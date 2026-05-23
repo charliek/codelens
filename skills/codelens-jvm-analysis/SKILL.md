@@ -28,6 +28,12 @@ Ensure the CodeLens server is running for your project:
 codelens start --project /path/to/project
 ```
 
+**Note:** The first start for a project may take several minutes (3-7 min for
+large projects) while the server resolves the Gradle classpath and downloads
+dependencies. Use `codelens status` to monitor — the server transitions through
+`LOADING` (scanning) to `READY` (fully available). Subsequent starts are fast
+due to cached dependencies.
+
 Several examples below pipe JSON output through `jq` — install it via your
 package manager if you want to follow those verbatim.
 

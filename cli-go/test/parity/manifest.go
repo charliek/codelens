@@ -108,11 +108,38 @@ var allCases = []Case{
 	{Name: "deps_default_json", Args: []string{"deps", "--format", "json"}},
 	{Name: "deps_default_dot", Args: []string{"deps", "--format", "dot"}},
 
-	// ---------- handlers ----------
-	// Client-side --missing-inject filter — sample project has no handlers,
-	// so this just confirms both CLIs produce identical JSON when the filter
-	// kicks in on an empty set.
+	// ---------- handlers (continued) ----------
+	// Client-side --missing-inject filter.
 	{Name: "handlers_list_missing_inject", Args: []string{"handlers", "list", "--missing-inject"}},
+	// Tier filter — exercises the query-param pass-through.
+	{Name: "handlers_list_tier_low", Args: []string{"handlers", "list", "--tier", "LOW"}},
+	// Show a handler that doesn't exist — both CLIs exit 1 with the same
+	// 404 body. Locks the error-path contract.
+	{Name: "handlers_show_not_found", Args: []string{"handlers", "show", "sample.handlers.NonExistent"}, ExpectExitCode: 1},
+
+	// ---------- classes (continued) ----------
+	// Show a specific class by FQN (BlockingHandler has @Inject, deps, etc.)
+	{Name: "classes_show", Args: []string{"classes", "show", "sample.handlers.BlockingHandler"}},
+	// Interfaces-only filter.
+	{Name: "classes_list_interfaces", Args: []string{"classes", "list", "--interfaces"}},
+	// Implementations of Handler interface.
+	{Name: "classes_implementations", Args: []string{"classes", "implementations", "ratpack.handling.Handler"}},
+	// Class dependencies (both incoming and outgoing).
+	{Name: "classes_dependencies", Args: []string{"classes", "dependencies", "sample.handlers.BlockingHandler"}},
+
+	// ---------- annotations ----------
+	{Name: "annotations_usages_singleton", Args: []string{"annotations", "usages", "javax.inject.Singleton"}},
+
+	// ---------- methods (continued) ----------
+	// Search by return type.
+	{Name: "methods_search_return_type", Args: []string{
+		"methods", "search",
+		"--return-type", "ratpack.exec.Promise",
+	}},
+
+	// ---------- source ----------
+	// Source retrieval for a project class.
+	{Name: "source_show", Args: []string{"source", "show", "sample.handlers.SimpleHandler"}},
 
 	// ---------- lint ----------
 	// lint_check on the sample fixture — which contains BadFormatting.kt

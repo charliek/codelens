@@ -83,6 +83,18 @@ func setup() error {
 	}
 	fixture.pythonBin = pythonBin
 
+	// Compile the fixture so the server has real project bytecode to scan.
+	// The server analyzes already-compiled output (it does not build the
+	// target itself), so on a clean checkout (e.g. CI) there are no .class
+	// files, projectClassCount is 0, and project-class lookups like
+	// `classes show` / `source show` 404. Run only after the JAR + Python
+	// checks above so the plain `go test ./...` job — which returns early
+	// when the JAR is absent — never triggers a fixture build. Idempotent:
+	// Gradle skips the work when the output is already up to date.
+	if err := compileFixture(fixture.projectPath); err != nil {
+		return err
+	}
+
 	// Isolated HOME. The Go CLI hardcodes ~/.cache/codelens; the Python
 	// CLI does too. Setting HOME isolates both from any developer state.
 	fixture.tmpHome = filepath.Join(tmp, "home")
@@ -126,6 +138,26 @@ func exists(path string) bool {
 	return err == nil
 }
 
+// compileFixture builds the sample project's main source set via its own
+// Gradle wrapper so the server has bytecode to scan. Without compiled output
+// the fixture has zero project classes and the success-path cases (e.g.
+// classes_show, source_show) fail because the server returns 404. Inherits
+// the ambient environment so it picks up JAVA_HOME from the CI job (or the
+// developer's active JDK locally).
+func compileFixture(projectPath string) error {
+	gradlew := filepath.Join(projectPath, "gradlew")
+	if !exists(gradlew) {
+		return fmt.Errorf("fixture gradlew not found at %s", gradlew)
+	}
+	cmd := exec.Command(gradlew, "classes", "--quiet")
+	cmd.Dir = projectPath
+	cmd.Env = os.Environ()
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to compile test fixture %s: %v\n%s", projectPath, err, out)
+	}
+	return nil
+}
+
 // cliRun encapsulates a CLI invocation and its captured output.
 type cliRun struct {
 	cmd    *exec.Cmd
@@ -153,8 +185,27 @@ func startServer(t *testing.T) {
 		t.Fatalf("go start failed: %v\nstderr=%s", err, r.stderr.String())
 	}
 	fixture.startedByGo = true
-	// Tiny settle pause so the next request doesn't race startup.
-	time.Sleep(200 * time.Millisecond)
+	// Wait for the scan to complete (status transitions from LOADING to READY).
+	// The HTTP server comes up immediately but bytecode scanning runs in the
+	// background. Without this wait, fast-running cases can hit 503 ScanNotReady.
+	waitForScanReady(t)
+}
+
+// waitForScanReady polls `classes stats` until it succeeds (scan complete)
+// or 120s elapse. The sample fixture is small, so this typically completes
+// in <30s even with a cold Gradle cache.
+func waitForScanReady(t *testing.T) {
+	t.Helper()
+	deadline := time.Now().Add(120 * time.Second)
+	for time.Now().Before(deadline) {
+		r := runCLI(fixture.goBin, "classes", "stats", "--project", fixture.projectPath, "--json")
+		if err := r.cmd.Run(); err == nil {
+			// Success means scan is complete.
+			return
+		}
+		time.Sleep(2 * time.Second)
+	}
+	t.Fatalf("scan did not complete within 120s")
 }
 
 // stopServer is registered as a Cleanup on the top-level subtest so it

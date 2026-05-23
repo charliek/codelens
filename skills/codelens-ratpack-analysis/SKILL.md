@@ -30,6 +30,13 @@ Ensure the CodeLens server is running for your Ratpack project:
 codelens start --project /path/to/ratpack-project
 ```
 
+**Note:** The first start for a project may take several minutes (3-7 min for
+large projects) while the server resolves the Gradle classpath and downloads
+dependencies. Subsequent starts are much faster due to Gradle's dependency
+cache. Use `codelens status --project /path/to/project` to monitor progress —
+the status transitions from `READY` (HTTP server up) through `LOADING`
+(scanning bytecode) and back to `READY` (scan complete, API fully available).
+
 ## Quick Start: Migration Assessment
 
 Run these commands for an initial assessment:
@@ -401,6 +408,8 @@ codelens handlers list --tier CRITICAL
 - Use `codelens routes spring` to preview target API structure
 - Foundation classes often contain shared logic worth refactoring
 - High Promise chain depth suggests candidates for async/await patterns
+- Use `--json` to get structured output for piping through `jq` or other tools
+  (the CLI auto-enables JSON output when stdout is not a TTY)
 
 ## External References
 
