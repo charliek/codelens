@@ -83,6 +83,18 @@ func setup() error {
 	}
 	fixture.pythonBin = pythonBin
 
+	// Compile the fixture so the server has real project bytecode to scan.
+	// The server analyzes already-compiled output (it does not build the
+	// target itself), so on a clean checkout (e.g. CI) there are no .class
+	// files, projectClassCount is 0, and project-class lookups like
+	// `classes show` / `source show` 404. Run only after the JAR + Python
+	// checks above so the plain `go test ./...` job — which returns early
+	// when the JAR is absent — never triggers a fixture build. Idempotent:
+	// Gradle skips the work when the output is already up to date.
+	if err := compileFixture(fixture.projectPath); err != nil {
+		return err
+	}
+
 	// Isolated HOME. The Go CLI hardcodes ~/.cache/codelens; the Python
 	// CLI does too. Setting HOME isolates both from any developer state.
 	fixture.tmpHome = filepath.Join(tmp, "home")
@@ -124,6 +136,26 @@ func findRepoRoot() (string, error) {
 func exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+// compileFixture builds the sample project's main source set via its own
+// Gradle wrapper so the server has bytecode to scan. Without compiled output
+// the fixture has zero project classes and the success-path cases (e.g.
+// classes_show, source_show) fail because the server returns 404. Inherits
+// the ambient environment so it picks up JAVA_HOME from the CI job (or the
+// developer's active JDK locally).
+func compileFixture(projectPath string) error {
+	gradlew := filepath.Join(projectPath, "gradlew")
+	if !exists(gradlew) {
+		return fmt.Errorf("fixture gradlew not found at %s", gradlew)
+	}
+	cmd := exec.Command(gradlew, "classes", "--quiet")
+	cmd.Dir = projectPath
+	cmd.Env = os.Environ()
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to compile test fixture %s: %v\n%s", projectPath, err, out)
+	}
+	return nil
 }
 
 // cliRun encapsulates a CLI invocation and its captured output.
