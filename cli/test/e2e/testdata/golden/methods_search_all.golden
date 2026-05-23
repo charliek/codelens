@@ -1,0 +1,504 @@
+{
+  "methods": [
+    {
+      "classFqn": "sample.AppKt",
+      "classSimpleName": "AppKt",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": true,
+        "isStatic": true,
+        "isSynthetic": false,
+        "name": "main",
+        "parameters": [],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.BadClass",
+      "classSimpleName": "BadClass",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "value": ""
+            },
+            "type": "org.jetbrains.annotations.NotNull"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": true,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getName",
+        "parameters": [],
+        "returnType": "java.lang.String",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.BadClass",
+      "classSimpleName": "BadClass",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": true,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "method",
+        "parameters": [],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.BadFormattingKt",
+      "classSimpleName": "BadFormattingKt",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": true,
+        "isStatic": true,
+        "isSynthetic": false,
+        "name": "badFunction",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "int"
+          },
+          {
+            "annotations": [],
+            "name": "arg1",
+            "type": "int"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.api.UsersApi",
+      "classSimpleName": "UsersApi",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "execute",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Chain"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.AsyncHandler",
+      "classSimpleName": "AsyncHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "fetchUserData",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "ratpack.exec.Promise",
+        "visibility": "PRIVATE"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.AsyncHandler",
+      "classSimpleName": "AsyncHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "formatResponse",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.String",
+        "visibility": "PRIVATE"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.AsyncHandler",
+      "classSimpleName": "AsyncHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "handle",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Context"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.AsyncHandler",
+      "classSimpleName": "AsyncHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "processUserAction",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.Object"
+          },
+          {
+            "annotations": [],
+            "name": "arg1",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "ratpack.exec.Promise",
+        "visibility": "PRIVATE"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.BadHandler",
+      "classSimpleName": "BadHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "handle",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Context"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.BlockingHandler",
+      "classSimpleName": "BlockingHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getUserName",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "ratpack.exec.Promise",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.BlockingHandler",
+      "classSimpleName": "BlockingHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "handle",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Context"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.LoggingBadHandler",
+      "classSimpleName": "LoggingBadHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "handle",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Context"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.NotificationService",
+      "classSimpleName": "NotificationService",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": true,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "sendNotification",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          },
+          {
+            "annotations": [],
+            "name": "arg1",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.SimpleHandler",
+      "classSimpleName": "SimpleHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "handle",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Context"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.UserService",
+      "classSimpleName": "UserService",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": true,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "findUser",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.Object",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.UserService",
+      "classSimpleName": "UserService",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": true,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "saveUser",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.Object"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.modules.AppModule",
+      "classSimpleName": "AppModule",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "configure",
+        "parameters": [],
+        "returnType": "void",
+        "visibility": "PROTECTED"
+      }
+    },
+    {
+      "classFqn": "sample.modules.AppModule",
+      "classSimpleName": "AppModule",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {},
+            "type": "com.google.inject.Provides"
+          },
+          {
+            "parameters": {},
+            "type": "com.google.inject.ScopeAnnotation"
+          },
+          {
+            "parameters": {},
+            "type": "com.google.inject.Singleton"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "provideNotificationService",
+        "parameters": [],
+        "returnType": "sample.handlers.NotificationService",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.modules.AppModule",
+      "classSimpleName": "AppModule",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {},
+            "type": "com.google.inject.Provides"
+          },
+          {
+            "parameters": {},
+            "type": "com.google.inject.ScopeAnnotation"
+          },
+          {
+            "parameters": {},
+            "type": "com.google.inject.Singleton"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "provideUserService",
+        "parameters": [],
+        "returnType": "sample.handlers.UserService",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.modules.AppModule$1",
+      "classSimpleName": "1",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "findUser",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.Object",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.modules.AppModule$1",
+      "classSimpleName": "1",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "saveUser",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.Object"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      }
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 22,
+  "totalPages": 1
+}

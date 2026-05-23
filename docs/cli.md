@@ -5,7 +5,7 @@ The CodeLens CLI provides a command-line interface for analyzing JVM bytecode. I
 ## Installation
 
 ```bash
-cd cli-go
+cd cli
 
 # Build and install the Go binary (~/.local/bin/codelens)
 go generate ./...

@@ -1,0 +1,19 @@
+{
+  "incoming": [
+    {
+      "classFqn": "sample.api.UsersApi",
+      "dependencyType": "FIELD_TYPE",
+      "location": "blockingHandler",
+      "source": "PROJECT"
+    }
+  ],
+  "outgoing": [
+    {
+      "classFqn": "sample.handlers.UserService",
+      "dependencyType": "FIELD_TYPE",
+      "location": "userService",
+      "source": "PROJECT"
+    }
+  ],
+  "targetClass": "sample.handlers.BlockingHandler"
+}

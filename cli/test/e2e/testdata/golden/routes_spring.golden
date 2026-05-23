@@ -1,0 +1,68 @@
+{
+  "mappings": [
+    {
+      "methodSignature": "fun getRoot(@PathVariable id: String): ResponseEntity\u003c*\u003e",
+      "notes": [
+        "Contains 1 path parameter(s)"
+      ],
+      "ratpackRoute": {
+        "chainFqn": "sample.api.UsersApi",
+        "handlerFqn": null,
+        "handlerSimpleName": null,
+        "isPrefix": false,
+        "method": "GET",
+        "nestedRoutes": [],
+        "pathParameters": [
+          {
+            "name": "id",
+            "optional": false,
+            "position": 0
+          }
+        ],
+        "pathPattern": "/:id"
+      },
+      "springAnnotation": "@GetMapping(\"/{id}\")"
+    },
+    {
+      "methodSignature": "fun deleteRoot(@PathVariable id: String): ResponseEntity\u003c*\u003e",
+      "notes": [
+        "Contains 1 path parameter(s)"
+      ],
+      "ratpackRoute": {
+        "chainFqn": "sample.api.UsersApi",
+        "handlerFqn": null,
+        "handlerSimpleName": null,
+        "isPrefix": false,
+        "method": "DELETE",
+        "nestedRoutes": [],
+        "pathParameters": [
+          {
+            "name": "id",
+            "optional": false,
+            "position": 0
+          }
+        ],
+        "pathPattern": "/:id"
+      },
+      "springAnnotation": "@DeleteMapping(\"/{id}\")"
+    },
+    {
+      "methodSignature": "fun handleAdmin(): ResponseEntity\u003c*\u003e",
+      "notes": [
+        "Handles all HTTP methods - consider splitting into specific mappings"
+      ],
+      "ratpackRoute": {
+        "chainFqn": "sample.api.UsersApi",
+        "handlerFqn": null,
+        "handlerSimpleName": null,
+        "isPrefix": false,
+        "method": "ALL",
+        "nestedRoutes": [],
+        "pathParameters": [],
+        "pathPattern": "/admin"
+      },
+      "springAnnotation": "@RequestMapping(\"/admin\")"
+    }
+  ],
+  "totalCount": 3
+}

@@ -1,0 +1,170 @@
+{
+  "classInfo": {
+    "annotations": [
+      {
+        "parameters": {},
+        "type": "javax.inject.Scope"
+      },
+      {
+        "parameters": {},
+        "type": "javax.inject.Singleton"
+      }
+    ],
+    "constructors": [
+      {
+        "annotations": [
+          {
+            "parameters": {},
+            "type": "javax.inject.Inject"
+          }
+        ],
+        "isSynthetic": false,
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "sample.handlers.UserService"
+          }
+        ],
+        "visibility": "PUBLIC"
+      }
+    ],
+    "fields": [
+      {
+        "annotations": [],
+        "isFinal": true,
+        "isStatic": false,
+        "name": "userService",
+        "type": "sample.handlers.UserService",
+        "visibility": "PRIVATE"
+      }
+    ],
+    "interfaces": [
+      "ratpack.handling.Handler"
+    ],
+    "isAbstract": false,
+    "isAnnotation": false,
+    "isEnum": false,
+    "isFinal": false,
+    "isInterface": false,
+    "isSynthetic": false,
+    "jarPath": "{{PROJECT}}/build/classes/java/main",
+    "methods": [
+      {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "handle",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Context"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PUBLIC"
+      },
+      {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getUserName",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "ratpack.exec.Promise",
+        "visibility": "PUBLIC"
+      },
+      {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": true,
+        "name": "lambda$getUserName$3",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.Object",
+        "visibility": "PRIVATE"
+      },
+      {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": true,
+        "isSynthetic": true,
+        "name": "lambda$handle$2",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "ratpack.handling.Context"
+          },
+          {
+            "annotations": [],
+            "name": "arg1",
+            "type": "java.lang.Object"
+          }
+        ],
+        "returnType": "void",
+        "visibility": "PRIVATE"
+      },
+      {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": true,
+        "isSynthetic": true,
+        "name": "lambda$handle$1",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.Object"
+          }
+        ],
+        "returnType": "java.lang.Object",
+        "visibility": "PRIVATE"
+      },
+      {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": true,
+        "name": "lambda$handle$0",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.Object",
+        "visibility": "PRIVATE"
+      }
+    ],
+    "name": {
+      "fqn": "sample.handlers.BlockingHandler",
+      "packageName": "sample.handlers",
+      "simpleName": "BlockingHandler"
+    },
+    "source": "PROJECT",
+    "superclass": null,
+    "visibility": "PUBLIC"
+  }
+}

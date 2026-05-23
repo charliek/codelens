@@ -1,0 +1,172 @@
+{
+  "appliedFilter": {
+    "extendsClass": null,
+    "hasAnnotation": null,
+    "implementsInterface": null,
+    "namePattern": null,
+    "packagePattern": null,
+    "source": "PROJECT"
+  },
+  "classes": [
+    {
+      "fieldCount": 0,
+      "fqn": "sample.AppKt",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "sample",
+      "simpleName": "AppKt",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "sample.BadClass",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "sample",
+      "simpleName": "BadClass",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.BadFormattingKt",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "sample",
+      "simpleName": "BadFormattingKt",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "sample.api.UsersApi",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 7,
+      "packageName": "sample.api",
+      "simpleName": "UsersApi",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "sample.handlers.AsyncHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 12,
+      "packageName": "sample.handlers",
+      "simpleName": "AsyncHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "sample.handlers.BadHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "BadHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "sample.handlers.BlockingHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 6,
+      "packageName": "sample.handlers",
+      "simpleName": "BlockingHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "sample.handlers.LoggingBadHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "LoggingBadHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.handlers.NotificationService",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "NotificationService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.handlers.SimpleHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "SimpleHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.handlers.UserService",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 2,
+      "packageName": "sample.handlers",
+      "simpleName": "UserService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.modules.AppModule",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 4,
+      "packageName": "sample.modules",
+      "simpleName": "AppModule",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.modules.AppModule$1",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "sample.modules",
+      "simpleName": "1",
+      "source": "PROJECT"
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 13,
+  "totalPages": 1
+}

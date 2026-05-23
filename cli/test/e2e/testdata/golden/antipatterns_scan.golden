@@ -1,0 +1,54 @@
+{
+  "appliedFilters": {
+    "includeLibraries": false,
+    "severity": null,
+    "type": null
+  },
+  "summary": {
+    "countBySeverity": {
+      "CRITICAL": 1,
+      "INFO": 1
+    },
+    "countByType": {
+      "BLOCKING_JDBC": 1,
+      "CONSOLE_LOGGING": 1
+    },
+    "instances": [
+      {
+        "classFqn": "sample.handlers.BadHandler",
+        "confidence": 0.8,
+        "fixExample": "// Before (blocking):\nval result = connection.prepareStatement(sql).executeQuery()\n\n// After (non-blocking):\nBlocking.get {\n    connection.prepareStatement(sql).executeQuery()\n}.then { result -\u003e\n    // handle result\n}",
+        "methodName": null,
+        "reason": "JDBC types (connection) are used without visible Blocking.get() usage. This may block the event loop.",
+        "recommendation": "Wrap JDBC calls in Blocking.get { ... } to move them off the compute thread.",
+        "severity": "CRITICAL",
+        "type": "BLOCKING_JDBC"
+      },
+      {
+        "classFqn": "sample.handlers.LoggingBadHandler",
+        "confidence": 0.6,
+        "fixExample": "// Before:\nSystem.out.println(\"Processing request\")\n\n// After:\nprivate val logger = LoggerFactory.getLogger(MyClass::class.java)\nlogger.info(\"Processing request\")",
+        "methodName": null,
+        "reason": "PrintStream usage detected without a logger field. Direct console output is synchronous and not captured by logging frameworks.",
+        "recommendation": "Use SLF4J or another logging framework for proper log management.",
+        "severity": "INFO",
+        "type": "CONSOLE_LOGGING"
+      }
+    ],
+    "totalCount": 2,
+    "worstOffenders": [
+      {
+        "classFqn": "sample.handlers.BadHandler",
+        "count": 1,
+        "criticalCount": 1,
+        "errorCount": 0
+      },
+      {
+        "classFqn": "sample.handlers.LoggingBadHandler",
+        "count": 1,
+        "criticalCount": 0,
+        "errorCount": 0
+      }
+    ]
+  }
+}

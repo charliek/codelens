@@ -1,0 +1,61 @@
+{
+  "analysis": {
+    "cycles": [],
+    "foundationClasses": [],
+    "handlerTiers": [
+      {
+        "count": 5,
+        "description": "No handler dependencies",
+        "handlers": [
+          "AsyncHandler",
+          "BadHandler",
+          "BlockingHandler",
+          "LoggingBadHandler",
+          "SimpleHandler"
+        ],
+        "tier": 0
+      },
+      {
+        "count": 1,
+        "description": "Depends only on Tier 0 handlers",
+        "handlers": [
+          "UsersApi"
+        ],
+        "tier": 1
+      }
+    ],
+    "quickWins": [
+      {
+        "complexity": "LOW",
+        "dependencyCount": 0,
+        "fqn": "sample.handlers.BadHandler",
+        "simpleName": "BadHandler"
+      },
+      {
+        "complexity": "LOW",
+        "dependencyCount": 0,
+        "fqn": "sample.handlers.LoggingBadHandler",
+        "simpleName": "LoggingBadHandler"
+      },
+      {
+        "complexity": "LOW",
+        "dependencyCount": 0,
+        "fqn": "sample.handlers.SimpleHandler",
+        "simpleName": "SimpleHandler"
+      },
+      {
+        "complexity": "LOW",
+        "dependencyCount": 1,
+        "fqn": "sample.handlers.BlockingHandler",
+        "simpleName": "BlockingHandler"
+      }
+    ],
+    "stats": {
+      "avgDependenciesPerHandler": 0.83,
+      "cycleCount": 0,
+      "maxDependencies": 2,
+      "totalDependencies": 5,
+      "totalHandlers": 6
+    }
+  }
+}

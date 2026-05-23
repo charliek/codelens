@@ -1,0 +1,7 @@
+{
+  "durationMs": "__BLANK__",
+  "filePath": "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt",
+  "formattedContent": "package sample\n\n// This file intentionally has ktlint violations for testing purposes\n\nfun badFunction(\n    x: Int,\n    y: Int,\n) {\n    val z = x + y\n    if (z \u003e 0) {\n        println(\"result\")\n    }\n}\n\nclass BadClass {\n    val name: String = \"test\"\n\n    fun method() {\n        println(\"hello\")\n    }\n}\n",
+  "hasChanges": true,
+  "remainingErrors": []
+}

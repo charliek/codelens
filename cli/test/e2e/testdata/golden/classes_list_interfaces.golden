@@ -1,0 +1,40 @@
+{
+  "appliedFilter": {
+    "extendsClass": null,
+    "hasAnnotation": null,
+    "implementsInterface": null,
+    "namePattern": null,
+    "packagePattern": null,
+    "source": "PROJECT"
+  },
+  "classes": [
+    {
+      "fieldCount": 0,
+      "fqn": "sample.handlers.NotificationService",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "NotificationService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.handlers.UserService",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 2,
+      "packageName": "sample.handlers",
+      "simpleName": "UserService",
+      "source": "PROJECT"
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 2,
+  "totalPages": 1
+}

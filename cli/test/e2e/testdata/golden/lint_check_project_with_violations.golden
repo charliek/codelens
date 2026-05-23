@@ -1,0 +1,253 @@
+{
+  "durationMs": "__BLANK__",
+  "fileResults": [
+    {
+      "errorCount": 34,
+      "errors": [
+        {
+          "canBeAutoCorrected": true,
+          "col": 17,
+          "detail": "Unexpected whitespace",
+          "line": 5,
+          "ruleId": "standard:parameter-list-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 17,
+          "detail": "Unexpected spacing after \"(\"",
+          "line": 5,
+          "ruleId": "standard:paren-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 18,
+          "detail": "Newline expected after opening parenthesis",
+          "line": 5,
+          "ruleId": "standard:function-signature"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 19,
+          "detail": "Whitespace after ':' is missing",
+          "line": 5,
+          "ruleId": "standard:parameter-list-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 20,
+          "detail": "Missing spacing after \":\"",
+          "line": 5,
+          "ruleId": "standard:colon-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 23,
+          "detail": "Whitespace after ',' is missing",
+          "line": 5,
+          "ruleId": "standard:parameter-list-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 24,
+          "detail": "Missing spacing after \",\"",
+          "line": 5,
+          "ruleId": "standard:comma-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 24,
+          "detail": "Parameter should start on a newline",
+          "line": 5,
+          "ruleId": "standard:function-signature"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 25,
+          "detail": "Whitespace after ':' is missing",
+          "line": 5,
+          "ruleId": "standard:parameter-list-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 26,
+          "detail": "Missing spacing after \":\"",
+          "line": 5,
+          "ruleId": "standard:colon-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 29,
+          "detail": "Unexpected whitespace",
+          "line": 5,
+          "ruleId": "standard:parameter-list-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 29,
+          "detail": "Unexpected spacing before \")\"",
+          "line": 5,
+          "ruleId": "standard:paren-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 30,
+          "detail": "Newline expected before closing parenthesis",
+          "line": 5,
+          "ruleId": "standard:function-signature"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 31,
+          "detail": "Missing spacing before \"{\"",
+          "line": 5,
+          "ruleId": "standard:curly-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 31,
+          "detail": "Expected a single white space before start of function body",
+          "line": 5,
+          "ruleId": "standard:function-start-of-body-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 31,
+          "detail": "Expected a single space before body block",
+          "line": 5,
+          "ruleId": "standard:function-signature"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 10,
+          "detail": "Missing spacing around \"=\"",
+          "line": 6,
+          "ruleId": "standard:op-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 12,
+          "detail": "Missing spacing around \"+\"",
+          "line": 6,
+          "ruleId": "standard:op-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 7,
+          "detail": "Missing spacing after \"if\"",
+          "line": 7,
+          "ruleId": "standard:keyword-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 9,
+          "detail": "Missing spacing around \"\u003e\"",
+          "line": 7,
+          "ruleId": "standard:op-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 12,
+          "detail": "Missing spacing before \"{\"",
+          "line": 7,
+          "ruleId": "standard:curly-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 17,
+          "detail": "Unexpected spacing after \"(\"",
+          "line": 8,
+          "ruleId": "standard:paren-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 26,
+          "detail": "Unexpected spacing before \")\"",
+          "line": 8,
+          "ruleId": "standard:paren-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 15,
+          "detail": "Missing spacing before \"{\"",
+          "line": 12,
+          "ruleId": "standard:curly-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 15,
+          "detail": "Expected a single space before class body",
+          "line": 12,
+          "ruleId": "standard:class-signature"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 14,
+          "detail": "Missing spacing after \":\"",
+          "line": 13,
+          "ruleId": "standard:colon-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 20,
+          "detail": "Missing spacing around \"=\"",
+          "line": 13,
+          "ruleId": "standard:op-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 5,
+          "detail": "Expected a blank line for this declaration",
+          "line": 14,
+          "ruleId": "standard:blank-line-before-declaration"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 16,
+          "detail": "Unexpected whitespace",
+          "line": 14,
+          "ruleId": "standard:parameter-list-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 16,
+          "detail": "Unexpected spacing after \"(\"",
+          "line": 14,
+          "ruleId": "standard:paren-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 16,
+          "detail": "No whitespace expected in empty parameter list",
+          "line": 14,
+          "ruleId": "standard:function-signature"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 18,
+          "detail": "Missing spacing before \"{\"",
+          "line": 14,
+          "ruleId": "standard:curly-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 18,
+          "detail": "Expected a single white space before start of function body",
+          "line": 14,
+          "ruleId": "standard:function-start-of-body-spacing"
+        },
+        {
+          "canBeAutoCorrected": true,
+          "col": 18,
+          "detail": "Expected a single space before body block",
+          "line": 14,
+          "ruleId": "standard:function-signature"
+        }
+      ],
+      "filePath": "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt"
+    }
+  ],
+  "filesScanned": 4,
+  "filesWithErrors": 1,
+  "projectPath": "{{PROJECT}}",
+  "totalErrorCount": 34
+}

@@ -1,0 +1,52 @@
+{
+  "appliedFilter": {
+    "extendsClass": null,
+    "hasAnnotation": null,
+    "implementsInterface": null,
+    "namePattern": null,
+    "packagePattern": null,
+    "source": "PROJECT"
+  },
+  "classes": [
+    {
+      "fieldCount": 0,
+      "fqn": "sample.handlers.UserService",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 2,
+      "packageName": "sample.handlers",
+      "simpleName": "UserService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.modules.AppModule",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 4,
+      "packageName": "sample.modules",
+      "simpleName": "AppModule",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.modules.AppModule$1",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "sample.modules",
+      "simpleName": "1",
+      "source": "PROJECT"
+    }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "totalCount": 13,
+  "totalPages": 2
+}

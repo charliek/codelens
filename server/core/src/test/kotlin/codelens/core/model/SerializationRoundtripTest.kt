@@ -9,8 +9,8 @@ import kotlin.test.assertTrue
 /**
  * Round-trip serialization tests for the wire types in `codelens.core.model`.
  *
- * These tests guard the JSON contract that both the Python CLI and any
- * future port (Go, Kotlin Multiplatform, etc.) depend on. If a field is
+ * These tests guard the JSON contract that the CLI and any other client
+ * (third-party integrations, future ports, etc.) depend on. If a field is
  * renamed or removed here, all clients must be updated.
  */
 class SerializationRoundtripTest {
@@ -50,7 +50,7 @@ class SerializationRoundtripTest {
 
     @Test
     fun `ProjectStatus enum names are stable`() {
-        // The Python CLI parses these as exact string values; renaming any
+        // The CLI parses these as exact string values; renaming any
         // of them would break wire compatibility.
         assertEquals("LOADING", ProjectStatus.LOADING.name)
         assertEquals("READY", ProjectStatus.READY.name)

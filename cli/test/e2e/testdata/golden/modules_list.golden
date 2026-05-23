@@ -1,0 +1,13 @@
+{
+  "modules": [
+    {
+      "bindingCount": 1,
+      "fqn": "sample.modules.AppModule",
+      "moduleType": "ABSTRACT_MODULE",
+      "packageName": "sample.modules",
+      "providesMethodCount": 2,
+      "simpleName": "AppModule"
+    }
+  ],
+  "totalCount": 1
+}

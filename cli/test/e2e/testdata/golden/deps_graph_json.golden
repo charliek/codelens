@@ -1,0 +1,99 @@
+{
+  "graph": {
+    "cycles": [],
+    "edges": [
+      {
+        "source": "sample.api.UsersApi",
+        "target": "sample.handlers.SimpleHandler",
+        "type": "CONSTRUCTOR"
+      },
+      {
+        "source": "sample.api.UsersApi",
+        "target": "sample.handlers.BlockingHandler",
+        "type": "CONSTRUCTOR"
+      },
+      {
+        "source": "sample.handlers.AsyncHandler",
+        "target": "sample.handlers.UserService",
+        "type": "CONSTRUCTOR"
+      },
+      {
+        "source": "sample.handlers.AsyncHandler",
+        "target": "sample.handlers.NotificationService",
+        "type": "CONSTRUCTOR"
+      },
+      {
+        "source": "sample.handlers.BlockingHandler",
+        "target": "sample.handlers.UserService",
+        "type": "CONSTRUCTOR"
+      }
+    ],
+    "isAcyclic": true,
+    "nodes": [
+      {
+        "complexity": "LOW",
+        "fqn": "sample.api.UsersApi",
+        "inDegree": 0,
+        "label": "UsersApi",
+        "outDegree": 2,
+        "type": "OTHER"
+      },
+      {
+        "complexity": "LOW",
+        "fqn": "sample.handlers.AsyncHandler",
+        "inDegree": 0,
+        "label": "AsyncHandler",
+        "outDegree": 2,
+        "type": "HANDLER"
+      },
+      {
+        "complexity": "LOW",
+        "fqn": "sample.handlers.BadHandler",
+        "inDegree": 0,
+        "label": "BadHandler",
+        "outDegree": 0,
+        "type": "HANDLER"
+      },
+      {
+        "complexity": "LOW",
+        "fqn": "sample.handlers.BlockingHandler",
+        "inDegree": 1,
+        "label": "BlockingHandler",
+        "outDegree": 1,
+        "type": "HANDLER"
+      },
+      {
+        "complexity": "LOW",
+        "fqn": "sample.handlers.LoggingBadHandler",
+        "inDegree": 0,
+        "label": "LoggingBadHandler",
+        "outDegree": 0,
+        "type": "HANDLER"
+      },
+      {
+        "complexity": "LOW",
+        "fqn": "sample.handlers.SimpleHandler",
+        "inDegree": 1,
+        "label": "SimpleHandler",
+        "outDegree": 0,
+        "type": "HANDLER"
+      },
+      {
+        "complexity": null,
+        "fqn": "sample.handlers.UserService",
+        "inDegree": 2,
+        "label": "UserService",
+        "outDegree": 0,
+        "type": "SERVICE"
+      },
+      {
+        "complexity": null,
+        "fqn": "sample.handlers.NotificationService",
+        "inDegree": 1,
+        "label": "NotificationService",
+        "outDegree": 0,
+        "type": "SERVICE"
+      }
+    ]
+  }
+}
