@@ -187,7 +187,7 @@ After route identification, verify completeness:
 **Project:** sample-ratpack-app
 
 **Step 1 - Routes output:**
-```
+```text
 GET    /ping
 GET    /config
 ALL    /accounts/:accountId/projects/:projectId/items  [ItemsApi]
@@ -196,7 +196,7 @@ ALL    /accounts                                       [AccountsApi]
 ```
 
 **Step 2 - Handlers output (filtered):**
-```
+```text
 ItemGetHandler, ItemUpdateHandler, ItemPatchHandler, ItemDeleteHandler
 ProjectStatisticsGetHandler, ProjectStatisticsListHandler
 AccountStatisticsGetHandler, AccountStatisticsListHandler
@@ -204,7 +204,7 @@ AccountItemsListHandler, AccountReportGetHandler
 ```
 
 **Step 3 - Expanded routes:**
-```
+```text
 GET    /ping
 GET    /config
 
