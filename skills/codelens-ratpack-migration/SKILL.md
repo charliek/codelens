@@ -1,5 +1,5 @@
 ---
-name: codelens-ratpack-migration
+name: codelens-ratpack-analysis
 description: |
   Analyze Ratpack applications for migration planning. Use this skill when working with
   Ratpack-based JVM projects to understand handlers, Promise usage patterns, Guice modules,

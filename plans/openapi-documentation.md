@@ -146,7 +146,7 @@ ktor {
             CodeLens server provides bytecode analysis for JVM codebases.
             Use these endpoints to query classes, methods, dependencies, and annotations.
         """.trimIndent()
-        contact = "codelens@example.com"
+        contact = "https://github.com/charliek/codelens/issues"
         target = project.layout.buildDirectory.file("openapi/codelens-api.json")
     }
 }

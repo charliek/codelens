@@ -1718,7 +1718,7 @@ fun estimateEffort(level: ComplexityLevel): String {
 **Functional:**
 - [ ] Server starts with project path, creates discovery file
 - [ ] Server shuts down gracefully, cleans up discovery file
-- [ ] Can scan a real Ratpack project (use test fixture + real SmartThings repo)
+- [ ] Can scan a real Ratpack project (use test fixture + representative sample project)
 - [ ] Class queries return accurate structural data
 - [ ] Handler detection finds all Handler implementations
 - [ ] Complexity scoring produces actionable categorization

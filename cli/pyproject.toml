@@ -2,6 +2,7 @@
 name = "codelens-cli"
 version = "0.1.0"
 description = "CLI for CodeLens - Ratpack migration analysis tool"
+license = { text = "Apache-2.0" }
 requires-python = ">=3.13"
 dependencies = [
     "typer>=0.12.0,<1.0.0",
@@ -24,6 +25,12 @@ dev = [
 
 [project.scripts]
 codelens = "codelens_cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/charliek/codelens"
+Repository = "https://github.com/charliek/codelens"
+Issues = "https://github.com/charliek/codelens/issues"
+Documentation = "https://github.com/charliek/codelens/tree/main/docs"
 
 [build-system]
 requires = ["hatchling"]

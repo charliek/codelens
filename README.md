@@ -1,6 +1,12 @@
 # CodeLens
 
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 A developer tool for analyzing Ratpack-based JVM codebases to assist with migration planning.
+
+Ratpack is a lightweight asynchronous JVM web framework. CodeLens focuses on
+Ratpack applications that need static analysis support for framework migration,
+route discovery, handler inventory, dependency mapping, and source lookup.
 
 ## Overview
 
@@ -8,6 +14,29 @@ CodeLens consists of two components:
 
 1. **Server** (Kotlin/Ktor): Runs in the background, loads a target project's bytecode using ClassGraph, and serves analysis queries via HTTP REST API
 2. **CLI** (Python/Typer): User-facing command-line interface that manages server lifecycle and presents analysis results
+
+## Quick Start
+
+Prerequisites: JDK 21+, Python 3.13+, and [uv](https://docs.astral.sh/uv/).
+Gradle is included via the wrapper.
+
+```bash
+# Build the server fat JAR
+./gradlew :server:app:shadowJar
+
+# Install the CLI in editable mode
+cd cli
+uv tool install --editable .
+
+# Smoke-test against the bundled sample Ratpack project
+cd ../test-fixtures/sample-ratpack-app
+codelens start
+codelens project
+codelens stop
+```
+
+For a real project, build the target application's classes first, then run
+`codelens start --project /path/to/ratpack-project`.
 
 ## Architecture
 
@@ -47,7 +76,14 @@ codelens/
 │
 ├── docs/
 │   ├── api.md                       # API endpoint documentation
-│   └── cli.md                       # CLI command documentation
+│   ├── cli.md                       # CLI command documentation
+│   ├── cli-spec.md                  # CLI behavior specification
+│   ├── jvm-detect.md                # JVM detection and troubleshooting
+│   ├── target-project-setup.md      # Target-project prerequisites
+│   ├── research-and-features.md     # Ratpack migration research notes
+│   ├── bootstrap-project.md         # Original bootstrap plan
+│   ├── phase1-spec.md               # Phase 1 server/CLI specification
+│   └── route-identification.md      # Route discovery guidance
 │
 ├── .github/
 │   └── workflows/
@@ -537,8 +573,6 @@ codelens project
 codelens stop
 ```
 
-## Development
-
 ### Running Tests
 
 **Kotlin:**
@@ -560,6 +594,10 @@ The codebase follows a service/repository pattern:
 - **Repositories** handle data persistence (`ServerStateRepository`)
 - **Routes/Commands** are thin wrappers that delegate to services
 - **Container** provides dependency injection for the CLI (`ServiceContainer`)
+
+## License
+
+CodeLens is licensed under the [Apache License, Version 2.0](LICENSE).
 
 ## Requirements
 
