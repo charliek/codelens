@@ -5,14 +5,16 @@ The CodeLens CLI provides a command-line interface for analyzing JVM bytecode. I
 ## Installation
 
 ```bash
-cd cli
+cd cli-go
 
-# Install with uv (recommended)
-uv tool install --editable .
-
-# Or install with pip
-pip install -e .
+# Build and install the Go binary (~/.local/bin/codelens)
+go generate ./...
+make install
 ```
+
+For a standalone install outside the repo, place `codelens` on your PATH
+and either set `CODELENS_SERVER_JAR=/path/to/codelens-server-all.jar` or
+drop the JAR at `~/.codelens/codelens-server-all.jar`.
 
 ## CLI to API Mapping
 
