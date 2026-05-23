@@ -159,18 +159,19 @@ Analyze class-level dependencies:
 codelens classes dependencies <fully-qualified-name>
 ```
 
-**Options:**
-- `--direction incoming` - Classes that depend on this class
-- `--direction outgoing` - Classes this class depends on (default)
-- `--direction both` - Both directions
+A single call returns both directions in one response: the JSON body has
+separate `incoming` and `outgoing` arrays. Use `jq` to pick the side you want.
 
 **Examples:**
 ```bash
-# What does UserService depend on?
+# Both directions in one call (default)
 codelens classes dependencies com.example.UserService
 
+# What does UserService depend on?
+codelens classes dependencies com.example.UserService | jq '.outgoing'
+
 # What depends on UserService?
-codelens classes dependencies com.example.UserService --direction incoming
+codelens classes dependencies com.example.UserService | jq '.incoming'
 ```
 
 ## Annotation Usages
@@ -211,8 +212,8 @@ codelens classes list --implements ratpack.handling.Handler
 # 1. Find implementations
 codelens classes implementations com.example.UserRepository
 
-# 2. Find incoming dependencies
-codelens classes dependencies com.example.UserRepository --direction incoming
+# 2. Find incoming dependencies (one call returns both directions)
+codelens classes dependencies com.example.UserRepository | jq '.incoming'
 
 # 3. View the source (use codelens-source-lookup skill)
 codelens source show com.example.UserRepositoryImpl

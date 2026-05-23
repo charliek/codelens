@@ -71,56 +71,14 @@ codelens source method com.example.UserService findUsers --params "String,int"
 codelens source method com.example.MyHandler handle --context 5
 ```
 
-## Output Formats
+## Output Today
 
-Use `--format` to control output:
-
-| Format | Description | Use Case |
-|--------|-------------|----------|
-| `full` | Complete source code (default) | Understanding implementation |
-| `stub` | Interface-only declarations | API overview, generating mocks |
-| `signatures` | Method signatures only | Quick reference |
-| `javadoc` | Source with extracted documentation | Reading API documentation |
-
-**Examples:**
-```bash
-# Generate a stub (no implementation bodies)
-codelens source show ratpack.handling.Handler --format stub
-
-# Just method signatures
-codelens source show com.example.MyService --format signatures
-
-# Extract javadoc
-codelens source show ratpack.exec.Promise --format javadoc
-```
-
-## Visibility Filtering
-
-Control which members are shown with `--visibility`:
-
-| Value | Shows |
-|-------|-------|
-| `all` | All members (default) |
-| `protected` | Public and protected members |
-| `public` | Public members only |
-
-**Example:**
-```bash
-# Public API only
-codelens source show com.example.MyService --format stub --visibility public
-```
-
-## Stub Language
-
-Generate stubs in Java or Kotlin syntax:
-
-```bash
-# Kotlin stub
-codelens source show com.example.MyService --format stub --lang kotlin
-
-# Java stub (default)
-codelens source show com.example.MyService --format stub --lang java
-```
+`codelens source show <fqn>` returns the full resolved source for the class
+(default behavior). Richer output modes — stub generation, signatures-only,
+javadoc extraction, visibility filtering, and Java/Kotlin language
+switching — exist on the server endpoint but are not yet exposed on the CLI.
+They are queued as a follow-up Go-CLI enhancement; once landed, this section
+will be expanded with `--format`, `--visibility`, and `--lang` examples.
 
 ## Source Resolution
 
@@ -138,7 +96,6 @@ CodeLens resolves source in this order:
 ## Tips
 
 - Combine with `codelens-jvm-analysis` skill to find classes first, then view their source
-- Use `--format stub` to quickly understand a class's API without implementation details
 - When viewing library code, source JARs are cached locally after first download
 - Decompiled code may not perfectly match original source but preserves logic
 
