@@ -1,635 +1,78 @@
-# CodeLens
+# codelens
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-A developer tool for analyzing Ratpack-based JVM codebases to assist with migration planning.
+codelens analyzes JVM codebases. It loads a project's compiled bytecode and
+resolved classpath, then answers structural questions about it over a small HTTP
+API and a command-line interface — classes, methods, annotations, type
+hierarchies, dependencies, and source (including JDK and library source).
 
-Ratpack is a lightweight asynchronous JVM web framework. CodeLens focuses on
-Ratpack applications that need static analysis support for framework migration,
-route discovery, handler inventory, dependency mapping, and source lookup.
+Java and Kotlin are the primary, tested languages. codelens also includes a set
+of Ratpack-migration helpers; these are secondary and may be phased out over
+time.
 
-## Overview
+**📖 Full documentation: [charliek.github.io/codelens](https://charliek.github.io/codelens/)**
 
-CodeLens consists of two components:
+## How it works
 
-1. **Server** (Kotlin/Ktor): Runs in the background, loads a target project's bytecode using ClassGraph, and serves analysis queries via HTTP REST API
-2. **CLI** (Go/Cobra, in `cli/`): User-facing command-line interface that manages server lifecycle and presents analysis results. Distributed as a single static binary.
+codelens has two parts:
 
-## Quick Start
+- **Server** (Kotlin/Ktor): runs in the background, scans the target's bytecode
+  with ClassGraph, resolves the classpath via the Gradle Tooling API, and serves
+  analysis over a local REST API. It shuts down when idle.
+- **CLI** (Go): a single static binary that manages the server and formats
+  results. It auto-starts the server on first use.
 
-Prerequisites: JDK 21+ and [mise](https://mise.jdx.dev/) for the Go toolchain (`mise install` reads `.mise.toml`). Gradle is included via the wrapper.
+## Install
 
 ```bash
-# Build the server fat JAR
-./gradlew :server:app:shadowJar
+brew tap charliek/tap
+brew install codelens
+```
 
-# Build the Go CLI
-cd cli
-go generate ./...
-make install   # places `codelens` in ~/.local/bin
-cd ..
+codelens runs a **JDK 21+** server under the hood and auto-discovers one from
+SDKMAN or Homebrew. Install one if needed:
 
-# Smoke-test against the bundled sample Ratpack project
-cd test-fixtures/sample-ratpack-app
-codelens start
-codelens project
+```bash
+sdk install java 21.0.9-amzn   # SDKMAN
+# or
+brew install openjdk@21        # Homebrew
+```
+
+See [Installation](https://charliek.github.io/codelens/getting-started/installation/)
+for standalone/manual layouts and the JDK details.
+
+## Quick start
+
+codelens analyzes compiled bytecode, so build the target project first, then run
+a command from its directory (the server auto-starts):
+
+```bash
+cd ~/work/my-service
+./gradlew build -x test
+
+codelens classes list --package "com.example.*"
+codelens classes show com.example.UserService
+codelens source show java.util.HashMap
 codelens stop
 ```
 
-For a distribution install (no checked-out repo), put the Go binary on
-your PATH and either:
-
-- Set `CODELENS_SERVER_JAR=/path/to/codelens-server-all.jar`, or
-- Place the JAR at `~/.codelens/codelens-server-all.jar`.
-
-The CLI will auto-discover the JAR from those locations.
-
-For a real project, build the target application's classes first, then run
-`codelens start --project /path/to/ratpack-project`.
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              Developer Machine                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   Terminal                           Background Process                     │
-│   ┌─────────────────────┐           ┌─────────────────────────────────┐    │
-│   │  $ codelens status  │           │  CodeLens Server (Kotlin/Ktor)  │    │
-│   │                     │──HTTP────▶│  - Loads target project         │    │
-│   │  Go CLI (Cobra)     │◀─────────│  - Serves /api/v1/* endpoints   │    │
-│   │  - Manages server   │           │  - Auto-shuts down when idle    │    │
-│   │  - Formats output   │           └─────────────────────────────────┘    │
-│   └─────────────────────┘                         │                         │
-│            │                                      │ Analyzes                │
-│            │                                      ▼                         │
-│            │                    ┌─────────────────────────────────┐        │
-│            │                    │  Target Ratpack Project         │        │
-│   ┌────────▼────────┐          │  ~/work/user-service/           │        │
-│   │ ~/.cache/codelens│          │  - build.gradle.kts             │        │
-│   │ └─ servers/*.json│          │  - build/classes/...            │        │
-│   │ └─ logs/*.log    │          └─────────────────────────────────┘        │
-│   └─────────────────┘                                                       │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-## Repository Structure
-
-```
-codelens/
-├── README.md
-├── .gitignore
-├── version.txt                      # Single source of truth for version
-│
-├── docs/
-│   ├── api.md                       # API endpoint documentation
-│   ├── cli.md                       # CLI command documentation
-│   ├── cli-spec.md                  # CLI behavior specification
-│   ├── jvm-detect.md                # JVM detection and troubleshooting
-│   ├── target-project-setup.md      # Target-project prerequisites
-│   ├── research-and-features.md     # Ratpack migration research notes
-│   ├── bootstrap-project.md         # Original bootstrap plan
-│   ├── phase1-spec.md               # Phase 1 server/CLI specification
-│   └── route-identification.md      # Route discovery guidance
-│
-├── .github/
-│   └── workflows/
-│       └── build.yml                # CI/CD pipeline
-│
-├── settings.gradle.kts              # Gradle multi-module config
-├── build.gradle.kts                 # Root build (shared config)
-├── gradle/
-│   ├── wrapper/                     # Gradle wrapper
-│   └── libs.versions.toml           # Version catalog
-├── gradlew
-├── gradlew.bat
-│
-├── server/                          # Kotlin server modules
-│   ├── core/                        # Shared models and interfaces
-│   │   ├── build.gradle.kts
-│   │   └── src/main/kotlin/
-│   │       └── codelens/core/
-│   │           └── model/           # Data classes (ProjectInfo, ServerInfo, etc.)
-│   │
-│   ├── classgraph/                  # ClassGraph-based analysis (stub for now)
-│   │   ├── build.gradle.kts
-│   │   └── src/main/kotlin/
-│   │       └── codelens/classgraph/
-│   │           └── ClassGraphProvider.kt
-│   │
-│   ├── source-resolver/             # Library/JDK source resolution
-│   │   ├── build.gradle.kts
-│   │   └── src/main/kotlin/
-│   │       └── codelens/source/
-│   │           ├── cache/           # Source cache management
-│   │           ├── resolver/        # Source resolution (Maven, JDK, decompiler)
-│   │           └── format/          # Stub/javadoc generation
-│   │
-│   ├── ktlint/                      # ktlint-based linting (warm server)
-│   │   ├── build.gradle.kts
-│   │   └── src/main/kotlin/
-│   │       └── codelens/ktlint/
-│   │           ├── KtlintProvider.kt
-│   │           └── KtlintProviderImpl.kt
-│   │
-│   └── app/                         # HTTP server application
-│       ├── build.gradle.kts         # Produces fat JAR via shadowJar
-│       └── src/
-│           ├── main/kotlin/
-│           │   └── codelens/server/
-│           │       ├── Application.kt       # Main entry point
-│           │       ├── config/              # Configuration
-│           │       │   ├── ServerConfig.kt
-│           │       │   └── ArgumentParser.kt
-│           │       ├── monitoring/          # Activity tracking
-│           │       │   ├── ActivityTracker.kt
-│           │       │   └── IdleMonitor.kt
-│           │       ├── routes/              # Ktor route definitions
-│           │       │   ├── AdminRoutes.kt
-│           │       │   └── ProjectRoutes.kt
-│           │       └── services/
-│           │           └── AnalysisService.kt
-│           └── test/kotlin/                 # Server tests
-│
-├── cli/                             # Go CLI
-│   ├── go.mod
-│   ├── .golangci.yml
-│   ├── Makefile
-│   ├── cmd/codelens/main.go         # Entry point
-│   ├── internal/
-│   │   ├── cli/                     # Cobra commands (lifecycle + 14 analysis groups)
-│   │   ├── client/                  # HTTP client + wire-contract characterization tests
-│   │   ├── server/                  # Child-process lifecycle + ready-line parser
-│   │   ├── state/                   # ServerState repository
-│   │   ├── settings/                # Env + Java/SDKMAN/Gradle detection
-│   │   ├── output/                  # JSON / table rendering
-│   │   └── errors/                  # Typed exit codes
-│   └── test/e2e/                    # Golden-fixture e2e suite (CLI vs live JVM)
-│
-└── test-fixtures/                   # Sample Ratpack project for testing
-    └── sample-ratpack-app/
-        ├── build.gradle.kts
-        └── src/main/kotlin/sample/App.kt
-```
-
-## Technology Stack
-
-### Server (Kotlin)
-
-| Component | Choice | Version |
-|-----------|--------|---------|
-| Language | Kotlin | 2.3.20 |
-| Build | Gradle + Kotlin DSL | 9.x |
-| HTTP Framework | Ktor | 3.0.2 |
-| Serialization | kotlinx.serialization | 1.7.3 |
-| CLI Parsing | kotlinx-cli | 0.3.6 |
-| JVM Target | 21 | LTS |
-
-### CLI (Go)
-
-| Component | Choice | Version |
-|-----------|--------|---------|
-| Language | Go | 1.24 |
-| Toolchain manager | mise | latest |
-| CLI Framework | Cobra | 1.8 |
-| Linter | golangci-lint | 2.10.1 |
-| HTTP Client | net/http (stdlib) | — |
-| Output formatting | text/tabwriter + encoding/json (stdlib) | — |
-
-The CLI was ported from an earlier Python/Typer implementation; see the git
-history for that code.
-
-## Building
-
-### Build the Server
-
-```bash
-# Build the shadow JAR (includes all dependencies)
-./gradlew :server:app:shadowJar
-
-# Output: server/app/build/libs/codelens-server-all.jar
-```
-
-### Install the CLI
-
-```bash
-cd cli
-
-# Build the Go binary
-go generate ./...
-make build      # produces ./bin/codelens
-make install    # copies to ~/.local/bin/codelens
-```
-
-## Usage
-
-### Basic Workflow
-
-```bash
-# Navigate to your Ratpack project
-cd ~/work/user-service
-
-# Start the server (auto-starts on first command)
-codelens start
-# Starting CodeLens server for user-service...
-# ✓ Server ready
-#
-# CodeLens Server
-#
-# Project:       user-service
-# Path:          /home/user/work/user-service
-# Status:        READY
-# Port:          8080
-# Mode:          gradle
-# Uptime:        5s
-# Idle:          0s
-# Idle timeout:  30m
-
-# Check server status
-codelens status
-
-# Get project info (calls API endpoint)
-codelens project
-#
-# user-service
-#
-# Path:     /home/user/work/user-service
-# Status:   READY
-# Classes:  42
-# Handlers: 3
-# Scanned:  2026-01-05T12:34:56.789Z
-
-# List all running servers
-codelens list
-# ┌──────────────┬──────┬────────┬────────┬─────────────────────────────┐
-# │ Project      │ Port │ Status │ Mode   │ Path                        │
-# ├──────────────┼──────┼────────┼────────┼─────────────────────────────┤
-# │ user-service │ 8080 │ READY  │ gradle │ /home/user/work/user-service│
-# └──────────────┴──────┴────────┴────────┴─────────────────────────────┘
-
-# Refresh project scan (after code changes)
-codelens refresh
-
-# Stop the server
-codelens stop
-# ✓ Server stopped
-```
-
-### Auto-Start
-
-The CLI automatically starts the server when needed:
-
-```bash
-cd ~/work/user-service
-
-# No server running yet
-codelens status
-# No server running for user-service
-#
-# Start with: codelens start
-
-# Project command auto-starts the server
-codelens project
-# Starting server for user-service...
-# (shows project info)
-
-# Server is now running
-codelens status
-# (shows running status)
-```
-
-### Multiple Projects
-
-You can run servers for multiple projects simultaneously:
-
-```bash
-# Terminal 1
-cd ~/work/project-a
-codelens start
-# Running on port 8080
-
-# Terminal 2
-cd ~/work/project-b
-codelens start
-# Running on port 8081
-
-# Either terminal
-codelens list
-# Shows both servers
-```
-
-### JSON Output
-
-All commands support `--json` for machine-readable output:
-
-```bash
-codelens status --json
-# {"running": true, "port": 8080, ...}
-
-codelens project --json | jq '.name'
-# "user-service"
-```
-
-### Quick Command Reference
-
-For complete documentation, see [docs/cli.md](docs/cli.md).
-
-#### Server Lifecycle
-
-```bash
-codelens start                # Start server for current project
-codelens stop                 # Stop server
-codelens status               # Show server status
-codelens list                 # List all running servers
-codelens refresh              # Refresh after code changes
-```
-
-#### Class Analysis
-
-```bash
-# List and search classes
-codelens classes list                                    # List all project classes
-codelens classes list --package "com.example.api.*"      # Filter by package
-codelens classes list --implements ratpack.handling.Handler  # Find implementations
-codelens classes show com.example.UserHandler            # Show class details
-
-# Analyze relationships
-codelens classes implementations ratpack.handling.Handler  # Find all implementations
-codelens classes hierarchy com.example.UserHandler         # Show class hierarchy
-codelens classes dependencies com.example.UserHandler      # Show dependencies
-
-# Statistics
-codelens classes stats                                   # Show scan statistics
-```
-
-#### Annotation & Method Search
-
-```bash
-# Find annotation usages
-codelens annotations usages javax.inject.Singleton       # Find @Singleton classes
-
-# Search methods
-codelens methods search --return-type ratpack.exec.Promise  # Find Promise methods
-codelens methods search --name "get*"                       # Search by name pattern
-```
-
-#### Linting & Formatting
-
-```bash
-codelens lint check                    # Check all Kotlin files for style issues
-codelens lint check src/Main.kt        # Check a single file
-codelens lint format                   # Format all Kotlin files
-codelens lint format --dry-run         # Preview formatting changes
-```
-
-#### Ratpack-Specific Analysis
-
-```bash
-# Handler analysis
-codelens handlers list                          # List all Ratpack handlers
-codelens handlers show com.example.MyHandler    # Show handler details
-codelens handlers list --tier HIGH              # Filter by complexity tier
-
-# Promise usage analysis
-codelens promises summary                       # Project-wide Promise usage
-codelens promises show com.example.MyHandler    # Promise usage for a class
-
-# Migration planning
-codelens migration summary                      # Complexity summary
-codelens migration complexity com.example.MyHandler  # Class complexity
-codelens migration order                        # Suggested migration order
-
-# Guice module analysis
-codelens modules list                           # List Guice modules
-codelens modules show com.example.MyModule      # Module bindings
-
-# External service integrations
-codelens integrations list                      # List all integrations
-codelens integrations show com.example.MyHandler  # Integrations for a class
-codelens integrations find HTTP_CLIENT          # Find classes by type
-
-# Anti-pattern detection
-codelens antipatterns scan                      # Scan for code anti-patterns
-codelens antipatterns show com.example.Handler  # Show class-specific issues
-
-# Route analysis
-codelens routes list                            # List all routes
-codelens routes tree                            # Show route tree structure
-codelens routes spring                          # Generate Spring @RequestMapping equivalents
-```
-
-#### Source Code Retrieval
-
-```bash
-codelens source show com.example.MyHandler        # View project class source
-codelens source show java.util.HashMap            # View JDK source (from src.zip)
-codelens source show com.google.guava.ImmutableList  # View library source
-
-# LLM-friendly output formats
-codelens source show com.google.guava.ImmutableList --stub  # Stub from bytecode
-codelens source show com.google.guava.ImmutableList --stub --kotlin  # Kotlin stub
-codelens source show com.google.guava.ImmutableList --signatures --public-only  # Minimal
-
-codelens source method com.example.MyHandler handle  # View method source
-```
-
-#### Common Options
-
-All commands support:
-- `--project`, `-p` - Specify project directory
-- `--json` - Output as JSON
-- `--include-libraries`, `-L` - Include library classes (analysis commands)
-
-## Configuration
-
-Configuration is managed via environment variables.
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CODELENS_SERVER_MODE` | `auto` | Server mode: `auto`, `gradle`, or `jar` |
-| `CODELENS_SERVER_IDLE_TIMEOUT` | `30m` | Auto-shutdown timeout |
-| `CODELENS_SERVER_HOST` | `127.0.0.1` | Server bind address |
-| `CODELENS_SERVER_PORT_RANGE_START` | `8080` | Port range start |
-| `CODELENS_SERVER_PORT_RANGE_END` | `8180` | Port range end |
-| `CODELENS_JAVA_HOME` | (system) | JAVA_HOME override |
-| `CODELENS_REPO_PATH` | (auto-detect) | Path to CodeLens repository |
-
-### Example
-
-```bash
-# Use JAR mode with custom timeout
-export CODELENS_SERVER_MODE=jar
-export CODELENS_SERVER_IDLE_TIMEOUT=1h
-
-codelens start
-```
-
-## State Management
-
-All state is stored in `~/.cache/codelens/`:
-
-```
-~/.cache/codelens/
-├── servers/              # Server state files (JSON)
-│   └── {hash}.json       # Keyed by SHA256 hash of project path
-└── logs/                 # Server log files
-    └── {hash}.log
-```
-
-State files are automatically cleaned up when processes exit.
-
-## API Endpoints
-
-The server exposes a REST API. For complete documentation, see [docs/api.md](docs/api.md).
-
-### Quick Reference
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /admin/health` | Health check |
-| `GET /admin/ready` | Readiness check |
-| `GET /admin/info` | Server information |
-| `GET /api/v1/project` | Project information |
-| `POST /api/v1/project/refresh` | Refresh scan |
-| `GET /api/v1/stats` | Scan statistics |
-| `GET /api/v1/classes` | List/search classes |
-| `GET /api/v1/classes/{fqn}` | Class details |
-| `GET /api/v1/implementations/{fqn}` | Find implementations |
-| `GET /api/v1/hierarchy/{fqn}` | Class hierarchy |
-| `GET /api/v1/dependencies/{fqn}` | Class dependencies |
-| `GET /api/v1/annotations/usages/{fqn}` | Annotation usages |
-| `GET /api/v1/methods` | Search methods |
-| `POST /api/v1/ktlint/lint/file` | Lint single file |
-| `POST /api/v1/ktlint/lint/project` | Lint project |
-| `POST /api/v1/ktlint/format/file` | Format single file |
-| `POST /api/v1/ktlint/format/project` | Format project |
-| `GET /api/v1/source/{fqn}` | Get class source code |
-| `GET /api/v1/source/{fqn}/method/{name}` | Get method source code |
-| `GET /api/v1/ratpack/handlers` | List Ratpack handlers |
-| `GET /api/v1/ratpack/handlers/{fqn}` | Handler details |
-| `GET /api/v1/ratpack/promises` | Promise usage summary |
-| `GET /api/v1/ratpack/promises/{fqn}` | Class Promise usage |
-| `GET /api/v1/ratpack/complexity` | Complexity summary |
-| `GET /api/v1/ratpack/complexity/{fqn}` | Class complexity |
-| `GET /api/v1/ratpack/migration-order` | Migration order |
-| `GET /api/v1/ratpack/modules` | List Guice modules |
-| `GET /api/v1/ratpack/modules/{fqn}` | Module details |
-| `GET /api/v1/ratpack/integrations` | Integration summary |
-| `GET /api/v1/ratpack/integrations/{fqn}` | Class integrations |
-| `GET /api/v1/ratpack/antipatterns` | Anti-pattern summary |
-| `GET /api/v1/ratpack/antipatterns/{fqn}` | Class anti-patterns |
-| `GET /api/v1/ratpack/routes` | All routes |
-| `GET /api/v1/ratpack/routes/tree` | Route tree structure |
-| `GET /api/v1/ratpack/routes/spring` | Spring mappings |
-
-## Server Startup Contract
-
-The server emits structured lines to stdout that any client (the bundled Go
-CLI or third-party integrations) can use to track startup. The contract has
-three lines:
-
-| Line | Meaning |
-|------|---------|
-| `CODELENS_STARTING port=<p> host=<h>` | Informational. The HTTP listener is bound but the initial classpath resolution and bytecode scan are still running. Clients should ignore this line for readiness. |
-| `CODELENS_READY port=<p> host=<h> version=<v>` | Success. The initial scan has completed and every analysis endpoint is ready to serve real data. Clients should match this line and only then start issuing analysis requests. |
-| `CODELENS_ERROR reason=<r> message="<m>"` | Failure. The initial scan failed; the server stops itself and exits with code 1. `reason` is one of `CLASSPATH_RESOLUTION`, `SCAN`, or `UNKNOWN`. |
-
-Example output:
-
-```
-CODELENS_STARTING port=8080 host=127.0.0.1
-CODELENS_READY port=8080 host=127.0.0.1 version=0.1.0
-```
-
-Note: the server delays the ready signal until the initial scan finishes, so
-clients should use a startup timeout large enough to cover the first scan
-(typically 5-60 seconds, longer for large dependency graphs). The bundled CLI
-defaults to 180 seconds and exposes `--timeout` on `codelens start`/`restart`.
-
-## Development
-
-### Running the Server Directly
-
-```bash
-# Using Gradle
-./gradlew :server:app:run --args="--project /path/to/project"
-
-# Using JAR
-java -jar server/app/build/libs/codelens-server-all.jar \
-  --project /path/to/project \
-  --port 8080 \
-  --idle-timeout 30m
-```
-
-### Running the CLI in Development
-
-```bash
-cd cli
-
-# Build and install
-go generate ./...
-make install      # ~/.local/bin/codelens
-
-# Or run without installing
-go run ./cmd/codelens --help
-```
-
-### Testing with the Sample Project
-
-```bash
-cd test-fixtures/sample-ratpack-app
-
-# Start server for sample project
-codelens start
-
-# Check status
-codelens status
-
-# Get project info
-codelens project
-
-# Stop server
-codelens stop
-```
-
-### Running Tests
-
-**Kotlin:**
-```bash
-./gradlew test
-```
-
-**Go:**
-```bash
-cd cli
-go test ./...
-
-# Golden e2e suite (requires the server JAR built):
-go test -v -run TestE2E ./test/e2e/...
-
-# Regenerate golden fixtures after an intentional output change:
-UPDATE_GOLDEN=1 go test -run TestE2E ./test/e2e/...
-```
-
-### Architecture
-
-The codebase follows a service/repository pattern:
-
-- **Services** contain business logic (`ServerService`, `ProjectService`, `AnalysisService`)
-- **Repositories** handle data persistence (`ServerStateRepository`)
-- **Routes/Commands** are thin wrappers that delegate to services
-- **Container** provides dependency injection for the CLI (`ServiceContainer`)
+Every command supports `--json`. See the
+[Quick Start](https://charliek.github.io/codelens/getting-started/quick-start/)
+and [CLI Reference](https://charliek.github.io/codelens/reference/cli/).
+
+## Documentation
+
+| Topic | |
+|-------|--|
+| Installation & quick start | <https://charliek.github.io/codelens/getting-started/installation/> |
+| CLI & HTTP API reference | <https://charliek.github.io/codelens/reference/cli/> |
+| Server & JAR discovery | <https://charliek.github.io/codelens/concepts/discovery/> |
+| JDK resolution | <https://charliek.github.io/codelens/concepts/jdk-resolution/> |
+| Development (build from source) | <https://charliek.github.io/codelens/development/setup/> |
+
+The docs site is built with MkDocs; preview it locally with `uv run mkdocs serve`.
 
 ## License
 
-CodeLens is licensed under the [Apache License, Version 2.0](LICENSE).
-
-## Requirements
-
-- JDK 21+
-- Go 1.24 + golangci-lint 2.10.1 (both installable via `mise install` from `.mise.toml`)
-- Gradle 9.x (included via wrapper)
+codelens is licensed under the [Apache License, Version 2.0](LICENSE).

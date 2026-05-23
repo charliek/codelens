@@ -57,6 +57,23 @@ func TestFindServerJAR_HomeFallback(t *testing.T) {
 	}
 }
 
+func TestLibexecJAR_PackagedLayout(t *testing.T) {
+	// Homebrew/manual layout: <prefix>/bin/codelens + <prefix>/libexec/...jar.
+	tmp := t.TempDir()
+	bin := filepath.Join(tmp, "bin", "codelens")
+	jar := filepath.Join(tmp, "libexec", "codelens-server-all.jar")
+	writeFile(t, bin, "")
+	writeFile(t, jar, "")
+
+	got := libexecJAR(bin)
+	if filepath.Clean(got) != filepath.Clean(jar) {
+		t.Fatalf("libexecJAR(%s) = %s, want %s", bin, got, jar)
+	}
+	if !fileExists(got) {
+		t.Errorf("expected resolved libexec jar to exist at %s", got)
+	}
+}
+
 func TestFindServerJAR_NoneFound(t *testing.T) {
 	// Empty HOME and no repo discoverable.
 	t.Setenv("HOME", t.TempDir())

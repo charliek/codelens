@@ -248,7 +248,8 @@ func (s *Service) buildCommand(opts StartOptions, mode state.ServerMode, port in
 		if jar == "" {
 			return nil, errors.New("server JAR not found (set CODELENS_SERVER_JAR, build with ./gradlew :server:app:shadowJar, or pass --server-jar)")
 		}
-		java := s.resolveJavaCmd()
+		java, serverMajor := s.resolveServerJava()
+		s.warnIfTargetNewerThanServer(opts.ProjectPath, serverMajor)
 		args := append(append([]string{}, s.Settings.JavaOpts...),
 			"-jar", jar,
 			"--project", opts.ProjectPath,
@@ -295,27 +296,50 @@ func (s *Service) autoResolveProjectJava(projectPath string) string {
 	return ""
 }
 
-// resolveJavaCmd: CODELENS_JAVA_HOME → SDKMAN → JAVA_HOME → PATH.
-func (s *Service) resolveJavaCmd() string {
+// resolveServerJava resolves the JVM that runs the server JAR and, when known,
+// its major version. Order: CODELENS_JAVA_HOME → SDKMAN/Homebrew (highest JDK in
+// [ServerJavaFloor, ServerJavaCeiling]) → JAVA_HOME → bare "java" on PATH. The
+// returned major is 0 when it can't be determined (e.g. an opaque JAVA_HOME or
+// the PATH fallback), in which case the target-version warning is skipped.
+func (s *Service) resolveServerJava() (javaBin string, major int) {
 	if s.Settings.JavaHome != "" {
 		bin := filepath.Join(s.Settings.JavaHome, "bin", "java")
 		if fileExists(bin) {
-			return bin
+			return bin, settings.JavaMajorFromHome(s.Settings.JavaHome)
 		}
 	}
-	if home := settings.ResolveCodelensJavaHome(s.Settings); home != "" {
+	if home, m := settings.ResolveServerJavaHome(s.Settings); home != "" {
 		bin := filepath.Join(home, "bin", "java")
 		if fileExists(bin) {
-			return bin
+			return bin, m
 		}
 	}
 	if env := os.Getenv("JAVA_HOME"); env != "" {
 		bin := filepath.Join(env, "bin", "java")
 		if fileExists(bin) {
-			return bin
+			return bin, settings.JavaMajorFromHome(env)
 		}
 	}
-	return "java"
+	return "java", 0
+}
+
+// warnIfTargetNewerThanServer prints a hint when the target project's bytecode
+// is newer than the JVM that will run the server. A server JVM must be >= the
+// target's class-file version to analyze it. serverMajor == 0 means unknown, so
+// we stay quiet rather than warn spuriously.
+func (s *Service) warnIfTargetNewerThanServer(projectPath string, serverMajor int) {
+	if serverMajor == 0 {
+		return
+	}
+	target := settings.JavaMajor(settings.DetectProjectJavaVersion(projectPath))
+	if target == 0 || target <= serverMajor {
+		return
+	}
+	fmt.Fprintf(os.Stderr,
+		"warning: server is running Java %d but %s targets Java %d; "+
+			"install a JDK >= %d (<= %d) via `sdk install java %d...` or "+
+			"`brew install openjdk@%d` so codelens can analyze it.\n",
+		serverMajor, projectPath, target, target, settings.ServerJavaCeiling, target, target)
 }
 
 func fileExists(path string) bool {

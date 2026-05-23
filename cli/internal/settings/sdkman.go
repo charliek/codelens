@@ -74,6 +74,8 @@ func FindSDKManJava(version string) string {
 
 // CodelensJavaVersion reads the codelens repo's own .sdkmanrc to learn
 // which Java the server JAR was built against. Returns "" if not available.
+// Server JDK selection no longer depends on this (see ResolveServerJavaHome in
+// javahome.go, which works without a repo); kept for diagnostics.
 func CodelensJavaVersion(s *Settings) string {
 	repo, err := FindRepoPath(s)
 	if err != nil {
@@ -84,13 +86,4 @@ func CodelensJavaVersion(s *Settings) string {
 		return ""
 	}
 	return cfg["java"]
-}
-
-// ResolveCodelensJavaHome resolves the Java home that should run the server.
-func ResolveCodelensJavaHome(s *Settings) string {
-	version := CodelensJavaVersion(s)
-	if version == "" {
-		return ""
-	}
-	return FindSDKManJava(version)
 }

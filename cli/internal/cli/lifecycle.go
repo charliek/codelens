@@ -14,6 +14,7 @@ import (
 	"github.com/charliek/codelens/cli/internal/server"
 	"github.com/charliek/codelens/cli/internal/settings"
 	"github.com/charliek/codelens/cli/internal/state"
+	"github.com/charliek/codelens/cli/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +37,7 @@ func defaultLifecycleFactory() (LifecycleService, error) {
 	if err != nil {
 		return nil, err
 	}
-	repo, err := state.NewRepository(cacheDir, "0.1.0") // version filled below by caller
+	repo, err := state.NewRepository(cacheDir, version.Value)
 	if err != nil {
 		return nil, err
 	}
