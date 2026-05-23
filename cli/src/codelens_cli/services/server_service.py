@@ -317,9 +317,7 @@ class ServerService:
         ready_pattern = re.compile(
             r"CODELENS_READY port=(\d+) host=(\S+) version=(\S+)"
         )
-        error_pattern = re.compile(
-            r'CODELENS_ERROR reason=(\S+) message="([^"]*)"'
-        )
+        error_pattern = re.compile(r'CODELENS_ERROR reason=(\S+) message="([^"]*)"')
 
         loop = asyncio.get_event_loop()
         start_time = loop.time()
