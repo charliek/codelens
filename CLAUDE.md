@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CodeLens is a developer tool for analyzing Ratpack-based JVM codebases to assist with migration planning. It consists of two components:
+CodeLens is a developer tool for analyzing JVM codebases (Java and Kotlin are the primary, tested languages). It loads a project's compiled bytecode and resolved classpath and answers structural questions over an HTTP API and CLI. It also includes Ratpack-migration helpers, which are a secondary capability that may be phased out over time (do not treat Ratpack as the headline framing in user-facing copy). It consists of two components:
 
 1. **Server** (Kotlin/Ktor): Background service that analyzes target project bytecode using ClassGraph and serves results via HTTP REST API
 2. **CLI** (Go/Cobra, in `cli/`): User-facing interface that manages server lifecycle and presents analysis results
@@ -105,19 +105,33 @@ The CLI uses this directory verbatim (Go does NOT use `os.UserCacheDir()` on mac
 
 ## Version Management
 
-Version is defined in `version.txt` at the repository root. Both Gradle and the Go CLI's `go generate` step read it; a copy lives at `cli/internal/version/version.txt` (gitignored — regenerated each build).
+Version is defined in `version.txt` at the repository root. Both Gradle and the Go CLI's `go generate` step read it; a copy lives at `cli/internal/version/version.txt` (gitignored — regenerated each build). The release workflow overwrites `version.txt` from the git tag before building, so released artifacts always match the tag.
+
+## Releases
+
+Tag-driven via GoReleaser. `/release:release` pushes a `vX.Y.Z` tag → `.github/workflows/release.yaml` builds the server JAR (Gradle) and the Go binaries (darwin/linux × amd64/arm64), bundles the JAR into each archive, publishes a GitHub Release, and pushes a Homebrew formula to `charliek/homebrew-tap` (needs the `HOMEBREW_TAP_TOKEN` secret). Config: `.goreleaser.yaml`. Docs deploy separately via `.github/workflows/docs.yml` (MkDocs → GitHub Pages).
 
 ## Server JAR discovery
 
-The Go CLI finds `codelens-server-all.jar` in this priority order:
+The Go CLI finds `codelens-server-all.jar` in this priority order (`cli/internal/settings/jar.go`):
 
 1. `--server-jar` flag (lifecycle commands only)
 2. `CODELENS_SERVER_JAR` env var
 3. `$CODELENS_REPO_PATH/server/app/build/libs/codelens-server-all.jar`
 4. Walked-up repo root (presence of `gradlew` + `settings.gradle.kts`)
-5. `~/.codelens/codelens-server-all.jar` (installed-binary convention)
+5. `../libexec/codelens-server-all.jar` relative to the resolved binary (Homebrew / packaged install)
+6. `~/.codelens/codelens-server-all.jar` (installed-binary convention)
 
-This lets the binary work in three modes: dev (inside the repo), env-var override, or two-binary install (`codelens` on PATH + JAR placed in `~/.codelens/`).
+This lets the binary work in three modes: dev (inside the repo), env-var override, or packaged install (Homebrew, or `codelens` on PATH + JAR in `~/.codelens/`).
+
+## JDK resolution
+
+Two JVMs, resolved separately in `cli/internal/settings` (`javahome.go`, `projectjava.go`) — see `docs/concepts/jdk-resolution.md`:
+
+- **Server JVM** (runs the JAR): `CODELENS_JAVA_HOME` → highest installed JDK with major in `[ServerJavaFloor=21, ServerJavaCeiling=25]` across SDKMAN (`~/.sdkman/candidates/java/*`) and Homebrew (`openjdk@21..@25`) → `JAVA_HOME` → bare `java`. Picks the newest in range because the server JVM must be ≥ the target's bytecode; warns when a target is newer (`service.go`).
+- **Project JVM** (`--project-java-home`): auto-detected from the target's `.sdkmanrc`/`.java-version`/`gradle.properties`, resolved via SDKMAN **and** Homebrew (`FindJavaForVersion`), only when the target's Gradle is too old for the server JVM.
+
+The ClassGraph version (`gradle/libs.versions.toml`) must support the ceiling JDK's class-file version.
 
 ## Testing
 

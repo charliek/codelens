@@ -5,16 +5,13 @@ The CodeLens CLI provides a command-line interface for analyzing JVM bytecode. I
 ## Installation
 
 ```bash
-cd cli
-
-# Build and install the Go binary (~/.local/bin/codelens)
-go generate ./...
-make install
+brew tap charliek/tap
+brew install codelens
 ```
 
-For a standalone install outside the repo, place `codelens` on your PATH
-and either set `CODELENS_SERVER_JAR=/path/to/codelens-server-all.jar` or
-drop the JAR at `~/.codelens/codelens-server-all.jar`.
+See [Installation](../getting-started/installation.md) for the JDK prerequisite,
+standalone/manual layouts, and building from source. The server JAR is located
+automatically — see [Server & JAR Discovery](../concepts/discovery.md).
 
 ## CLI to API Mapping
 

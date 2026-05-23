@@ -42,10 +42,11 @@ func DetectProjectJavaVersion(projectPath string) string {
 	return ""
 }
 
-// ResolveProjectJavaHome mirrors settings.py:243-275.
+// ResolveProjectJavaHome mirrors settings.py:243-275, extended to resolve the
+// project's JDK from Homebrew as well as SDKMAN (see FindJavaForVersion).
 func ResolveProjectJavaHome(projectPath string) string {
 	if v := DetectProjectJavaVersion(projectPath); v != "" {
-		if home := FindSDKManJava(v); home != "" {
+		if home := FindJavaForVersion(v); home != "" {
 			return home
 		}
 	}

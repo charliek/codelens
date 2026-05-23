@@ -1,0 +1,90 @@
+version: 2
+
+project_name: codelens
+
+# The Go module lives in cli/; the Java fat JAR is built by Gradle in the release
+# workflow before GoReleaser runs and is bundled into each archive (see archives.files).
+before:
+  hooks:
+    # Embed version.txt into the binary. The workflow writes version.txt from the
+    # tag before this runs, so the embedded version matches the release.
+    - sh -c 'cd cli && go generate ./...'
+
+builds:
+  - id: codelens
+    dir: cli
+    main: ./cmd/codelens
+    binary: codelens
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      # Platform-independent server JAR, flattened to the archive root.
+      - src: server/app/build/libs/codelens-server-all.jar
+        dst: .
+        strip_parent: true
+
+brews:
+  - name: codelens
+    ids:
+      - default
+    repository:
+      owner: charliek
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/charliek/codelens"
+    description: "Analyze JVM codebases (Java & Kotlin) — classes, methods, handlers, and more"
+    license: "Apache-2.0"
+    install: |
+      bin.install "codelens"
+      libexec.install "codelens-server-all.jar"
+    caveats: |
+      codelens runs a JDK 21+ server under the hood. Provide a JDK via SDKMAN:
+        sdk install java 21.0.9-amzn
+      or Homebrew:
+        brew install openjdk@21
+      or point CODELENS_JAVA_HOME / JAVA_HOME at a JDK 21+ home.
+
+      codelens auto-discovers JDKs from SDKMAN and Homebrew (openjdk@21..@25) and
+      runs the server on the newest it finds. Analyzing a target project may also
+      require that project's own JDK (likewise auto-discovered).
+
+      Docs: https://charliek.github.io/codelens/
+    test: |
+      system bin/"codelens", "version"
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+release:
+  github:
+    owner: charliek
+    name: codelens
+  draft: false
+  prerelease: auto
+  mode: replace
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
