@@ -186,8 +186,8 @@ codelens/
 
 | Component | Choice | Version |
 |-----------|--------|---------|
-| Language | Kotlin | 2.0.21 |
-| Build | Gradle + Kotlin DSL | 8.x |
+| Language | Kotlin | 2.3.20 |
+| Build | Gradle + Kotlin DSL | 9.x |
 | HTTP Framework | Ktor | 3.0.2 |
 | Serialization | kotlinx.serialization | 1.7.3 |
 | CLI Parsing | kotlinx-cli | 0.3.6 |
@@ -628,4 +628,4 @@ CodeLens is licensed under the [Apache License, Version 2.0](LICENSE).
 - JDK 21+
 - Python 3.13+
 - UV package manager
-- Gradle 8.x (included via wrapper)
+- Gradle 9.x (included via wrapper)

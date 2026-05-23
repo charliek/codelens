@@ -38,7 +38,7 @@ CodeLens analyzes compiled bytecode, not source files. Your project must be comp
 
 ### 3. Gradle Version Compatibility
 
-CodeLens supports Gradle versions 4.x through 8.x. Your project's Gradle version must also be compatible with the JDK you're using to run CodeLens.
+CodeLens supports Gradle versions 4.x through 9.x. Your project's Gradle version must also be compatible with the JDK you're using to run CodeLens.
 
 Check your current Gradle version:
 
@@ -130,7 +130,7 @@ If you see Gradle Tooling API errors, ensure your Gradle version is compatible w
 
 | Java Version | Minimum Gradle Version |
 |--------------|------------------------|
-| Java 21      | Gradle 8.4+            |
+| Java 21      | Gradle 8.5+            |
 | Java 17      | Gradle 7.3+            |
 | Java 11      | Gradle 5.0+            |
 | Java 8       | Gradle 4.x+            |

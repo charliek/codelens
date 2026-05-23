@@ -1,11 +1,11 @@
 [versions]
-kotlin = "2.0.21"
+kotlin = "2.3.20"
 ktor = "3.0.2"
 kotlinx-serialization = "1.7.3"
 kotlinx-cli = "0.3.6"
 logback = "1.5.12"
 classgraph = "4.8.177"
-gradle-tooling-api = "8.5"
+gradle-tooling-api = "9.5.1"
 ktlint = "1.5.0"
 junit = "5.10.0"
 mockk = "1.13.8"
@@ -37,4 +37,4 @@ ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negoti
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
+shadow = { id = "com.gradleup.shadow", version = "9.4.1" }
