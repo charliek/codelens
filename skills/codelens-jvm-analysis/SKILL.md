@@ -28,6 +28,9 @@ Ensure the CodeLens server is running for your project:
 codelens start --project /path/to/project
 ```
 
+Several examples below pipe JSON output through `jq` — install it via your
+package manager if you want to follow those verbatim.
+
 ## Class Discovery
 
 ### List Classes
