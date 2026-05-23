@@ -27,7 +27,15 @@ func newRootCmd() *cobra.Command {
 	root.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "Path to the target Gradle project (defaults to cwd)")
 	root.PersistentFlags().BoolVar(&flagJSON, "json", false, "Emit JSON output (auto-enabled when stdout is not a TTY)")
 
-	root.AddCommand(newVersionCmd())
+	root.AddCommand(
+		newVersionCmd(),
+		newStartCmd(),
+		newStopCmd(),
+		newStatusCmd(),
+		newRestartCmd(),
+		newRefreshCmd(),
+		newListCmd(),
+	)
 
 	return root
 }
