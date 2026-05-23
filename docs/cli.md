@@ -89,7 +89,7 @@ codelens start [OPTIONS]
 | `--project`, `-p` | `.` | Project directory |
 | `--port` | auto | Specific port to use |
 | `--mode` | `auto` | Server mode: `auto`, `gradle`, or `jar` |
-| `--timeout` | `60` | Startup timeout in seconds |
+| `--timeout` | `180` | Startup timeout in seconds |
 | `--json` | - | Output as JSON |
 
 **Examples:**
@@ -249,19 +249,19 @@ codelens project [OPTIONS]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--project`, `-p` | `.` | Project directory |
-| `--once` | `false` | Start server, query, then stop |
 | `--json` | - | Output as JSON |
 
-**Example Output:**
+**Example Output (JSON):**
 
-```
-my-project
-
-Path:     /home/user/work/my-project
-Status:   READY
-Classes:  150
-Handlers: 24
-Scanned:  2026-01-05T12:00:05.000Z
+```json
+{
+  "name": "my-project",
+  "path": "/home/user/work/my-project",
+  "status": "READY",
+  "classCount": 150,
+  "handlerCount": 24,
+  "scannedAt": "2026-01-05T12:00:05.000000Z"
+}
 ```
 
 ---

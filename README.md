@@ -62,7 +62,7 @@ For a real project, build the target application's classes first, then run
 │   ┌─────────────────────┐           ┌─────────────────────────────────┐    │
 │   │  $ codelens status  │           │  CodeLens Server (Kotlin/Ktor)  │    │
 │   │                     │──HTTP────▶│  - Loads target project         │    │
-│   │  Python CLI         │◀─────────│  - Serves /api/v1/* endpoints   │    │
+│   │  Go CLI (Cobra)     │◀─────────│  - Serves /api/v1/* endpoints   │    │
 │   │  - Manages server   │           │  - Auto-shuts down when idle    │    │
 │   │  - Formats output   │           └─────────────────────────────────┘    │
 │   └─────────────────────┘                         │                         │
@@ -453,7 +453,7 @@ All commands support:
 
 ## Configuration
 
-Configuration is managed via environment variables using Pydantic Settings.
+Configuration is managed via environment variables.
 
 ### Environment Variables
 
