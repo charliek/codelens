@@ -35,6 +35,21 @@ func newRootCmd() *cobra.Command {
 		newRestartCmd(),
 		newRefreshCmd(),
 		newListCmd(),
+		// analysis groups
+		newClassesCmd(),
+		newMethodsCmd(),
+		newAnnotationsCmd(),
+		newSourceCmd(),
+		newHandlersCmd(),
+		newPromisesCmd(),
+		newMigrationCmd(),
+		newModulesCmd(),
+		newIntegrationsCmd(),
+		newAntipatternsCmd(),
+		newRoutesCmd(),
+		newDepsCmd(),
+		newLintCmd(),
+		newProjectCmd(),
 	)
 
 	return root

@@ -2,6 +2,7 @@
 package output
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"os"
@@ -28,16 +29,21 @@ func PrintJSON(w io.Writer, v any) error {
 
 // PrintRawJSON re-indents an already-serialized JSON payload (typically a
 // json.RawMessage from the HTTP client) so callers using --json get
-// consistently-formatted output.
+// consistently-formatted output. Crucially, it uses json.Indent rather than
+// Unmarshal → Marshal so the server's intentional key order is preserved
+// (json.Marshal of map[string]any alphabetizes, which would corrupt parity
+// with the Python CLI).
 func PrintRawJSON(w io.Writer, raw []byte) error {
 	if len(raw) == 0 {
 		return nil
 	}
-	var v any
-	if err := json.Unmarshal(raw, &v); err != nil {
+	var buf bytes.Buffer
+	if err := json.Indent(&buf, raw, "", "  "); err != nil {
 		// Not parseable JSON — emit verbatim.
 		_, err := w.Write(raw)
 		return err
 	}
-	return PrintJSON(w, v)
+	buf.WriteByte('\n')
+	_, err := w.Write(buf.Bytes())
+	return err
 }

@@ -598,7 +598,7 @@ func TestDeps_DOTReturnsRawBody(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(body) != "digraph G { A -> B }\n" {
+	if string(body.([]byte)) != "digraph G { A -> B }\n" {
 		t.Errorf("dot body unexpectedly transformed: %q", body)
 	}
 	if cap.last().Query.Get("format") != "dot" {
@@ -609,7 +609,7 @@ func TestDeps_DOTReturnsRawBody(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(body) != "digraph G { A -> B }\n" {
+	if string(body.([]byte)) != "digraph G { A -> B }\n" {
 		t.Errorf("graph dot body wrong: %q", body)
 	}
 }

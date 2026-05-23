@@ -600,18 +600,16 @@ func (c *Client) GetSpringMappings(ctx context.Context, includeLibraries bool) (
 // =============================================================================
 
 // GetDependencyAnalysis returns either JSON or raw DOT depending on `format`.
-// Callers receive the raw bytes; "dot" output is not JSON.
-func (c *Client) GetDependencyAnalysis(ctx context.Context, format string) ([]byte, error) {
+//   - format == "dot": raw bytes (not JSON, written verbatim by the command).
+//   - any other format: json.RawMessage so the command re-indents it through
+//     output.PrintRawJSON.
+func (c *Client) GetDependencyAnalysis(ctx context.Context, format string) (any, error) {
 	if format == "dot" {
 		p := &params{}
 		p.add("format", "dot")
 		return c.doRaw(ctx, "/api/v1/ratpack/dependencies", p)
 	}
-	raw, err := c.doGet(ctx, "/api/v1/ratpack/dependencies", nil)
-	if err != nil {
-		return nil, err
-	}
-	return []byte(raw), nil
+	return c.doGet(ctx, "/api/v1/ratpack/dependencies", nil)
 }
 
 func (c *Client) GetFoundationClasses(ctx context.Context) (json.RawMessage, error) {
@@ -622,15 +620,13 @@ func (c *Client) GetQuickWins(ctx context.Context) (json.RawMessage, error) {
 	return c.doGet(ctx, "/api/v1/ratpack/dependencies/quickwins", nil)
 }
 
-func (c *Client) GetDependencyGraph(ctx context.Context, format string) ([]byte, error) {
+// GetDependencyGraph mirrors GetDependencyAnalysis: dot → raw bytes,
+// anything else → json.RawMessage.
+func (c *Client) GetDependencyGraph(ctx context.Context, format string) (any, error) {
 	if format == "dot" {
 		p := &params{}
 		p.add("format", "dot")
 		return c.doRaw(ctx, "/api/v1/ratpack/dependencies/graph", p)
 	}
-	raw, err := c.doGet(ctx, "/api/v1/ratpack/dependencies/graph", nil)
-	if err != nil {
-		return nil, err
-	}
-	return []byte(raw), nil
+	return c.doGet(ctx, "/api/v1/ratpack/dependencies/graph", nil)
 }
