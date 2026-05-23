@@ -43,36 +43,53 @@ func newPromisesShowCmd() *cobra.Command {
 
 func newPromisesSearchCmd() *cobra.Command {
 	var f client.SearchPromisesFilter
-	var blockingFlag, asyncFlag, forkFlag string
+	// Python uses Typer's --foo/--no-foo paired boolean convention. We mirror
+	// that with two separate flags: --blocking sets *true, --no-blocking sets
+	// *false, neither leaves the filter omitted. Only one of the pair should
+	// be set at once; if both are passed the last one to be set wins.
+	var blocking, noBlocking, async, noAsync, fork, noFork bool
 	cmd := &cobra.Command{
 		Use:   "search",
 		Short: "Find handlers with specific Promise patterns",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			f.UsesBlocking = parseTriBool(blockingFlag)
-			f.UsesAsync = parseTriBool(asyncFlag)
-			f.UsesFork = parseTriBool(forkFlag)
+			f.UsesBlocking = pairedBool(cmd, "blocking", "no-blocking", blocking, noBlocking)
+			f.UsesAsync = pairedBool(cmd, "async", "no-async", async, noAsync)
+			f.UsesFork = pairedBool(cmd, "fork", "no-fork", fork, noFork)
 			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.SearchPromises(ctx, f)
 			})
 		},
 	}
-	// String flags so the user can pass "true"/"false"/unset to drive the
-	// tri-state semantics. Unset → omit, "true"/"false" → send literal.
-	cmd.Flags().StringVar(&blockingFlag, "uses-blocking", "", "true|false (omit to skip filter)")
-	cmd.Flags().StringVar(&asyncFlag, "uses-async", "", "true|false (omit to skip filter)")
-	cmd.Flags().StringVar(&forkFlag, "uses-fork", "", "true|false (omit to skip filter)")
-	cmd.Flags().IntVar(&f.MinOperations, "min-operations", 0, "Minimum number of Promise operations")
+	cmd.Flags().BoolVar(&blocking, "blocking", false, "Filter by Blocking usage")
+	cmd.Flags().BoolVar(&noBlocking, "no-blocking", false, "Filter to handlers NOT using Blocking")
+	cmd.Flags().BoolVar(&async, "async", false, "Filter by async usage")
+	cmd.Flags().BoolVar(&noAsync, "no-async", false, "Filter to handlers NOT using async")
+	cmd.Flags().BoolVar(&fork, "fork", false, "Filter by fork usage")
+	cmd.Flags().BoolVar(&noFork, "no-fork", false, "Filter to handlers NOT using fork")
+	// Python flag name: --min-ops (not --min-operations).
+	cmd.Flags().IntVar(&f.MinOperations, "min-ops", 0, "Minimum number of Promise operations")
 	return cmd
 }
 
-func parseTriBool(s string) *bool {
-	switch s {
-	case "true", "True", "TRUE":
+// pairedBool returns a tri-state from a --flag / --no-flag pair. If neither
+// was set on the command line, returns nil (omit from request).
+func pairedBool(cmd *cobra.Command, posName, negName string, pos, neg bool) *bool {
+	posSet := cmd.Flags().Changed(posName)
+	negSet := cmd.Flags().Changed(negName)
+	switch {
+	case posSet && pos:
 		t := true
 		return &t
-	case "false", "False", "FALSE":
+	case negSet && neg:
 		f := false
 		return &f
+	case posSet:
+		// --flag explicitly false (e.g. user typed `--flag=false`)
+		t := false
+		return &t
+	case negSet:
+		t := true
+		return &t
 	}
 	return nil
 }

@@ -24,11 +24,12 @@ func newMethodsSearchCmd() *cobra.Command {
 			})
 		},
 	}
-	cmd.Flags().StringVar(&f.Name, "name", "", "Filter by method name (supports *)")
-	cmd.Flags().StringVar(&f.ReturnType, "return-type", "", "Filter by return type")
-	cmd.Flags().StringVar(&f.Annotation, "annotation", "", "Filter by annotation")
-	cmd.Flags().StringVar(&f.InClass, "in-class", "", "Filter to methods in this class FQN")
-	cmd.Flags().StringVar(&f.InPackage, "in-package", "", "Filter to methods in this package")
+	cmd.Flags().StringVarP(&f.Name, "name", "n", "", "Filter by method name (supports *)")
+	cmd.Flags().StringVarP(&f.ReturnType, "return-type", "r", "", "Filter by return type FQN")
+	cmd.Flags().StringVarP(&f.Annotation, "annotation", "a", "", "Filter by annotation")
+	// Python flag names: `--class` and `--package`. NOT `--in-class` / `--in-package`.
+	cmd.Flags().StringVarP(&f.InClass, "class", "c", "", "Filter by containing class FQN")
+	cmd.Flags().StringVar(&f.InPackage, "package", "", "Filter by containing package pattern")
 	cmd.Flags().BoolVarP(&f.IncludeLibraries, "include-libraries", "L", false, "Include library classes")
 	cmd.Flags().IntVar(&f.Page, "page", 0, "Page number (0-based)")
 	cmd.Flags().IntVar(&f.Size, "size", 50, "Page size")
