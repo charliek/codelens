@@ -83,6 +83,13 @@ func (s *Service) Start(ctx context.Context, opts StartOptions) (*state.ServerSt
 		port = p
 	}
 
+	// Fill in --project-java-home automatically when the target project
+	// uses a Gradle version that can't run on Java 21 and we can resolve
+	// the project's preferred Java. Mirrors server_service.py:133-175.
+	if opts.ProjectJavaHome == "" {
+		opts.ProjectJavaHome = s.autoResolveProjectJava(opts.ProjectPath)
+	}
+
 	cmd, err := s.buildCommand(opts, mode, port)
 	if err != nil {
 		return nil, err
@@ -254,6 +261,38 @@ func (s *Service) buildCommand(opts StartOptions, mode state.ServerMode, port in
 		return exec.Command(java, args...), nil
 	}
 	return nil, fmt.Errorf("unknown server mode: %s", mode)
+}
+
+// autoResolveProjectJava picks a Java home for the target project's Gradle
+// when the user didn't pass --project-java explicitly. Returns "" if no
+// detection is required (modern Gradle) or no usable JDK was found.
+//
+// Mirrors Python server_service.py:141-175: only fires when the project's
+// Gradle wrapper can't run on Java 21, then resolves via SDKMAN. When a
+// version is requested but absent from SDKMAN, log a one-line hint to
+// stderr (matches Python's logger.warning).
+func (s *Service) autoResolveProjectJava(projectPath string) string {
+	if !settings.NeedsOlderJavaForGradle(projectPath) {
+		return ""
+	}
+	home := settings.ResolveProjectJavaHome(projectPath)
+	if home != "" {
+		return home
+	}
+	// Detection failed — emit a helpful hint without aborting; the server
+	// may still start if the project happens to have a usable Java on PATH.
+	if v := settings.DetectProjectJavaVersion(projectPath); v != "" {
+		fmt.Fprintf(os.Stderr,
+			"warning: project requests Java %s but it's not installed in SDKMAN. "+
+				"Install with `sdk install java %s` or pass --project-java.\n",
+			v, v)
+	} else if g := settings.GradleVersion(projectPath); g != "" {
+		fmt.Fprintf(os.Stderr,
+			"warning: project uses Gradle %s which may require an older Java. "+
+				"If startup fails, add a .sdkmanrc to the project or pass --project-java.\n",
+			g)
+	}
+	return ""
 }
 
 // resolveJavaCmd: CODELENS_JAVA_HOME → SDKMAN → JAVA_HOME → PATH.

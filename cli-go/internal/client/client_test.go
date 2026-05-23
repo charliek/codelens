@@ -367,7 +367,7 @@ func TestKtlint_FormatFile_BodyIncludesWriteToFile(t *testing.T) {
 // Gap fill: FormatProject was not covered by test_client.py.
 func TestKtlint_FormatProject_BodyShape(t *testing.T) {
 	c, cap, done := newTestClientWith(t, func(_ *http.Request) (int, []byte) {
-		return 200, []byte(`{"projectPath":"/tmp","fileResults":[],"filesScanned":0,"filesWithChanges":0,"durationMs":1}`)
+		return 200, []byte(`{"projectPath":"/tmp","filesFormatted":[],"filesScanned":0,"filesWithChanges":0,"durationMs":1}`)
 	})
 	defer done()
 	if _, err := c.FormatProject(ctx(), "*.kt", true, true); err != nil {
@@ -385,6 +385,87 @@ func TestKtlint_FormatProject_BodyShape(t *testing.T) {
 		if got[k] != want {
 			t.Errorf("body[%q] = %v, want %v", k, got[k], want)
 		}
+	}
+}
+
+// Server's LintProjectResponse.fileResults entries are FileLintResult (no
+// durationMs). Reusing LintFileResponse would re-emit "durationMs":0 per
+// file and corrupt the contract — guard against that.
+func TestKtlint_LintProject_ResponseRoundTrip_NoPerFileDurationMs(t *testing.T) {
+	wireResponse := `{
+		"projectPath": "/tmp",
+		"fileResults": [
+			{
+				"filePath": "/tmp/Foo.kt",
+				"errors": [{"line": 1, "col": 1, "ruleId": "no-wildcard-imports", "detail": "wildcard", "canBeAutoCorrected": true}],
+				"errorCount": 1
+			}
+		],
+		"filesScanned": 5,
+		"filesWithErrors": 1,
+		"totalErrorCount": 1,
+		"durationMs": 42
+	}`
+	c, _, done := newTestClientWith(t, func(_ *http.Request) (int, []byte) {
+		return 200, []byte(wireResponse)
+	})
+	defer done()
+	resp, err := c.LintProject(ctx(), "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Decode into a generic map to inspect per-file entry shape.
+	var m map[string]any
+	if err := json.Unmarshal(out, &m); err != nil {
+		t.Fatal(err)
+	}
+	files, _ := m["fileResults"].([]any)
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file result; got %d", len(files))
+	}
+	first, _ := files[0].(map[string]any)
+	if _, has := first["durationMs"]; has {
+		t.Errorf("per-file result must NOT have durationMs; got %v", first)
+	}
+	if first["errorCount"] != float64(1) {
+		t.Errorf("errorCount lost: %v", first["errorCount"])
+	}
+}
+
+// Server's FormatProjectResponse uses filesFormatted: []string, NOT a
+// per-file result list. Reusing FormatFileResponse here would drop the
+// formatted file names — guard against that.
+func TestKtlint_FormatProject_ResponseRoundTrip_FilesFormattedSurvives(t *testing.T) {
+	wireResponse := `{
+		"projectPath": "/tmp",
+		"filesFormatted": ["/tmp/a.kt", "/tmp/b.kt"],
+		"filesScanned": 5,
+		"filesWithChanges": 2,
+		"durationMs": 17
+	}`
+	c, _, done := newTestClientWith(t, func(_ *http.Request) (int, []byte) {
+		return 200, []byte(wireResponse)
+	})
+	defer done()
+	resp, err := c.FormatProject(ctx(), "", true, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resp.FilesFormatted) != 2 || resp.FilesFormatted[0] != "/tmp/a.kt" {
+		t.Errorf("FilesFormatted lost: %v", resp.FilesFormatted)
+	}
+	out, _ := json.Marshal(resp)
+	var m map[string]any
+	_ = json.Unmarshal(out, &m)
+	if _, has := m["filesFormatted"]; !has {
+		t.Errorf("filesFormatted dropped from re-emitted JSON: %s", out)
+	}
+	if _, has := m["fileResults"]; has {
+		t.Errorf("spurious fileResults appeared in re-emitted JSON: %s", out)
 	}
 }
 

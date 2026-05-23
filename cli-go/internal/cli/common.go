@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/charliek/codelens/cli-go/internal/client"
@@ -19,27 +20,41 @@ import (
 // Tests replace this to capture/mock requests.
 var dataClientFactory = client.NewClient
 
-// withRunningServer is the standard preamble for any analysis command. It
-// resolves the project path, ensures a server is running (auto-starting if
-// not), and hands the caller a Client.
-//
-// fn is called with a Client wired to the running server. Its return value
-// (a json.RawMessage or []byte) is emitted as JSON to cmd.OutOrStdout().
+// analysisFunc is called with a Client wired to the running server. Its
+// return value (typically a json.RawMessage, []byte for DOT, or a typed
+// struct) is emitted as JSON / raw bytes to cmd.OutOrStdout().
 type analysisFunc func(ctx context.Context, c *client.Client) (any, error)
 
+// withRunningServer is the standard preamble for any analysis command:
+// resolve project, auto-start the server if needed, call fn, emit result.
+//
+// Use this for commands that don't need to react to the response (no exit
+// code based on response content, no client-side filtering). Commands that
+// need that should call runWithServer directly.
 func withRunningServer(cmd *cobra.Command, fn analysisFunc) error {
-	projectPath, err := resolveProjectPath(flagProject)
+	result, err := runWithServer(fn)
 	if err != nil {
 		return err
 	}
+	return emitAnalysisResult(cmd, result)
+}
+
+// runWithServer handles project resolution + server auto-start + the
+// client call, returning the raw result so callers can inspect a typed
+// response (e.g. lint commands need ErrorCount to drive the exit code).
+func runWithServer(fn analysisFunc) (any, error) {
+	projectPath, err := resolveProjectPath(flagProject)
+	if err != nil {
+		return nil, err
+	}
 	svc, err := lifecycleFactory()
 	if err != nil {
-		return clierrors.New(clierrors.ServerError, "%v", err)
+		return nil, clierrors.New(clierrors.ServerError, "%v", err)
 	}
 
 	st, err := svc.Find(projectPath)
 	if err != nil {
-		return clierrors.New(clierrors.ServerError, "%v", err)
+		return nil, clierrors.New(clierrors.ServerError, "%v", err)
 	}
 	if st == nil || st.Status != state.StatusReady {
 		ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
@@ -50,9 +65,9 @@ func withRunningServer(cmd *cobra.Command, fn analysisFunc) error {
 		cancel()
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
-				return clierrors.New(clierrors.Timeout, "server did not start within 180s")
+				return nil, clierrors.New(clierrors.Timeout, "server did not start within 180s")
 			}
-			return clierrors.New(clierrors.ServerError, "%v", err)
+			return nil, clierrors.New(clierrors.ServerError, "%v", err)
 		}
 	}
 
@@ -64,23 +79,27 @@ func withRunningServer(cmd *cobra.Command, fn analysisFunc) error {
 
 	result, err := fn(ctx, cli)
 	if err != nil {
-		return apiErrorToExit(err)
+		return nil, apiErrorToExit(err)
 	}
-	return emitAnalysisResult(cmd, result)
+	return result, nil
 }
 
 func emitAnalysisResult(cmd *cobra.Command, v any) error {
+	return emitAnalysisResultTo(cmd.OutOrStdout(), v)
+}
+
+func emitAnalysisResultTo(w io.Writer, v any) error {
 	switch r := v.(type) {
 	case json.RawMessage:
-		return output.PrintRawJSON(cmd.OutOrStdout(), r)
+		return output.PrintRawJSON(w, r)
 	case []byte:
 		// Raw bytes (DOT). Mirror Python's typer.echo, which always appends
 		// a trailing newline even if the input already ends in one.
 		out := append(append([]byte{}, r...), '\n')
-		_, err := cmd.OutOrStdout().Write(out)
+		_, err := w.Write(out)
 		return err
 	default:
-		return output.PrintJSON(cmd.OutOrStdout(), v)
+		return output.PrintJSON(w, v)
 	}
 }
 

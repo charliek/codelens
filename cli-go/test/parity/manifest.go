@@ -23,6 +23,10 @@ type Case struct {
 	//   "appliedFilter.source"   — nested
 	//   "classes.*.scannedAt"    — every element of an array
 	BlankPaths []string
+	// ExpectExitCode is the exit code both CLIs are expected to return. 0
+	// (the zero value) means success. Set to 1 to lock the contract that a
+	// command exits non-zero — e.g. lint check on a project with violations.
+	ExpectExitCode int
 	// SkipUntilReady runs the case after the server has been warmed up
 	// (already used by every case; kept here for future variations).
 	SkipUntilReady bool
@@ -100,4 +104,22 @@ var allCases = []Case{
 	{Name: "deps_quickwins", Args: []string{"deps", "quickwins"}},
 	{Name: "deps_graph_json", Args: []string{"deps", "graph", "--format", "json"}},
 	{Name: "deps_graph_dot", Args: []string{"deps", "graph", "--format", "dot"}},
+	// `codelens deps` (no subcommand) — locked Python behavior.
+	{Name: "deps_default_json", Args: []string{"deps", "--format", "json"}},
+	{Name: "deps_default_dot", Args: []string{"deps", "--format", "dot"}},
+
+	// ---------- handlers ----------
+	// Client-side --missing-inject filter — sample project has no handlers,
+	// so this just confirms both CLIs produce identical JSON when the filter
+	// kicks in on an empty set.
+	{Name: "handlers_list_missing_inject", Args: []string{"handlers", "list", "--missing-inject"}},
+
+	// ---------- lint ----------
+	// lint_check on the sample fixture — which contains BadFormatting.kt
+	// intentionally. Both CLIs exit 1 and emit identical JSON describing
+	// the violations. Locks the exit-code contract (P2 #1 fix).
+	{Name: "lint_check_project_with_violations", Args: []string{"lint", "check"}, ExpectExitCode: 1},
+	// lint format --dry-run, project-wide — exercises the corrected
+	// FormatProjectResponse model (filesFormatted []string, not fileResults).
+	{Name: "lint_format_project_dry_run", Args: []string{"lint", "format", "--dry-run"}},
 }

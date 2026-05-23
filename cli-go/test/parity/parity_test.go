@@ -15,6 +15,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+// Forces the exec import to be referenced by exitCodeFrom below.
+var _ = (*exec.ExitError)(nil)
+
 // fixture is filled by TestMain.
 var fixture struct {
 	goBin       string // absolute path to compiled Go binary
@@ -185,12 +188,19 @@ func TestParity(t *testing.T) {
 			args = append(args, "--project", fixture.projectPath, "--json")
 
 			goRun := runCLI(fixture.goBin, args...)
-			if err := goRun.cmd.Run(); err != nil {
-				t.Fatalf("go run failed (%s): %v\nstderr=%s", c.Name, err, goRun.stderr.String())
-			}
+			goErr := goRun.cmd.Run()
 			pyRun := runCLI(fixture.pythonBin, args...)
-			if err := pyRun.cmd.Run(); err != nil {
-				t.Fatalf("python run failed (%s): %v\nstderr=%s", c.Name, err, pyRun.stderr.String())
+			pyErr := pyRun.cmd.Run()
+
+			// Verify both CLIs returned the expected exit code (0 by
+			// default, non-zero for cases like `lint check` against a
+			// project with violations).
+			goExit := exitCodeFrom(goErr)
+			pyExit := exitCodeFrom(pyErr)
+			if goExit != c.ExpectExitCode || pyExit != c.ExpectExitCode {
+				t.Fatalf("exit-code mismatch (%s): go=%d py=%d expected=%d\ngo stderr:%s\npy stderr:%s",
+					c.Name, goExit, pyExit, c.ExpectExitCode,
+					goRun.stderr.String(), pyRun.stderr.String())
 			}
 
 			goOut := goRun.stdout.Bytes()
@@ -237,6 +247,19 @@ func diffRaw(t *testing.T, c Case, goOut, pyOut []byte) {
 		t.Errorf("raw output mismatch (%s):\n--- python ---\n%s\n--- go ---\n%s",
 			c.Name, truncate([]byte(pyStr), 1024), truncate([]byte(goStr), 1024))
 	}
+}
+
+// exitCodeFrom turns an *exec.Cmd error into a numeric exit code.
+// Returns 0 if err is nil, the actual exit code if the process exited
+// cleanly with non-zero, or -1 for non-exit failures (couldn't spawn, etc.).
+func exitCodeFrom(err error) int {
+	if err == nil {
+		return 0
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		return exitErr.ExitCode()
+	}
+	return -1
 }
 
 func truncate(b []byte, max int) string {
