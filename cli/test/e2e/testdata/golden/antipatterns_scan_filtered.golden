@@ -1,0 +1,14 @@
+{
+  "appliedFilters": {
+    "includeLibraries": false,
+    "severity": "WARNING",
+    "type": null
+  },
+  "summary": {
+    "countBySeverity": {},
+    "countByType": {},
+    "instances": [],
+    "totalCount": 0,
+    "worstOffenders": []
+  }
+}

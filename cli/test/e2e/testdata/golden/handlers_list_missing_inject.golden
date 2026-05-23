@@ -1,0 +1,33 @@
+{
+  "appliedFilters": {
+    "handlerType": null,
+    "tier": null
+  },
+  "handlers": [
+    {
+      "complexityScore": 3,
+      "complexityTier": "LOW",
+      "fqn": "sample.handlers.LoggingBadHandler",
+      "handlerType": "HANDLER",
+      "hasInjectAnnotation": false,
+      "packageName": "sample.handlers",
+      "promiseOperationCount": 0,
+      "simpleName": "LoggingBadHandler",
+      "source": "PROJECT",
+      "usesBlocking": false
+    },
+    {
+      "complexityScore": 0,
+      "complexityTier": "LOW",
+      "fqn": "sample.handlers.SimpleHandler",
+      "handlerType": "HANDLER",
+      "hasInjectAnnotation": false,
+      "packageName": "sample.handlers",
+      "promiseOperationCount": 0,
+      "simpleName": "SimpleHandler",
+      "source": "PROJECT",
+      "usesBlocking": false
+    }
+  ],
+  "totalCount": 6
+}

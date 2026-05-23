@@ -1,0 +1,81 @@
+{
+  "appliedFilters": {
+    "handlerType": null,
+    "tier": null
+  },
+  "handlers": [
+    {
+      "complexityScore": 11,
+      "complexityTier": "LOW",
+      "fqn": "sample.api.UsersApi",
+      "handlerType": "CHAIN_ACTION",
+      "hasInjectAnnotation": true,
+      "packageName": "sample.api",
+      "promiseOperationCount": 0,
+      "simpleName": "UsersApi",
+      "source": "PROJECT",
+      "usesBlocking": false
+    },
+    {
+      "complexityScore": 20,
+      "complexityTier": "LOW",
+      "fqn": "sample.handlers.AsyncHandler",
+      "handlerType": "HANDLER",
+      "hasInjectAnnotation": true,
+      "packageName": "sample.handlers",
+      "promiseOperationCount": 4,
+      "simpleName": "AsyncHandler",
+      "source": "PROJECT",
+      "usesBlocking": false
+    },
+    {
+      "complexityScore": 3,
+      "complexityTier": "LOW",
+      "fqn": "sample.handlers.BadHandler",
+      "handlerType": "HANDLER",
+      "hasInjectAnnotation": true,
+      "packageName": "sample.handlers",
+      "promiseOperationCount": 0,
+      "simpleName": "BadHandler",
+      "source": "PROJECT",
+      "usesBlocking": false
+    },
+    {
+      "complexityScore": 3,
+      "complexityTier": "LOW",
+      "fqn": "sample.handlers.BlockingHandler",
+      "handlerType": "HANDLER",
+      "hasInjectAnnotation": true,
+      "packageName": "sample.handlers",
+      "promiseOperationCount": 1,
+      "simpleName": "BlockingHandler",
+      "source": "PROJECT",
+      "usesBlocking": false
+    },
+    {
+      "complexityScore": 3,
+      "complexityTier": "LOW",
+      "fqn": "sample.handlers.LoggingBadHandler",
+      "handlerType": "HANDLER",
+      "hasInjectAnnotation": false,
+      "packageName": "sample.handlers",
+      "promiseOperationCount": 0,
+      "simpleName": "LoggingBadHandler",
+      "source": "PROJECT",
+      "usesBlocking": false
+    },
+    {
+      "complexityScore": 0,
+      "complexityTier": "LOW",
+      "fqn": "sample.handlers.SimpleHandler",
+      "handlerType": "HANDLER",
+      "hasInjectAnnotation": false,
+      "packageName": "sample.handlers",
+      "promiseOperationCount": 0,
+      "simpleName": "SimpleHandler",
+      "source": "PROJECT",
+      "usesBlocking": false
+    }
+  ],
+  "totalCount": 6
+}

@@ -1,0 +1,67 @@
+{
+  "directImplementations": [
+    {
+      "fieldCount": 2,
+      "fqn": "sample.handlers.AsyncHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 12,
+      "packageName": "sample.handlers",
+      "simpleName": "AsyncHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "sample.handlers.BadHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "BadHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "sample.handlers.BlockingHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 6,
+      "packageName": "sample.handlers",
+      "simpleName": "BlockingHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "sample.handlers.LoggingBadHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "LoggingBadHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "sample.handlers.SimpleHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "SimpleHandler",
+      "source": "PROJECT"
+    }
+  ],
+  "indirectImplementations": [],
+  "targetClass": "ratpack.handling.Handler",
+  "totalCount": 5
+}

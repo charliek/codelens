@@ -1,0 +1,21 @@
+digraph Dependencies {
+  rankdir=TB;
+  node [shape=box, style=rounded];
+
+  "sample.api.UsersApi" [label="UsersApi", fillcolor=lightgray, style=filled, shape=box];
+  "sample.handlers.AsyncHandler" [label="AsyncHandler", fillcolor=lightgreen, style=filled, shape=box];
+  "sample.handlers.BadHandler" [label="BadHandler", fillcolor=lightgreen, style=filled, shape=box];
+  "sample.handlers.BlockingHandler" [label="BlockingHandler", fillcolor=lightgreen, style=filled, shape=box];
+  "sample.handlers.LoggingBadHandler" [label="LoggingBadHandler", fillcolor=lightgreen, style=filled, shape=box];
+  "sample.handlers.SimpleHandler" [label="SimpleHandler", fillcolor=lightgreen, style=filled, shape=box];
+  "sample.handlers.UserService" [label="UserService", fillcolor=lightblue, style=filled, shape=ellipse];
+  "sample.handlers.NotificationService" [label="NotificationService", fillcolor=lightblue, style=filled, shape=ellipse];
+
+  "sample.api.UsersApi" -> "sample.handlers.SimpleHandler" [style=solid];
+  "sample.api.UsersApi" -> "sample.handlers.BlockingHandler" [style=solid];
+  "sample.handlers.AsyncHandler" -> "sample.handlers.UserService" [style=solid];
+  "sample.handlers.AsyncHandler" -> "sample.handlers.NotificationService" [style=solid];
+  "sample.handlers.BlockingHandler" -> "sample.handlers.UserService" [style=solid];
+}
+
+

@@ -1,0 +1,9 @@
+{
+  "durationMs": "__BLANK__",
+  "filesFormatted": [
+    "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt"
+  ],
+  "filesScanned": 4,
+  "filesWithChanges": 1,
+  "projectPath": "{{PROJECT}}"
+}

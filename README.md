@@ -13,11 +13,7 @@ route discovery, handler inventory, dependency mapping, and source lookup.
 CodeLens consists of two components:
 
 1. **Server** (Kotlin/Ktor): Runs in the background, loads a target project's bytecode using ClassGraph, and serves analysis queries via HTTP REST API
-2. **CLI** (Go/Cobra, in `cli-go/`): User-facing command-line interface that manages server lifecycle and presents analysis results. Distributed as a single static binary.
-
-> A legacy Python/Typer CLI lives in `cli/` and is being retired once the
-> Go port has been green on `main` for a release cycle. Both CLIs share
-> the same HTTP wire contract and on-disk state files.
+2. **CLI** (Go/Cobra, in `cli/`): User-facing command-line interface that manages server lifecycle and presents analysis results. Distributed as a single static binary.
 
 ## Quick Start
 
@@ -28,7 +24,7 @@ Prerequisites: JDK 21+ and [mise](https://mise.jdx.dev/) for the Go toolchain (`
 ./gradlew :server:app:shadowJar
 
 # Build the Go CLI
-cd cli-go
+cd cli
 go generate ./...
 make install   # places `codelens` in ~/.local/bin
 cd ..
@@ -157,7 +153,7 @@ codelens/
 │           │           └── AnalysisService.kt
 │           └── test/kotlin/                 # Server tests
 │
-├── cli-go/                          # Go CLI (current)
+├── cli/                             # Go CLI
 │   ├── go.mod
 │   ├── .golangci.yml
 │   ├── Makefile
@@ -170,10 +166,7 @@ codelens/
 │   │   ├── settings/                # Env + Java/SDKMAN/Gradle detection
 │   │   ├── output/                  # JSON / table rendering
 │   │   └── errors/                  # Typed exit codes
-│   └── test/parity/                 # Side-by-side Go vs Python parity harness
-│
-├── cli/                             # Python CLI (legacy, kept for parity tests)
-│   └── (Typer/Pydantic implementation — see commit history for details)
+│   └── test/e2e/                    # Golden-fixture e2e suite (CLI vs live JVM)
 │
 └── test-fixtures/                   # Sample Ratpack project for testing
     └── sample-ratpack-app/
@@ -205,10 +198,8 @@ codelens/
 | HTTP Client | net/http (stdlib) | — |
 | Output formatting | text/tabwriter + encoding/json (stdlib) | — |
 
-### Legacy CLI (Python, deprecated)
-
-The `cli/` directory contains the original Python/Typer implementation,
-retained for the side-by-side parity tests during the transition.
+The CLI was ported from an earlier Python/Typer implementation; see the git
+history for that code.
 
 ## Building
 
@@ -224,7 +215,7 @@ retained for the side-by-side parity tests during the transition.
 ### Install the CLI
 
 ```bash
-cd cli-go
+cd cli
 
 # Build the Go binary
 go generate ./...
@@ -537,9 +528,9 @@ The server exposes a REST API. For complete documentation, see [docs/api.md](doc
 
 ## Server Startup Contract
 
-The server emits structured lines to stdout that any client (the bundled Python
-CLI today, a future Go port, or third-party integrations) can use to track
-startup. The contract has three lines:
+The server emits structured lines to stdout that any client (the bundled Go
+CLI or third-party integrations) can use to track startup. The contract has
+three lines:
 
 | Line | Meaning |
 |------|---------|
@@ -577,7 +568,7 @@ java -jar server/app/build/libs/codelens-server-all.jar \
 ### Running the CLI in Development
 
 ```bash
-cd cli-go
+cd cli
 
 # Build and install
 go generate ./...
@@ -614,11 +605,14 @@ codelens stop
 
 **Go:**
 ```bash
-cd cli-go
+cd cli
 go test ./...
 
-# Side-by-side parity (requires the Python CLI on PATH):
-go test -v -run TestParity ./test/parity/...
+# Golden e2e suite (requires the server JAR built):
+go test -v -run TestE2E ./test/e2e/...
+
+# Regenerate golden fixtures after an intentional output change:
+UPDATE_GOLDEN=1 go test -run TestE2E ./test/e2e/...
 ```
 
 ### Architecture

@@ -1,0 +1,14 @@
+{
+  "source": {
+    "content": "package sample.handlers;\n\nimport ratpack.handling.Context;\nimport ratpack.handling.Handler;\n\nimport javax.inject.Singleton;\n\n/**\n * Simple handler - low complexity.\n * Implements Handler directly, no Promise usage.\n */\n@Singleton\npublic class SimpleHandler implements Handler {\n\n    @Override\n    public void handle(Context ctx) throws Exception {\n        ctx.render(\"Hello, World!\");\n    }\n}\n",
+    "filePath": "{{PROJECT}}/src/main/java/sample/handlers/SimpleHandler.java",
+    "format": "FULL",
+    "fqn": "sample.handlers.SimpleHandler",
+    "isDecompiled": false,
+    "language": "JAVA",
+    "lineCount": 20,
+    "mavenCoordinates": null,
+    "module": null,
+    "sourceOrigin": "PROJECT_SOURCE"
+  }
+}

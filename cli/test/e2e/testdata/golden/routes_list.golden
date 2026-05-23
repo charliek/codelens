@@ -1,0 +1,63 @@
+{
+  "summary": {
+    "chainClasses": [
+      {
+        "fqn": "sample.api.UsersApi",
+        "pathPrefix": null,
+        "routeCount": 3,
+        "simpleName": "UsersApi"
+      }
+    ],
+    "routes": [
+      {
+        "chainFqn": "sample.api.UsersApi",
+        "handlerFqn": null,
+        "handlerSimpleName": null,
+        "isPrefix": false,
+        "method": "GET",
+        "nestedRoutes": [],
+        "pathParameters": [
+          {
+            "name": "id",
+            "optional": false,
+            "position": 0
+          }
+        ],
+        "pathPattern": "/:id"
+      },
+      {
+        "chainFqn": "sample.api.UsersApi",
+        "handlerFqn": null,
+        "handlerSimpleName": null,
+        "isPrefix": false,
+        "method": "DELETE",
+        "nestedRoutes": [],
+        "pathParameters": [
+          {
+            "name": "id",
+            "optional": false,
+            "position": 0
+          }
+        ],
+        "pathPattern": "/:id"
+      },
+      {
+        "chainFqn": "sample.api.UsersApi",
+        "handlerFqn": null,
+        "handlerSimpleName": null,
+        "isPrefix": false,
+        "method": "ALL",
+        "nestedRoutes": [],
+        "pathParameters": [],
+        "pathPattern": "/admin"
+      }
+    ],
+    "routesByMethod": {
+      "ALL": 1,
+      "DELETE": 1,
+      "GET": 1
+    },
+    "totalRoutes": 3,
+    "uniquePaths": 2
+  }
+}

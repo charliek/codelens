@@ -1,0 +1,54 @@
+{
+  "order": [
+    {
+      "classFqn": "sample.handlers.SimpleHandler",
+      "estimatedHours": 0.5,
+      "order": 1,
+      "reason": "Quick win - simple migration",
+      "simpleName": "SimpleHandler",
+      "tier": "LOW"
+    },
+    {
+      "classFqn": "sample.handlers.BadHandler",
+      "estimatedHours": 0.8,
+      "order": 2,
+      "reason": "Quick win - simple migration",
+      "simpleName": "BadHandler",
+      "tier": "LOW"
+    },
+    {
+      "classFqn": "sample.handlers.BlockingHandler",
+      "estimatedHours": 0.8,
+      "order": 3,
+      "reason": "Quick win - simple migration",
+      "simpleName": "BlockingHandler",
+      "tier": "LOW"
+    },
+    {
+      "classFqn": "sample.handlers.LoggingBadHandler",
+      "estimatedHours": 0.8,
+      "order": 4,
+      "reason": "Quick win - simple migration",
+      "simpleName": "LoggingBadHandler",
+      "tier": "LOW"
+    },
+    {
+      "classFqn": "sample.api.UsersApi",
+      "estimatedHours": 1.6,
+      "order": 5,
+      "reason": "Quick win - simple migration",
+      "simpleName": "UsersApi",
+      "tier": "LOW"
+    },
+    {
+      "classFqn": "sample.handlers.AsyncHandler",
+      "estimatedHours": 2.5,
+      "order": 6,
+      "reason": "Quick win - simple migration",
+      "simpleName": "AsyncHandler",
+      "tier": "LOW"
+    }
+  ],
+  "totalCount": 6,
+  "totalEstimatedHours": 7
+}

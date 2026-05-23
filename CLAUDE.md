@@ -7,9 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 CodeLens is a developer tool for analyzing Ratpack-based JVM codebases to assist with migration planning. It consists of two components:
 
 1. **Server** (Kotlin/Ktor): Background service that analyzes target project bytecode using ClassGraph and serves results via HTTP REST API
-2. **CLI** (Go/Cobra, in `cli-go/`): User-facing interface that manages server lifecycle and presents analysis results
+2. **CLI** (Go/Cobra, in `cli/`): User-facing interface that manages server lifecycle and presents analysis results
 
-A second CLI in `cli/` (Python/Typer) is the historical reference implementation; it is being retired once the Go port has been green on `main` for a release cycle. New work should target `cli-go/`. The two CLIs share the same HTTP wire contract and on-disk state-file format, so they can coexist and talk to the same running server.
+The CLI was ported from an earlier Python/Typer implementation (see git history); the two shared an HTTP wire contract and on-disk state-file format, which the Go CLI preserves.
 
 ## Build Commands
 
@@ -41,7 +41,7 @@ Requires `mise` for tool versions (`go = "1.24"`, `golangci-lint = "2.10.1"`).
 # First-time setup: install pinned toolchain
 mise install
 
-cd cli-go
+cd cli
 
 # Generate the embedded version.txt then build
 go generate ./...
@@ -53,23 +53,17 @@ make build
 # Install to ~/.local/bin
 make install
 
-# Run all Go tests (parity tests are gated behind -run TestParity)
+# Run all Go tests (e2e golden tests are gated behind -run TestE2E)
 go test ./...
 
-# Run the side-by-side parity suite against a live JVM
-# (requires the Python CLI installed on PATH and the server JAR built)
-go test -v -run TestParity ./test/parity/...
+# Run the golden e2e suite against a live JVM (requires the server JAR built)
+go test -v -run TestE2E ./test/e2e/...
+
+# Regenerate golden fixtures after an intentional output change
+UPDATE_GOLDEN=1 go test -run TestE2E ./test/e2e/...
 
 # Lint
 golangci-lint run ./...
-```
-
-### Python CLI (legacy, kept until parity has been green for a release cycle)
-
-```bash
-cd cli
-uv tool install --editable .
-uv run pytest
 ```
 
 ## Architecture
@@ -84,7 +78,7 @@ The server is split into six Gradle modules:
 - `server:ktlint` - Warm ktlint server for Kotlin linting/formatting
 - `server:app` - Ktor HTTP server application with routes and services
 
-### Go CLI structure (`cli-go/`)
+### Go CLI structure (`cli/`)
 
 - `cmd/codelens/main.go` — entry point
 - `internal/cli/` — Cobra commands (one file per group: classes, methods, handlers, promises, …)
@@ -94,13 +88,12 @@ The server is split into six Gradle modules:
 - `internal/settings/` — env-driven config, Java/SDKMAN/Gradle detection, JAR discovery
 - `internal/output/` — JSON / table / tty rendering
 - `internal/errors/` — typed exit codes (Success=0, ServerError=4, Timeout=5, NotRunning=7, …)
-- `test/parity/` — runs Go and Python CLIs side by side and structurally diffs `--json` output
+- `test/e2e/` — runs the CLI against a live JVM and diffs `--json` output against committed golden fixtures
 
 ### Key Entry Points
 
 - Server main: `server/app/src/main/kotlin/codelens/server/Application.kt`
-- Go CLI main: `cli-go/cmd/codelens/main.go`
-- Python CLI main (legacy): `cli/src/codelens_cli/main.py`
+- Go CLI main: `cli/cmd/codelens/main.go`
 
 ### State Storage
 
@@ -108,11 +101,11 @@ Server state is persisted in `~/.cache/codelens/`:
 - `servers/{hash}.json` - Server state files (keyed by SHA256 hash of project path, first 12 hex chars)
 - `logs/{hash}.log` - Server log files
 
-Both CLIs use this directory verbatim (Go does NOT use `os.UserCacheDir()` on macOS so the location stays the same across both implementations).
+The CLI uses this directory verbatim (Go does NOT use `os.UserCacheDir()` on macOS, so the location matches the original Python implementation and any existing on-disk state).
 
 ## Version Management
 
-Version is defined in `version.txt` at the repository root. Both Gradle and the Go CLI's `go generate` step read it; a copy lives at `cli-go/internal/version/version.txt` (gitignored — regenerated each build).
+Version is defined in `version.txt` at the repository root. Both Gradle and the Go CLI's `go generate` step read it; a copy lives at `cli/internal/version/version.txt` (gitignored — regenerated each build).
 
 ## Server JAR discovery
 
@@ -130,4 +123,4 @@ This lets the binary work in three modes: dev (inside the repo), env-var overrid
 
 Test fixtures are in `test-fixtures/sample-ratpack-app/` - a minimal Ratpack project for integration testing.
 
-The Go parity suite (`cli-go/test/parity/`) is the most rigorous proof of correctness: it spawns the JVM server once, then exec's the Go binary and the Python binary side by side for every documented endpoint and structurally diffs the `--json` output (after blanking mutable fields like pid/port/timestamps).
+The Go e2e golden suite (`cli/test/e2e/`) is the most rigorous proof of correctness: it spawns the JVM server once, then exec's the CLI for every documented endpoint and diffs the `--json` output against committed golden fixtures (after blanking mutable fields like pid/port/timestamps and templating machine-specific paths). Regenerate the fixtures after an intentional output change with `UPDATE_GOLDEN=1 go test -run TestE2E ./test/e2e/...`. The suite is gated behind `-run TestE2E` and skips when the server JAR is absent.

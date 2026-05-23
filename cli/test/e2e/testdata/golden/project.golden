@@ -1,0 +1,8 @@
+{
+  "classCount": 13,
+  "handlerCount": 5,
+  "name": "sample-ratpack-app",
+  "path": "{{PROJECT}}",
+  "scannedAt": "__BLANK__",
+  "status": "READY"
+}
