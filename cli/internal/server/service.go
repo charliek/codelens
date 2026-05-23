@@ -335,6 +335,16 @@ func (s *Service) warnIfTargetNewerThanServer(projectPath string, serverMajor in
 	if target == 0 || target <= serverMajor {
 		return
 	}
+	if target > settings.ServerJavaCeiling {
+		// The target is newer than the highest JDK codelens runs the server on,
+		// so there's no in-range JDK that can satisfy it.
+		fmt.Fprintf(os.Stderr,
+			"warning: server is running Java %d but %s targets Java %d, which is newer "+
+				"than the highest JDK codelens runs the server on (Java %d); analysis may "+
+				"be incomplete and this ceiling may need to be raised.\n",
+			serverMajor, projectPath, target, settings.ServerJavaCeiling)
+		return
+	}
 	fmt.Fprintf(os.Stderr,
 		"warning: server is running Java %d but %s targets Java %d; "+
 			"install a JDK >= %d (<= %d) via `sdk install java %d...` or "+

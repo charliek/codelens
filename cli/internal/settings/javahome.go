@@ -77,21 +77,30 @@ func installedJavaHomes() []javaInstall {
 }
 
 // FindHomebrewJava locates a Homebrew openjdk@<major> keg matching the given
-// version's major, checking the common Homebrew prefixes on macOS (Apple
-// Silicon and Intel) and Linux. Returns "" when not found.
+// version's major. Returns "" when not found.
 func FindHomebrewJava(version string) string {
 	major := JavaMajor(version)
 	if major == 0 {
 		return ""
 	}
 	keg := fmt.Sprintf("openjdk@%d", major)
-	for _, prefix := range []string{"/opt/homebrew", "/usr/local", "/home/linuxbrew/.linuxbrew"} {
+	for _, prefix := range homebrewPrefixes() {
 		home := filepath.Join(prefix, "opt", keg)
 		if fileExists(filepath.Join(home, "bin", "java")) {
 			return home
 		}
 	}
 	return ""
+}
+
+// homebrewPrefixes returns the Homebrew prefixes to search. If HOMEBREW_PREFIX
+// is set (Homebrew's shellenv exports it) it is authoritative; otherwise we fall
+// back to the common defaults for Apple Silicon, Intel macOS, and Linuxbrew.
+func homebrewPrefixes() []string {
+	if p := os.Getenv("HOMEBREW_PREFIX"); p != "" {
+		return []string{p}
+	}
+	return []string{"/opt/homebrew", "/usr/local", "/home/linuxbrew/.linuxbrew"}
 }
 
 // FindJavaForVersion resolves a JDK home for a specifically requested version,

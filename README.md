@@ -71,7 +71,7 @@ and [CLI Reference](https://charliek.github.io/codelens/reference/cli/).
 | JDK resolution | <https://charliek.github.io/codelens/concepts/jdk-resolution/> |
 | Development (build from source) | <https://charliek.github.io/codelens/development/setup/> |
 
-The docs site is built with MkDocs; preview it locally with `uv run mkdocs serve`.
+The docs site is built with MkDocs; preview it locally with `uv run --group docs mkdocs serve`.
 
 ## License
 

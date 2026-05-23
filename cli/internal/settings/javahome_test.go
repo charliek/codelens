@@ -54,6 +54,7 @@ func fakeSDKManJDK(t *testing.T, home, name string) {
 func TestResolveServerJavaHome_PicksHighestInRange(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir()) // isolate from any system Homebrew JDKs
 	// 17 is below the floor, 26 is above the ceiling; 21 and 25 are in range.
 	fakeSDKManJDK(t, tmp, "17.0.10-tem")
 	fakeSDKManJDK(t, tmp, "21.0.9-amzn")
@@ -72,6 +73,7 @@ func TestResolveServerJavaHome_PicksHighestInRange(t *testing.T) {
 func TestResolveServerJavaHome_NoneInRange(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir()) // isolate from any system Homebrew JDKs
 	fakeSDKManJDK(t, tmp, "17.0.10-tem")
 	fakeSDKManJDK(t, tmp, "26-open")
 
@@ -83,17 +85,14 @@ func TestResolveServerJavaHome_NoneInRange(t *testing.T) {
 func TestFindJavaForVersion_SDKManThenEmpty(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir()) // isolate from any system Homebrew JDKs
 	fakeSDKManJDK(t, tmp, "17.0.10-tem")
 
 	if got := FindJavaForVersion("17.0.10-tem"); filepath.Base(got) != "17.0.10-tem" {
 		t.Errorf("expected SDKMAN 17 home; got %s", got)
 	}
-	// Not installed in SDKMAN and (in the test env) no Homebrew keg → "".
+	// Not installed in SDKMAN and no Homebrew keg in the isolated prefix → "".
 	if got := FindJavaForVersion("8.0.392-amzn"); got != "" {
-		// A real Homebrew openjdk@8 on the dev box would be a valid hit; only
-		// fail when nothing should resolve.
-		if _, err := os.Stat(filepath.Join(got, "bin", "java")); err != nil {
-			t.Errorf("expected empty; got %s", got)
-		}
+		t.Errorf("expected empty; got %s", got)
 	}
 }
