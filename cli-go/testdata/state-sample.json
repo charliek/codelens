@@ -1,0 +1,13 @@
+{
+  "pid": 55926,
+  "port": 8080,
+  "host": "127.0.0.1",
+  "projectPath": "__PROJECT_PATH__",
+  "projectName": "sample-ratpack-app",
+  "startedAt": "2026-05-23T04:18:39.650582Z",
+  "lastActivityAt": "2026-05-23T04:18:47.614509Z",
+  "idleTimeout": "30m",
+  "status": "READY",
+  "serverMode": "jar",
+  "version": "0.1.0"
+}

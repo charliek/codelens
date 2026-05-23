@@ -13,27 +13,40 @@ route discovery, handler inventory, dependency mapping, and source lookup.
 CodeLens consists of two components:
 
 1. **Server** (Kotlin/Ktor): Runs in the background, loads a target project's bytecode using ClassGraph, and serves analysis queries via HTTP REST API
-2. **CLI** (Python/Typer): User-facing command-line interface that manages server lifecycle and presents analysis results
+2. **CLI** (Go/Cobra, in `cli-go/`): User-facing command-line interface that manages server lifecycle and presents analysis results. Distributed as a single static binary.
+
+> A legacy Python/Typer CLI lives in `cli/` and is being retired once the
+> Go port has been green on `main` for a release cycle. Both CLIs share
+> the same HTTP wire contract and on-disk state files.
 
 ## Quick Start
 
-Prerequisites: JDK 21+, Python 3.13+, and [uv](https://docs.astral.sh/uv/).
-Gradle is included via the wrapper.
+Prerequisites: JDK 21+ and [mise](https://mise.jdx.dev/) for the Go toolchain (`mise install` reads `.mise.toml`). Gradle is included via the wrapper.
 
 ```bash
 # Build the server fat JAR
 ./gradlew :server:app:shadowJar
 
-# Install the CLI in editable mode
-cd cli
-uv tool install --editable .
+# Build the Go CLI
+cd cli-go
+go generate ./...
+make install   # places `codelens` in ~/.local/bin
+cd ..
 
 # Smoke-test against the bundled sample Ratpack project
-cd ../test-fixtures/sample-ratpack-app
+cd test-fixtures/sample-ratpack-app
 codelens start
 codelens project
 codelens stop
 ```
+
+For a distribution install (no checked-out repo), put the Go binary on
+your PATH and either:
+
+- Set `CODELENS_SERVER_JAR=/path/to/codelens-server-all.jar`, or
+- Place the JAR at `~/.codelens/codelens-server-all.jar`.
+
+The CLI will auto-discover the JAR from those locations.
 
 For a real project, build the target application's classes first, then run
 `codelens start --project /path/to/ratpack-project`.
@@ -49,7 +62,7 @@ For a real project, build the target application's classes first, then run
 │   ┌─────────────────────┐           ┌─────────────────────────────────┐    │
 │   │  $ codelens status  │           │  CodeLens Server (Kotlin/Ktor)  │    │
 │   │                     │──HTTP────▶│  - Loads target project         │    │
-│   │  Python CLI         │◀─────────│  - Serves /api/v1/* endpoints   │    │
+│   │  Go CLI (Cobra)     │◀─────────│  - Serves /api/v1/* endpoints   │    │
 │   │  - Manages server   │           │  - Auto-shuts down when idle    │    │
 │   │  - Formats output   │           └─────────────────────────────────┘    │
 │   └─────────────────────┘                         │                         │
@@ -144,35 +157,23 @@ codelens/
 │           │           └── AnalysisService.kt
 │           └── test/kotlin/                 # Server tests
 │
-├── cli/                             # Python CLI
-│   ├── pyproject.toml               # UV/Python project config
-│   ├── tests/                       # CLI tests
-│   │   ├── conftest.py
-│   │   └── test_models.py
-│   └── src/
-│       └── codelens_cli/
-│           ├── __init__.py
-│           ├── main.py              # Typer app entry point
-│           ├── client.py            # HTTP client for server API
-│           ├── container.py         # Dependency injection container
-│           ├── errors.py            # Exit codes and exceptions
-│           ├── models.py            # Pydantic models
-│           ├── output.py            # Rich formatting utilities
-│           ├── settings.py          # Pydantic Settings configuration
-│           ├── commands/
-│           │   ├── __init__.py
-│           │   ├── lifecycle.py     # start, stop, status, restart, list
-│           │   ├── project.py       # project info
-│           │   ├── classes.py       # class analysis commands
-│           │   ├── annotations.py   # annotation commands
-│           │   ├── methods.py       # method search commands
-│           │   └── lint.py          # lint check, lint format
-│           ├── repositories/
-│           │   └── server_state_repository.py  # State persistence
-│           └── services/
-│               ├── __init__.py
-│               ├── project_service.py   # Project operations
-│               └── server_service.py    # Server lifecycle management
+├── cli-go/                          # Go CLI (current)
+│   ├── go.mod
+│   ├── .golangci.yml
+│   ├── Makefile
+│   ├── cmd/codelens/main.go         # Entry point
+│   ├── internal/
+│   │   ├── cli/                     # Cobra commands (lifecycle + 14 analysis groups)
+│   │   ├── client/                  # HTTP client + wire-contract characterization tests
+│   │   ├── server/                  # Child-process lifecycle + ready-line parser
+│   │   ├── state/                   # ServerState repository
+│   │   ├── settings/                # Env + Java/SDKMAN/Gradle detection
+│   │   ├── output/                  # JSON / table rendering
+│   │   └── errors/                  # Typed exit codes
+│   └── test/parity/                 # Side-by-side Go vs Python parity harness
+│
+├── cli/                             # Python CLI (legacy, kept for parity tests)
+│   └── (Typer/Pydantic implementation — see commit history for details)
 │
 └── test-fixtures/                   # Sample Ratpack project for testing
     └── sample-ratpack-app/
@@ -193,16 +194,21 @@ codelens/
 | CLI Parsing | kotlinx-cli | 0.3.6 |
 | JVM Target | 21 | LTS |
 
-### CLI (Python)
+### CLI (Go)
 
 | Component | Choice | Version |
 |-----------|--------|---------|
-| Language | Python | 3.13+ |
-| Package Manager | UV | latest |
-| CLI Framework | Typer | 0.12+ |
-| Terminal UI | Rich | 13+ |
-| HTTP Client | httpx | 0.27+ |
-| Config | Pydantic Settings | 2.0+ |
+| Language | Go | 1.24 |
+| Toolchain manager | mise | latest |
+| CLI Framework | Cobra | 1.8 |
+| Linter | golangci-lint | 2.10.1 |
+| HTTP Client | net/http (stdlib) | — |
+| Output formatting | text/tabwriter + encoding/json (stdlib) | — |
+
+### Legacy CLI (Python, deprecated)
+
+The `cli/` directory contains the original Python/Typer implementation,
+retained for the side-by-side parity tests during the transition.
 
 ## Building
 
@@ -218,10 +224,12 @@ codelens/
 ### Install the CLI
 
 ```bash
-cd cli
+cd cli-go
 
-# Install with uv (recommended for development)
-uv tool install --editable .
+# Build the Go binary
+go generate ./...
+make build      # produces ./bin/codelens
+make install    # copies to ~/.local/bin/codelens
 ```
 
 ## Usage
@@ -445,7 +453,7 @@ All commands support:
 
 ## Configuration
 
-Configuration is managed via environment variables using Pydantic Settings.
+Configuration is managed via environment variables.
 
 ### Environment Variables
 
@@ -569,14 +577,14 @@ java -jar server/app/build/libs/codelens-server-all.jar \
 ### Running the CLI in Development
 
 ```bash
-cd cli
+cd cli-go
 
-# Install in editable mode
-uv tool install --editable .
+# Build and install
+go generate ./...
+make install      # ~/.local/bin/codelens
 
-# Or run directly with Python
-export CODELENS_REPO_PATH=/path/to/codelens
-python -m codelens_cli.main --help
+# Or run without installing
+go run ./cmd/codelens --help
 ```
 
 ### Testing with the Sample Project
@@ -604,10 +612,13 @@ codelens stop
 ./gradlew test
 ```
 
-**Python:**
+**Go:**
 ```bash
-cd cli
-uv run pytest
+cd cli-go
+go test ./...
+
+# Side-by-side parity (requires the Python CLI on PATH):
+go test -v -run TestParity ./test/parity/...
 ```
 
 ### Architecture
@@ -626,6 +637,5 @@ CodeLens is licensed under the [Apache License, Version 2.0](LICENSE).
 ## Requirements
 
 - JDK 21+
-- Python 3.13+
-- UV package manager
+- Go 1.24 + golangci-lint 2.10.1 (both installable via `mise install` from `.mise.toml`)
 - Gradle 9.x (included via wrapper)

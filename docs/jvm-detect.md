@@ -35,7 +35,7 @@ The CodeLens server requires **Java 21 or later**. When starting in JAR mode, th
 
 ### Detection Logic
 
-```python
+```text
 # Priority 1: Explicit setting
 if CODELENS_JAVA_HOME is set:
     use CODELENS_JAVA_HOME
@@ -87,7 +87,7 @@ CodeLens automatically detects if the target project needs an older Java and con
 
 **Step 1: Check if older Java is needed**
 
-```python
+```text
 # Read gradle/wrapper/gradle-wrapper.properties
 gradle_version = parse version from distributionUrl
 
@@ -111,7 +111,7 @@ Checked in this priority order:
 
 **Step 3: Locate the Java installation**
 
-```python
+```text
 # Try to find in SDKMAN
 java_home = ~/.sdkman/candidates/java/{version}
 

@@ -5,14 +5,16 @@ The CodeLens CLI provides a command-line interface for analyzing JVM bytecode. I
 ## Installation
 
 ```bash
-cd cli
+cd cli-go
 
-# Install with uv (recommended)
-uv tool install --editable .
-
-# Or install with pip
-pip install -e .
+# Build and install the Go binary (~/.local/bin/codelens)
+go generate ./...
+make install
 ```
+
+For a standalone install outside the repo, place `codelens` on your PATH
+and either set `CODELENS_SERVER_JAR=/path/to/codelens-server-all.jar` or
+drop the JAR at `~/.codelens/codelens-server-all.jar`.
 
 ## CLI to API Mapping
 
@@ -87,7 +89,7 @@ codelens start [OPTIONS]
 | `--project`, `-p` | `.` | Project directory |
 | `--port` | auto | Specific port to use |
 | `--mode` | `auto` | Server mode: `auto`, `gradle`, or `jar` |
-| `--timeout` | `60` | Startup timeout in seconds |
+| `--timeout` | `180` | Startup timeout in seconds |
 | `--json` | - | Output as JSON |
 
 **Examples:**
@@ -247,19 +249,19 @@ codelens project [OPTIONS]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--project`, `-p` | `.` | Project directory |
-| `--once` | `false` | Start server, query, then stop |
 | `--json` | - | Output as JSON |
 
-**Example Output:**
+**Example Output (JSON):**
 
-```
-my-project
-
-Path:     /home/user/work/my-project
-Status:   READY
-Classes:  150
-Handlers: 24
-Scanned:  2026-01-05T12:00:05.000Z
+```json
+{
+  "name": "my-project",
+  "path": "/home/user/work/my-project",
+  "status": "READY",
+  "classCount": 150,
+  "handlerCount": 24,
+  "scannedAt": "2026-01-05T12:00:05.000000Z"
+}
 ```
 
 ---

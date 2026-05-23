@@ -1,0 +1,141 @@
+// Package parity runs the Go CLI and the Python CLI against the same
+// running server and asserts that their --json output is identical after
+// normalizing mutable fields (timestamps, uptimes, pid, port).
+//
+// This is the executable contract that proves the Go port is a behavioral
+// drop-in for the Python CLI. Adding a new endpoint to the CLI should
+// usually mean adding a Case here.
+package parity
+
+// Case is one (command, args) tuple to exercise on both CLIs.
+type Case struct {
+	Name string
+	// Args are passed AFTER the global --project flag (which the runner
+	// injects automatically) and BEFORE --json (also injected).
+	Args []string
+	// BlankPaths is a list of jq-style paths to blank out before
+	// comparison. Use this only for genuinely mutable fields (timestamps,
+	// pid, port, uptime). Server-deterministic data should not need
+	// normalization.
+	//
+	// Examples:
+	//   "uptime"                 — top-level key on /admin/info
+	//   "appliedFilter.source"   — nested
+	//   "classes.*.scannedAt"    — every element of an array
+	BlankPaths []string
+	// ExpectExitCode is the exit code both CLIs are expected to return. 0
+	// (the zero value) means success. Set to 1 to lock the contract that a
+	// command exits non-zero — e.g. lint check on a project with violations.
+	ExpectExitCode int
+	// SkipUntilReady runs the case after the server has been warmed up
+	// (already used by every case; kept here for future variations).
+	SkipUntilReady bool
+}
+
+// allCases is the full manifest. Add cases here as new endpoints land.
+//
+//nolint:revive // the long literal is fine — exhaustiveness matters more.
+var allCases = []Case{
+	// ---------- admin & project ----------
+	{Name: "project", Args: []string{"project"}, BlankPaths: []string{"scannedAt"}},
+	{Name: "classes_stats", Args: []string{"classes", "stats"}, BlankPaths: []string{"scanDurationMs", "scannedAt"}},
+
+	// ---------- classes ----------
+	{Name: "classes_list_no_filter", Args: []string{"classes", "list"}},
+	{Name: "classes_list_with_filters", Args: []string{
+		"classes", "list",
+		"--package", "ratpack.*",
+		"--name", "*Handler",
+		"--include-libraries",
+	}},
+	{Name: "classes_list_paginated", Args: []string{"classes", "list", "--page", "1", "--size", "10"}},
+
+	// ---------- methods ----------
+	{Name: "methods_search_all", Args: []string{"methods", "search"}},
+	{Name: "methods_search_filtered", Args: []string{
+		"methods", "search",
+		"--name", "get*",
+		"--package", "ratpack.*",
+		"--include-libraries",
+	}},
+
+	// ---------- handlers ----------
+	{Name: "handlers_list", Args: []string{"handlers", "list"}},
+	{Name: "handlers_list_filtered", Args: []string{"handlers", "list", "--include-libraries"}},
+
+	// ---------- promises ----------
+	{Name: "promises_summary", Args: []string{"promises", "summary"}},
+	{Name: "promises_search_omit_filters", Args: []string{"promises", "search"}},
+	{Name: "promises_search_true_filters", Args: []string{
+		"promises", "search",
+		"--blocking", "--async", "--fork",
+	}},
+	{Name: "promises_search_false_filters", Args: []string{
+		"promises", "search",
+		"--no-blocking", "--no-async", "--no-fork",
+	}},
+
+	// ---------- migration ----------
+	{Name: "migration_order", Args: []string{"migration", "order"}},
+	{Name: "migration_complexity_summary", Args: []string{"migration", "complexity"}},
+
+	// ---------- modules ----------
+	{Name: "modules_list", Args: []string{"modules", "list"}},
+
+	// ---------- integrations ----------
+	{Name: "integrations_list", Args: []string{"integrations", "list"}},
+	{Name: "integrations_list_filtered", Args: []string{
+		"integrations", "list",
+		"--type", "HTTP_CLIENT",
+		"--sub-type", "RATPACK_HTTP_CLIENT",
+	}},
+
+	// ---------- antipatterns ----------
+	{Name: "antipatterns_scan", Args: []string{"antipatterns", "scan"}},
+	{Name: "antipatterns_scan_filtered", Args: []string{"antipatterns", "scan", "--severity", "WARNING"}},
+
+	// ---------- routes ----------
+	{Name: "routes_list", Args: []string{"routes", "list"}},
+	{Name: "routes_tree", Args: []string{"routes", "tree"}},
+	{Name: "routes_spring", Args: []string{"routes", "spring"}},
+
+	// ---------- deps ----------
+	{Name: "deps_foundation", Args: []string{"deps", "foundation"}},
+	{Name: "deps_quickwins", Args: []string{"deps", "quickwins"}},
+	{Name: "deps_graph_json", Args: []string{"deps", "graph", "--format", "json"}},
+	{Name: "deps_graph_dot", Args: []string{"deps", "graph", "--format", "dot"}},
+	// `codelens deps` (no subcommand) — locked Python behavior.
+	{Name: "deps_default_json", Args: []string{"deps", "--format", "json"}},
+	{Name: "deps_default_dot", Args: []string{"deps", "--format", "dot"}},
+
+	// ---------- handlers ----------
+	// Client-side --missing-inject filter — sample project has no handlers,
+	// so this just confirms both CLIs produce identical JSON when the filter
+	// kicks in on an empty set.
+	{Name: "handlers_list_missing_inject", Args: []string{"handlers", "list", "--missing-inject"}},
+
+	// ---------- lint ----------
+	// lint_check on the sample fixture — which contains BadFormatting.kt
+	// intentionally. Both CLIs exit 1 and emit identical JSON describing
+	// the violations. Locks the exit-code contract (P2 #1 fix) AND the
+	// FileLintResult model (no per-file durationMs, P2 #4 fix).
+	{Name: "lint_check_project_with_violations", Args: []string{"lint", "check"}, ExpectExitCode: 1},
+	// Single-file lint check on the same offender — exercises the LintFile
+	// path and locks the exit-code contract for the single-file mode of
+	// the P2 #1 fix (only the project mode is covered above).
+	{
+		Name:           "lint_check_single_file_with_violations",
+		Args:           []string{"lint", "check", "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt"},
+		ExpectExitCode: 1,
+	},
+	// lint format --dry-run, project-wide — exercises the corrected
+	// FormatProjectResponse model (filesFormatted []string, not fileResults).
+	{Name: "lint_format_project_dry_run", Args: []string{"lint", "format", "--dry-run"}},
+	// Single-file lint format --dry-run — exercises the FormatFile
+	// response model under the writeToFile=false path. Using --dry-run
+	// avoids mutating the fixture file across parity runs.
+	{
+		Name: "lint_format_single_file_dry_run",
+		Args: []string{"lint", "format", "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt", "--dry-run"},
+	},
+}
