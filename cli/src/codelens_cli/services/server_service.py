@@ -100,7 +100,7 @@ class ServerService:
         project_path: Path,
         mode: Optional[ServerMode] = None,
         port: Optional[int] = None,
-        timeout: int = 60,
+        timeout: int = 180,
         project_java_home: Optional[Path] = None,
     ) -> ServerState:
         """Start the CodeLens server for a project.
@@ -109,7 +109,11 @@ class ServerService:
             project_path: Path to the target project
             mode: Server mode (gradle or jar)
             port: Port to use (auto-allocated if not specified)
-            timeout: Startup timeout in seconds
+            timeout: Startup timeout in seconds. The server now waits for the
+                initial classpath resolution and bytecode scan to complete
+                before signalling readiness, so this needs to be large enough
+                to cover the first scan of the target project (typically
+                5-60s, longer for big dependency graphs).
             project_java_home: Java home for target project's Gradle (auto-detected if not specified)
         """
         # Check if already running
@@ -301,9 +305,20 @@ class ServerService:
         log_file: Path,
         project_path: Optional[Path] = None,
     ) -> dict[str, int | str]:
-        """Wait for server to print CODELENS_READY."""
+        """Wait for server to print CODELENS_READY.
+
+        Also recognizes:
+          - CODELENS_STARTING: informational, ignored (server has bound the
+            HTTP listener but the initial scan is still running).
+          - CODELENS_ERROR reason=<r> message="<m>": initial scan failed.
+            Raises immediately with the reason/message rather than waiting
+            out the full timeout.
+        """
         ready_pattern = re.compile(
             r"CODELENS_READY port=(\d+) host=(\S+) version=(\S+)"
+        )
+        error_pattern = re.compile(
+            r'CODELENS_ERROR reason=(\S+) message="([^"]*)"'
         )
 
         loop = asyncio.get_event_loop()
@@ -329,6 +344,15 @@ class ServerService:
                                 "host": match.group(2),
                                 "version": match.group(3),
                             }
+                        err_match = error_pattern.search(line)
+                        if err_match:
+                            reason = err_match.group(1)
+                            message = err_match.group(2)
+                            raise RuntimeError(
+                                f"Server scan failed ({reason}): {message}"
+                            )
+            except RuntimeError:
+                raise
             except Exception:
                 pass
 

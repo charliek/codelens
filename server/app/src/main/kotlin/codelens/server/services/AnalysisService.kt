@@ -19,9 +19,13 @@ import codelens.source.model.VisibilityFilter
 import codelens.source.resolver.LibrarySourceResolver
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -35,12 +39,15 @@ class AnalysisService(
     private val projectDir: File,
     classpathFile: String? = null,
     projectJavaHome: String? = null,
+    classpathResolverOverride: ClasspathResolver? = null,
+    classGraphProviderOverride: ClassGraphProvider? = null,
 ) {
     private val logger = LoggerFactory.getLogger(AnalysisService::class.java)
 
     private val classpathResolver: ClasspathResolver
     private val projectJavaHomeFile: File? = projectJavaHome?.let { File(it) }
-    private val classGraphProvider: ClassGraphProvider = ClassGraphProviderImpl()
+    private val classGraphProvider: ClassGraphProvider =
+        classGraphProviderOverride ?: ClassGraphProviderImpl()
 
     /**
      * Gets the ClassGraphProvider for use by other services (e.g., RatpackAnalysisService).
@@ -55,9 +62,26 @@ class AnalysisService(
     private val projectInfo: AtomicReference<ProjectInfo>
     private var resolvedClasspath: ResolvedClasspath? = null
 
+    /**
+     * Completes when the initial scan finishes (success or failure).
+     * Holds the terminal [ProjectStatus] - either [ProjectStatus.READY] or
+     * [ProjectStatus.ERROR]. Used by the server's startup contract to gate
+     * the `CODELENS_READY` stdout signal on actual analysis readiness.
+     *
+     * One-shot: subsequent [refresh] calls do not affect this future.
+     */
+    private val initialScan = CompletableFuture<ProjectStatus>()
+
+    /**
+     * Captures the underlying failure from the initial scan, if any.
+     * Only populated when the initial scan fails; later [refresh] failures
+     * do not overwrite it.
+     */
+    private val initialScanError = AtomicReference<Throwable?>(null)
+
     init {
         // Choose classpath resolver based on configuration
-        classpathResolver =
+        classpathResolver = classpathResolverOverride ?: run {
             if (classpathFile != null) {
                 logger.info("Using classpath file resolver: $classpathFile")
                 ClasspathFileResolver(File(classpathFile))
@@ -68,6 +92,7 @@ class AnalysisService(
                 }
                 GradleProjectResolver()
             }
+        }
 
         projectInfo =
             AtomicReference(
@@ -78,14 +103,27 @@ class AnalysisService(
                 ),
             )
 
-        // Start initial scan in background
-        scanExecutor.submit { performScan() }
+        // Start initial scan in background; complete the readiness future
+        // exactly once, regardless of success/failure, so awaitInitialScan()
+        // unblocks the server's startup path.
+        scanExecutor.submit {
+            try {
+                performScan(captureInitialError = true)
+            } finally {
+                initialScan.complete(projectInfo.get().status)
+            }
+        }
     }
 
     /**
      * Performs the classpath resolution and bytecode scanning.
+     *
+     * @param captureInitialError When true, any thrown exception is also recorded
+     *   in [initialScanError] so the startup path can surface a precise failure
+     *   reason. Refresh-triggered scans pass false to avoid clobbering the
+     *   original startup error.
      */
-    private fun performScan() {
+    private fun performScan(captureInitialError: Boolean = false) {
         try {
             logger.info("Starting scan for project: ${projectDir.name}")
 
@@ -113,11 +151,38 @@ class AnalysisService(
         } catch (e: ClasspathResolutionException) {
             logger.error("Classpath resolution failed for ${projectDir.name}: ${e.message}", e)
             projectInfo.updateAndGet { it.copy(status = ProjectStatus.ERROR) }
+            if (captureInitialError) initialScanError.set(e)
         } catch (e: Exception) {
             logger.error("Scan failed for ${projectDir.name}", e)
             projectInfo.updateAndGet { it.copy(status = ProjectStatus.ERROR) }
+            if (captureInitialError) initialScanError.set(e)
         }
     }
+
+    /**
+     * Blocks until the initial scan finishes and returns its terminal status.
+     *
+     * The server's startup path calls this before printing `CODELENS_READY`
+     * so the stdout signal accurately reflects analysis readiness rather than
+     * just "the HTTP listener is bound".
+     *
+     * @param timeout Optional upper bound on how long to wait.
+     * @return [ProjectStatus.READY] on success or [ProjectStatus.ERROR] on failure.
+     * @throws TimeoutException if [timeout] is non-null and elapses before the
+     *   initial scan completes.
+     */
+    fun awaitInitialScan(timeout: Duration? = null): ProjectStatus =
+        if (timeout != null) {
+            initialScan.get(timeout.toNanos(), TimeUnit.NANOSECONDS)
+        } else {
+            initialScan.get()
+        }
+
+    /**
+     * Returns the underlying error from the initial scan, or null if the
+     * initial scan succeeded or has not finished yet.
+     */
+    fun getInitialScanError(): Throwable? = initialScanError.get()
 
     /**
      * Counts Ratpack Handler implementations in the project.

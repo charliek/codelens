@@ -527,6 +527,30 @@ The server exposes a REST API. For complete documentation, see [docs/api.md](doc
 | `GET /api/v1/ratpack/routes/tree` | Route tree structure |
 | `GET /api/v1/ratpack/routes/spring` | Spring mappings |
 
+## Server Startup Contract
+
+The server emits structured lines to stdout that any client (the bundled Python
+CLI today, a future Go port, or third-party integrations) can use to track
+startup. The contract has three lines:
+
+| Line | Meaning |
+|------|---------|
+| `CODELENS_STARTING port=<p> host=<h>` | Informational. The HTTP listener is bound but the initial classpath resolution and bytecode scan are still running. Clients should ignore this line for readiness. |
+| `CODELENS_READY port=<p> host=<h> version=<v>` | Success. The initial scan has completed and every analysis endpoint is ready to serve real data. Clients should match this line and only then start issuing analysis requests. |
+| `CODELENS_ERROR reason=<r> message="<m>"` | Failure. The initial scan failed; the server stops itself and exits with code 1. `reason` is one of `CLASSPATH_RESOLUTION`, `SCAN`, or `UNKNOWN`. |
+
+Example output:
+
+```
+CODELENS_STARTING port=8080 host=127.0.0.1
+CODELENS_READY port=8080 host=127.0.0.1 version=0.1.0
+```
+
+Note: the server delays the ready signal until the initial scan finishes, so
+clients should use a startup timeout large enough to cover the first scan
+(typically 5-60 seconds, longer for large dependency graphs). The bundled CLI
+defaults to 180 seconds and exposes `--timeout` on `codelens start`/`restart`.
+
 ## Development
 
 ### Running the Server Directly
