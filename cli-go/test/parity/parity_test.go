@@ -153,8 +153,27 @@ func startServer(t *testing.T) {
 		t.Fatalf("go start failed: %v\nstderr=%s", err, r.stderr.String())
 	}
 	fixture.startedByGo = true
-	// Tiny settle pause so the next request doesn't race startup.
-	time.Sleep(200 * time.Millisecond)
+	// Wait for the scan to complete (status transitions from LOADING to READY).
+	// The HTTP server comes up immediately but bytecode scanning runs in the
+	// background. Without this wait, fast-running cases can hit 503 ScanNotReady.
+	waitForScanReady(t)
+}
+
+// waitForScanReady polls `classes stats` until it succeeds (scan complete)
+// or 120s elapse. The sample fixture is small, so this typically completes
+// in <30s even with a cold Gradle cache.
+func waitForScanReady(t *testing.T) {
+	t.Helper()
+	deadline := time.Now().Add(120 * time.Second)
+	for time.Now().Before(deadline) {
+		r := runCLI(fixture.goBin, "classes", "stats", "--project", fixture.projectPath, "--json")
+		if err := r.cmd.Run(); err == nil {
+			// Success means scan is complete.
+			return
+		}
+		time.Sleep(2 * time.Second)
+	}
+	t.Fatalf("scan did not complete within 120s")
 }
 
 // stopServer is registered as a Cleanup on the top-level subtest so it
