@@ -117,9 +117,25 @@ var allCases = []Case{
 	// ---------- lint ----------
 	// lint_check on the sample fixture — which contains BadFormatting.kt
 	// intentionally. Both CLIs exit 1 and emit identical JSON describing
-	// the violations. Locks the exit-code contract (P2 #1 fix).
+	// the violations. Locks the exit-code contract (P2 #1 fix) AND the
+	// FileLintResult model (no per-file durationMs, P2 #4 fix).
 	{Name: "lint_check_project_with_violations", Args: []string{"lint", "check"}, ExpectExitCode: 1},
+	// Single-file lint check on the same offender — exercises the LintFile
+	// path and locks the exit-code contract for the single-file mode of
+	// the P2 #1 fix (only the project mode is covered above).
+	{
+		Name:           "lint_check_single_file_with_violations",
+		Args:           []string{"lint", "check", "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt"},
+		ExpectExitCode: 1,
+	},
 	// lint format --dry-run, project-wide — exercises the corrected
 	// FormatProjectResponse model (filesFormatted []string, not fileResults).
 	{Name: "lint_format_project_dry_run", Args: []string{"lint", "format", "--dry-run"}},
+	// Single-file lint format --dry-run — exercises the FormatFile
+	// response model under the writeToFile=false path. Using --dry-run
+	// avoids mutating the fixture file across parity runs.
+	{
+		Name: "lint_format_single_file_dry_run",
+		Args: []string{"lint", "format", "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt", "--dry-run"},
+	},
 }

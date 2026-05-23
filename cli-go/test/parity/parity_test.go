@@ -184,7 +184,12 @@ func TestParity(t *testing.T) {
 		c := c // capture
 		t.Run(c.Name, func(t *testing.T) {
 			args := []string{}
-			args = append(args, c.Args...)
+			for _, a := range c.Args {
+				// Allow manifest entries to reference paths inside the
+				// fixture project via {{PROJECT}} — substituted at run time
+				// so the manifest stays machine-agnostic.
+				args = append(args, strings.ReplaceAll(a, "{{PROJECT}}", fixture.projectPath))
+			}
 			args = append(args, "--project", fixture.projectPath, "--json")
 
 			goRun := runCLI(fixture.goBin, args...)
