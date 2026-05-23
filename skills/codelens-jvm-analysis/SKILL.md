@@ -238,4 +238,4 @@ codelens annotations usages javax.inject.Singleton
 ## Related Skills
 
 - `codelens-source-lookup` - View source for discovered classes
-- `codelens-ratpack-migration` - Ratpack-specific analysis (handlers, promises)
+- `codelens-ratpack-analysis` - Ratpack-specific analysis (handlers, promises)

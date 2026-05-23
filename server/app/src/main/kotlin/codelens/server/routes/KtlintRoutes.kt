@@ -26,8 +26,8 @@ fun Route.ktlintRoutes(ktlintService: KtlintService) {
                     ErrorResponse(
                         code = 400,
                         type = "LintError",
-                        message = e.message ?: "Failed to lint file"
-                    )
+                        message = e.message ?: "Failed to lint file",
+                    ),
                 )
             }
         }
@@ -46,8 +46,8 @@ fun Route.ktlintRoutes(ktlintService: KtlintService) {
                     ErrorResponse(
                         code = 500,
                         type = "LintError",
-                        message = e.message ?: "Failed to lint project"
-                    )
+                        message = e.message ?: "Failed to lint project",
+                    ),
                 )
             }
         }
@@ -66,8 +66,8 @@ fun Route.ktlintRoutes(ktlintService: KtlintService) {
                     ErrorResponse(
                         code = 400,
                         type = "FormatError",
-                        message = e.message ?: "Failed to format file"
-                    )
+                        message = e.message ?: "Failed to format file",
+                    ),
                 )
             }
         }
@@ -78,11 +78,12 @@ fun Route.ktlintRoutes(ktlintService: KtlintService) {
         post("/format/project") {
             val request = call.receiveNullable<FormatProjectRequest>() ?: FormatProjectRequest()
             try {
-                val result = ktlintService.formatProject(
-                    request.pattern,
-                    request.includeTests,
-                    request.dryRun
-                )
+                val result =
+                    ktlintService.formatProject(
+                        request.pattern,
+                        request.includeTests,
+                        request.dryRun,
+                    )
                 call.respond(result)
             } catch (e: Exception) {
                 call.respond(
@@ -90,8 +91,8 @@ fun Route.ktlintRoutes(ktlintService: KtlintService) {
                     ErrorResponse(
                         code = 500,
                         type = "FormatError",
-                        message = e.message ?: "Failed to format project"
-                    )
+                        message = e.message ?: "Failed to format project",
+                    ),
                 )
             }
         }

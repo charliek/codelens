@@ -7,10 +7,8 @@ import codelens.source.model.VisibilityFilter
 import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class StubGeneratorTest {
-
     private val stubGenerator = StubGenerator()
 
     private fun createTestClassInfo(
@@ -21,14 +19,15 @@ class StubGeneratorTest {
         superclass: String? = null,
         interfaces: List<String> = emptyList(),
         methods: List<MethodInfo> = emptyList(),
-        fields: List<FieldInfo> = emptyList()
-    ): ClassInfo {
-        return ClassInfo(
-            name = ClassName(
-                fqn = "$packageName.$simpleName",
-                simpleName = simpleName,
-                packageName = packageName
-            ),
+        fields: List<FieldInfo> = emptyList(),
+    ): ClassInfo =
+        ClassInfo(
+            name =
+                ClassName(
+                    fqn = "$packageName.$simpleName",
+                    simpleName = simpleName,
+                    packageName = packageName,
+                ),
             source = ClassSource.LIBRARY,
             visibility = Visibility.PUBLIC,
             isInterface = isInterface,
@@ -36,9 +35,8 @@ class StubGeneratorTest {
             superclass = superclass,
             interfaces = interfaces,
             methods = methods,
-            fields = fields
+            fields = fields,
         )
-    }
 
     @Test
     fun `generates Java package declaration`() {
@@ -59,9 +57,10 @@ class StubGeneratorTest {
 
     @Test
     fun `generates Java class with extends`() {
-        val classInfo = createTestClassInfo(
-            superclass = "com.example.BaseClass"
-        )
+        val classInfo =
+            createTestClassInfo(
+                superclass = "com.example.BaseClass",
+            )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.JAVA)
 
         assertContains(stub, "extends BaseClass")
@@ -69,9 +68,10 @@ class StubGeneratorTest {
 
     @Test
     fun `generates Java class with implements`() {
-        val classInfo = createTestClassInfo(
-            interfaces = listOf("java.io.Serializable", "java.lang.Comparable")
-        )
+        val classInfo =
+            createTestClassInfo(
+                interfaces = listOf("java.io.Serializable", "java.lang.Comparable"),
+            )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.JAVA)
 
         assertContains(stub, "implements Serializable, Comparable")
@@ -95,18 +95,21 @@ class StubGeneratorTest {
 
     @Test
     fun `generates Java method with placeholder body`() {
-        val classInfo = createTestClassInfo(
-            methods = listOf(
-                MethodInfo(
-                    name = "doSomething",
-                    visibility = Visibility.PUBLIC,
-                    returnType = "void",
-                    parameters = listOf(
-                        ParameterInfo("name", "java.lang.String")
-                    )
-                )
+        val classInfo =
+            createTestClassInfo(
+                methods =
+                    listOf(
+                        MethodInfo(
+                            name = "doSomething",
+                            visibility = Visibility.PUBLIC,
+                            returnType = "void",
+                            parameters =
+                                listOf(
+                                    ParameterInfo("name", "java.lang.String"),
+                                ),
+                        ),
+                    ),
             )
-        )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.JAVA, format = SourceFormat.STUB)
 
         assertContains(stub, "public void doSomething(String name) { /* ... */ }")
@@ -114,18 +117,21 @@ class StubGeneratorTest {
 
     @Test
     fun `generates Kotlin method with TODO body`() {
-        val classInfo = createTestClassInfo(
-            methods = listOf(
-                MethodInfo(
-                    name = "doSomething",
-                    visibility = Visibility.PUBLIC,
-                    returnType = "java.lang.String",
-                    parameters = listOf(
-                        ParameterInfo("count", "int")
-                    )
-                )
+        val classInfo =
+            createTestClassInfo(
+                methods =
+                    listOf(
+                        MethodInfo(
+                            name = "doSomething",
+                            visibility = Visibility.PUBLIC,
+                            returnType = "java.lang.String",
+                            parameters =
+                                listOf(
+                                    ParameterInfo("count", "int"),
+                                ),
+                        ),
+                    ),
             )
-        )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.KOTLIN, format = SourceFormat.STUB)
 
         assertContains(stub, "fun doSomething(count: Int): String = TODO()")
@@ -133,15 +139,17 @@ class StubGeneratorTest {
 
     @Test
     fun `generates signatures only without bodies`() {
-        val classInfo = createTestClassInfo(
-            methods = listOf(
-                MethodInfo(
-                    name = "getValue",
-                    visibility = Visibility.PUBLIC,
-                    returnType = "int"
-                )
+        val classInfo =
+            createTestClassInfo(
+                methods =
+                    listOf(
+                        MethodInfo(
+                            name = "getValue",
+                            visibility = Visibility.PUBLIC,
+                            returnType = "int",
+                        ),
+                    ),
             )
-        )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.JAVA, format = SourceFormat.SIGNATURES)
 
         assertContains(stub, "public int getValue();")
@@ -150,25 +158,28 @@ class StubGeneratorTest {
 
     @Test
     fun `filters by visibility - public only`() {
-        val classInfo = createTestClassInfo(
-            methods = listOf(
-                MethodInfo(
-                    name = "publicMethod",
-                    visibility = Visibility.PUBLIC,
-                    returnType = "void"
-                ),
-                MethodInfo(
-                    name = "privateMethod",
-                    visibility = Visibility.PRIVATE,
-                    returnType = "void"
-                )
+        val classInfo =
+            createTestClassInfo(
+                methods =
+                    listOf(
+                        MethodInfo(
+                            name = "publicMethod",
+                            visibility = Visibility.PUBLIC,
+                            returnType = "void",
+                        ),
+                        MethodInfo(
+                            name = "privateMethod",
+                            visibility = Visibility.PRIVATE,
+                            returnType = "void",
+                        ),
+                    ),
             )
-        )
-        val stub = stubGenerator.generateStub(
-            classInfo,
-            StubLanguage.JAVA,
-            visibility = VisibilityFilter.PUBLIC
-        )
+        val stub =
+            stubGenerator.generateStub(
+                classInfo,
+                StubLanguage.JAVA,
+                visibility = VisibilityFilter.PUBLIC,
+            )
 
         assertContains(stub, "publicMethod")
         assertFalse(stub.contains("privateMethod"))
@@ -176,19 +187,22 @@ class StubGeneratorTest {
 
     @Test
     fun `converts Java primitives to Kotlin types`() {
-        val classInfo = createTestClassInfo(
-            methods = listOf(
-                MethodInfo(
-                    name = "process",
-                    visibility = Visibility.PUBLIC,
-                    returnType = "boolean",
-                    parameters = listOf(
-                        ParameterInfo("value", "int"),
-                        ParameterInfo("name", "java.lang.String")
-                    )
-                )
+        val classInfo =
+            createTestClassInfo(
+                methods =
+                    listOf(
+                        MethodInfo(
+                            name = "process",
+                            visibility = Visibility.PUBLIC,
+                            returnType = "boolean",
+                            parameters =
+                                listOf(
+                                    ParameterInfo("value", "int"),
+                                    ParameterInfo("name", "java.lang.String"),
+                                ),
+                        ),
+                    ),
             )
-        )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.KOTLIN)
 
         assertContains(stub, "value: Int")
@@ -198,17 +212,19 @@ class StubGeneratorTest {
 
     @Test
     fun `generates abstract methods correctly`() {
-        val classInfo = createTestClassInfo(
-            isAbstract = true,
-            methods = listOf(
-                MethodInfo(
-                    name = "abstractMethod",
-                    visibility = Visibility.PUBLIC,
-                    returnType = "void",
-                    isAbstract = true
-                )
+        val classInfo =
+            createTestClassInfo(
+                isAbstract = true,
+                methods =
+                    listOf(
+                        MethodInfo(
+                            name = "abstractMethod",
+                            visibility = Visibility.PUBLIC,
+                            returnType = "void",
+                            isAbstract = true,
+                        ),
+                    ),
             )
-        )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.JAVA)
 
         assertContains(stub, "public abstract class TestClass")
@@ -217,16 +233,18 @@ class StubGeneratorTest {
 
     @Test
     fun `generates static methods in Kotlin companion object`() {
-        val classInfo = createTestClassInfo(
-            methods = listOf(
-                MethodInfo(
-                    name = "staticMethod",
-                    visibility = Visibility.PUBLIC,
-                    returnType = "void",
-                    isStatic = true
-                )
+        val classInfo =
+            createTestClassInfo(
+                methods =
+                    listOf(
+                        MethodInfo(
+                            name = "staticMethod",
+                            visibility = Visibility.PUBLIC,
+                            returnType = "void",
+                            isStatic = true,
+                        ),
+                    ),
             )
-        )
         val stub = stubGenerator.generateStub(classInfo, StubLanguage.KOTLIN)
 
         assertContains(stub, "companion object")
@@ -236,16 +254,18 @@ class StubGeneratorTest {
 
     @Test
     fun `generates fields correctly`() {
-        val classInfo = createTestClassInfo(
-            fields = listOf(
-                FieldInfo(
-                    name = "value",
-                    visibility = Visibility.PUBLIC,
-                    type = "int",
-                    isFinal = true
-                )
+        val classInfo =
+            createTestClassInfo(
+                fields =
+                    listOf(
+                        FieldInfo(
+                            name = "value",
+                            visibility = Visibility.PUBLIC,
+                            type = "int",
+                            isFinal = true,
+                        ),
+                    ),
             )
-        )
         val javaStub = stubGenerator.generateStub(classInfo, StubLanguage.JAVA)
         val kotlinStub = stubGenerator.generateStub(classInfo, StubLanguage.KOTLIN)
 

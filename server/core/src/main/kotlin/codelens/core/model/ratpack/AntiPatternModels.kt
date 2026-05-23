@@ -13,16 +13,21 @@ import kotlinx.serialization.Serializable
 enum class AntiPatternType {
     /** JDBC calls without Blocking.get() wrapper */
     BLOCKING_JDBC,
+
     /** Thread.sleep() calls in handlers */
     THREAD_SLEEP,
+
     /** Synchronous file I/O in handlers */
     SYNCHRONOUS_FILE_IO,
+
     /** Blocking HTTP client calls */
     BLOCKING_HTTP_CLIENT,
+
     /** Direct System.out/err usage instead of logging */
     CONSOLE_LOGGING,
+
     /** Catching and swallowing exceptions */
-    SWALLOWED_EXCEPTION
+    SWALLOWED_EXCEPTION,
 }
 
 /**
@@ -32,12 +37,15 @@ enum class AntiPatternType {
 enum class AntiPatternSeverity {
     /** Informational - might be intentional */
     INFO,
+
     /** Warning - should review */
     WARNING,
+
     /** Error - likely a bug */
     ERROR,
+
     /** Critical - will cause problems in production */
-    CRITICAL
+    CRITICAL,
 }
 
 /**
@@ -60,7 +68,7 @@ data class AntiPatternInstance(
     /** How to fix it */
     val recommendation: String,
     /** Example fix code (if available) */
-    val fixExample: String?
+    val fixExample: String?,
 )
 
 /**
@@ -75,7 +83,7 @@ data class ClassAntiPatternCount(
     /** Count of CRITICAL severity */
     val criticalCount: Int,
     /** Count of ERROR severity */
-    val errorCount: Int
+    val errorCount: Int,
 )
 
 /**
@@ -92,5 +100,5 @@ data class AntiPatternSummary(
     /** Classes with most issues (top 10) */
     val worstOffenders: List<ClassAntiPatternCount>,
     /** Total count */
-    val totalCount: Int
+    val totalCount: Int,
 )

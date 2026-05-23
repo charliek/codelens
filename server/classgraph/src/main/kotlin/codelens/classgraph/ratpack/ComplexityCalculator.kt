@@ -24,7 +24,7 @@ import kotlin.math.ceil
  * - 76-100: CRITICAL (significant effort)
  */
 class ComplexityCalculator(
-    private val classGraphProvider: ClassGraphProvider
+    private val classGraphProvider: ClassGraphProvider,
 ) {
     private val logger = LoggerFactory.getLogger(ComplexityCalculator::class.java)
 
@@ -58,8 +58,9 @@ class ComplexityCalculator(
      * @return Complexity result
      */
     fun calculate(fqn: String): ComplexityResult {
-        val classInfo = classGraphProvider.getClass(fqn)
-            ?: return emptyComplexityResult(fqn)
+        val classInfo =
+            classGraphProvider.getClass(fqn)
+                ?: return emptyComplexityResult(fqn)
 
         val factors = mutableListOf<ComplexityFactor>()
         val migrationNotes = mutableListOf<String>()
@@ -92,12 +93,13 @@ class ComplexityCalculator(
         // Cap at 100
         totalScore = totalScore.coerceAtMost(100)
 
-        val tier = when {
-            totalScore <= THRESHOLD_LOW -> ComplexityTier.LOW
-            totalScore <= THRESHOLD_MEDIUM -> ComplexityTier.MEDIUM
-            totalScore <= THRESHOLD_HIGH -> ComplexityTier.HIGH
-            else -> ComplexityTier.CRITICAL
-        }
+        val tier =
+            when {
+                totalScore <= THRESHOLD_LOW -> ComplexityTier.LOW
+                totalScore <= THRESHOLD_MEDIUM -> ComplexityTier.MEDIUM
+                totalScore <= THRESHOLD_HIGH -> ComplexityTier.HIGH
+                else -> ComplexityTier.CRITICAL
+            }
 
         val estimatedHours = BASE_HOURS + (totalScore * HOURS_PER_POINT)
 
@@ -109,7 +111,7 @@ class ComplexityCalculator(
             factors = factors,
             migrationNotes = migrationNotes,
             migrationPriority = calculatePriority(totalScore, promiseAnalysis),
-            blockedBy = findBlockingDependencies(classInfo)
+            blockedBy = findBlockingDependencies(classInfo),
         )
     }
 
@@ -125,7 +127,10 @@ class ComplexityCalculator(
         var totalScore = 0
 
         // Store items with their scores to avoid recalculating during sort
-        data class OrderItemWithScore(val item: MigrationOrderItem, val score: Int)
+        data class OrderItemWithScore(
+            val item: MigrationOrderItem,
+            val score: Int,
+        )
         val migrationOrderWithScores = mutableListOf<OrderItemWithScore>()
 
         for (handler in handlers) {
@@ -137,46 +142,45 @@ class ComplexityCalculator(
 
             migrationOrderWithScores.add(
                 OrderItemWithScore(
-                    item = MigrationOrderItem(
-                        classFqn = handler.fqn,
-                        simpleName = handler.simpleName,
-                        tier = complexity.tier,
-                        estimatedHours = complexity.estimatedHours,
-                        order = 0, // Will be assigned below
-                        reason = generateMigrationReason(complexity)
-                    ),
-                    score = complexity.score
-                )
+                    item =
+                        MigrationOrderItem(
+                            classFqn = handler.fqn,
+                            simpleName = handler.simpleName,
+                            tier = complexity.tier,
+                            estimatedHours = complexity.estimatedHours,
+                            order = 0, // Will be assigned below
+                            reason = generateMigrationReason(complexity),
+                        ),
+                    score = complexity.score,
+                ),
             )
         }
 
         // Sort migration order: LOW first (quick wins), then by score (using pre-calculated values)
-        val sortedOrder = migrationOrderWithScores
-            .sortedWith(
-                compareBy(
-                    { it.item.tier.ordinal },
-                    { it.score }
-                )
-            )
-            .mapIndexed { index, itemWithScore ->
-                itemWithScore.item.copy(order = index + 1)
-            }
+        val sortedOrder =
+            migrationOrderWithScores
+                .sortedWith(
+                    compareBy(
+                        { it.item.tier.ordinal },
+                        { it.score },
+                    ),
+                ).mapIndexed { index, itemWithScore ->
+                    itemWithScore.item.copy(order = index + 1)
+                }
 
         return ComplexitySummary(
             totalHandlers = handlers.size,
             tierBreakdown = tierBreakdown,
             totalEstimatedHours = ceil(totalHours * 10) / 10,
             averageScore = if (handlers.isNotEmpty()) totalScore.toDouble() / handlers.size else 0.0,
-            migrationOrder = sortedOrder
+            migrationOrder = sortedOrder,
         )
     }
 
     /**
      * Analyze Promise-related complexity.
      */
-    private fun analyzePromiseComplexity(
-        promiseAnalysis: PromiseUsageInfo
-    ): Triple<Int, List<ComplexityFactor>, List<String>> {
+    private fun analyzePromiseComplexity(promiseAnalysis: PromiseUsageInfo): Triple<Int, List<ComplexityFactor>, List<String>> {
         val factors = mutableListOf<ComplexityFactor>()
         val notes = mutableListOf<String>()
         var score = 0
@@ -190,8 +194,8 @@ class ComplexityCalculator(
                     description = "Uses Blocking.get() which needs careful migration",
                     points = WEIGHT_BLOCKING,
                     maxPoints = WEIGHT_BLOCKING,
-                    details = "Blocking operations need conversion to coroutines or reactive patterns"
-                )
+                    details = "Blocking operations need conversion to coroutines or reactive patterns",
+                ),
             )
             notes.add("Contains Blocking.get() - requires conversion to non-blocking pattern")
         }
@@ -205,8 +209,8 @@ class ComplexityCalculator(
                     description = "Uses Promise.async() for async operations",
                     points = WEIGHT_PROMISE_ASYNC,
                     maxPoints = WEIGHT_PROMISE_ASYNC,
-                    details = "Promise.async patterns need conversion to suspend functions"
-                )
+                    details = "Promise.async patterns need conversion to suspend functions",
+                ),
             )
             notes.add("Uses Promise.async() - convert to suspend function or Flow")
         }
@@ -220,8 +224,8 @@ class ComplexityCalculator(
                     description = "Uses Execution.fork() for parallel work",
                     points = WEIGHT_EXECUTION_FORK,
                     maxPoints = WEIGHT_EXECUTION_FORK,
-                    details = "Fork patterns need conversion to coroutine scope"
-                )
+                    details = "Fork patterns need conversion to coroutine scope",
+                ),
             )
             notes.add("Uses Execution.fork() - migrate to coroutine scope or async{}")
         }
@@ -235,16 +239,17 @@ class ComplexityCalculator(
                     description = "Uses ParallelBatch for concurrent operations",
                     points = WEIGHT_PARALLEL_BATCH,
                     maxPoints = WEIGHT_PARALLEL_BATCH,
-                    details = "ParallelBatch is complex to migrate - use async/awaitAll"
-                )
+                    details = "ParallelBatch is complex to migrate - use async/awaitAll",
+                ),
             )
             notes.add("Uses ParallelBatch - requires async/awaitAll pattern")
         }
 
         // Chain depth
         if (promiseAnalysis.maxChainDepth > 1) {
-            val chainPoints = (promiseAnalysis.maxChainDepth * WEIGHT_PROMISE_CHAIN_PER_DEPTH)
-                .coerceAtMost(15)
+            val chainPoints =
+                (promiseAnalysis.maxChainDepth * WEIGHT_PROMISE_CHAIN_PER_DEPTH)
+                    .coerceAtMost(15)
             score += chainPoints
             factors.add(
                 ComplexityFactor(
@@ -252,15 +257,16 @@ class ComplexityCalculator(
                     description = "Deep Promise chains are harder to migrate",
                     points = chainPoints,
                     maxPoints = 15,
-                    details = "Chain depth: ${promiseAnalysis.maxChainDepth} - consider breaking into smaller functions"
-                )
+                    details = "Chain depth: ${promiseAnalysis.maxChainDepth} - consider breaking into smaller functions",
+                ),
             )
         }
 
         // Operation count
         if (promiseAnalysis.totalOperationCount > 3) {
-            val opPoints = ((promiseAnalysis.totalOperationCount - 3) * WEIGHT_PROMISE_OP_PER_COUNT)
-                .coerceAtMost(10)
+            val opPoints =
+                ((promiseAnalysis.totalOperationCount - 3) * WEIGHT_PROMISE_OP_PER_COUNT)
+                    .coerceAtMost(10)
             score += opPoints
             factors.add(
                 ComplexityFactor(
@@ -268,8 +274,8 @@ class ComplexityCalculator(
                     description = "Many Promise operations increase migration complexity",
                     points = opPoints,
                     maxPoints = 10,
-                    details = "${promiseAnalysis.totalOperationCount} Promise operations detected"
-                )
+                    details = "${promiseAnalysis.totalOperationCount} Promise operations detected",
+                ),
             )
         }
 
@@ -291,17 +297,18 @@ class ComplexityCalculator(
                     description = "Groovy handlers have additional DSL complexity",
                     points = WEIGHT_GROOVY_HANDLER,
                     maxPoints = WEIGHT_GROOVY_HANDLER,
-                    details = "Consider migrating Groovy to Kotlin first"
+                    details = "Consider migrating Groovy to Kotlin first",
                 ),
-                "GroovyHandler - consider converting to Kotlin before migration"
+                "GroovyHandler - consider converting to Kotlin before migration",
             )
         }
 
         // Check for Chain Action
-        val isChainAction = classInfo.methods.any { method ->
-            method.name == "execute" &&
-                method.parameters.any { it.type.contains(RatpackTypes.CHAIN) }
-        }
+        val isChainAction =
+            classInfo.methods.any { method ->
+                method.name == "execute" &&
+                    method.parameters.any { it.type.contains(RatpackTypes.CHAIN) }
+            }
         if (isChainAction) {
             return Triple(
                 WEIGHT_CHAIN_ACTION,
@@ -310,9 +317,9 @@ class ComplexityCalculator(
                     description = "Chain actions define routing structure",
                     points = WEIGHT_CHAIN_ACTION,
                     maxPoints = WEIGHT_CHAIN_ACTION,
-                    details = "Chain actions need conversion to Ktor routing DSL"
+                    details = "Chain actions need conversion to Ktor routing DSL",
                 ),
-                "Chain Action - convert to Ktor routing DSL"
+                "Chain Action - convert to Ktor routing DSL",
             )
         }
 
@@ -322,9 +329,7 @@ class ComplexityCalculator(
     /**
      * Analyze Guice dependency complexity.
      */
-    private fun analyzeGuiceDependencies(
-        classInfo: ClassInfo
-    ): Triple<Int, ComplexityFactor?, List<String>> {
+    private fun analyzeGuiceDependencies(classInfo: ClassInfo): Triple<Int, ComplexityFactor?, List<String>> {
         val notes = mutableListOf<String>()
 
         // Count injected dependencies
@@ -357,9 +362,9 @@ class ComplexityCalculator(
                 description = "Injected dependencies need DI framework migration",
                 points = guicePoints,
                 maxPoints = 15,
-                details = "$injectedCount dependencies to migrate to new DI framework"
+                details = "$injectedCount dependencies to migrate to new DI framework",
             ),
-            notes
+            notes,
         )
     }
 
@@ -367,9 +372,10 @@ class ComplexityCalculator(
      * Analyze method count as proxy for class size.
      */
     private fun analyzeMethodCount(classInfo: ClassInfo): Pair<Int, ComplexityFactor?> {
-        val publicMethods = classInfo.methods.count {
-            !it.isSynthetic && it.visibility == codelens.core.model.Visibility.PUBLIC
-        }
+        val publicMethods =
+            classInfo.methods.count {
+                !it.isSynthetic && it.visibility == codelens.core.model.Visibility.PUBLIC
+            }
 
         if (publicMethods <= 5) {
             return Pair(0, null)
@@ -384,15 +390,18 @@ class ComplexityCalculator(
                 description = "Larger classes require more migration effort",
                 points = methodPoints,
                 maxPoints = 10,
-                details = "$publicMethods public methods - consider splitting if > 10"
-            )
+                details = "$publicMethods public methods - consider splitting if > 10",
+            ),
         )
     }
 
     /**
      * Calculate migration priority (lower = migrate first).
      */
-    private fun calculatePriority(score: Int, promiseAnalysis: PromiseUsageInfo): Int {
+    private fun calculatePriority(
+        score: Int,
+        promiseAnalysis: PromiseUsageInfo,
+    ): Int {
         // Lower score = higher priority (migrate simple things first)
         // But also consider if class is a dependency for others
         return when {
@@ -428,20 +437,19 @@ class ComplexityCalculator(
     /**
      * Generate a human-readable migration reason.
      */
-    private fun generateMigrationReason(complexity: ComplexityResult): String {
-        return when (complexity.tier) {
+    private fun generateMigrationReason(complexity: ComplexityResult): String =
+        when (complexity.tier) {
             ComplexityTier.LOW -> "Quick win - simple migration"
             ComplexityTier.MEDIUM -> "Moderate complexity"
             ComplexityTier.HIGH -> "Complex - allocate dedicated time"
             ComplexityTier.CRITICAL -> "Critical complexity - careful planning needed"
         }
-    }
 
     /**
      * Create empty complexity result for unknown class.
      */
-    private fun emptyComplexityResult(fqn: String): ComplexityResult {
-        return ComplexityResult(
+    private fun emptyComplexityResult(fqn: String): ComplexityResult =
+        ComplexityResult(
             classFqn = fqn,
             score = 0,
             tier = ComplexityTier.LOW,
@@ -449,7 +457,6 @@ class ComplexityCalculator(
             factors = emptyList(),
             migrationNotes = listOf("Class not found in scan results"),
             migrationPriority = 0,
-            blockedBy = emptyList()
+            blockedBy = emptyList(),
         )
-    }
 }

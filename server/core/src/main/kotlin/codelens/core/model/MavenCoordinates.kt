@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 data class MavenCoordinates(
     val groupId: String,
     val artifactId: String,
-    val version: String
+    val version: String,
 ) {
     /**
      * Returns Gradle-style notation: "groupId:artifactId:version"
@@ -34,8 +34,7 @@ data class MavenCoordinates(
     /**
      * Returns the full Maven Central URL for the source JAR.
      */
-    fun sourceJarUrl(): String =
-        "https://repo1.maven.org/maven2/${toRepositoryPath()}/${sourceJarName()}"
+    fun sourceJarUrl(): String = "https://repo1.maven.org/maven2/${toRepositoryPath()}/${sourceJarName()}"
 
     companion object {
         /**
@@ -45,7 +44,9 @@ data class MavenCoordinates(
             val parts = notation.split(":")
             return if (parts.size >= 3) {
                 MavenCoordinates(parts[0], parts[1], parts[2])
-            } else null
+            } else {
+                null
+            }
         }
 
         /**

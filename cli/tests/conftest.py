@@ -22,10 +22,21 @@ def temp_project_dir() -> Generator[Path, None, None]:
 
 @pytest.fixture
 def temp_cache_dir(monkeypatch: pytest.MonkeyPatch) -> Generator[Path, None, None]:
-    """Create a temporary cache directory and set it as the default."""
+    """Create a temporary cache directory and patch `get_cache_dir` to return it.
+
+    Patches the symbol everywhere it's imported (in `settings.py` and the
+    repository module's `from settings import get_cache_dir` binding).
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         cache_path = Path(tmpdir)
-        # This would need to be updated to properly mock get_cache_dir
+        monkeypatch.setattr(
+            "codelens_cli.settings.get_cache_dir",
+            lambda: cache_path,
+        )
+        monkeypatch.setattr(
+            "codelens_cli.repositories.server_state_repository.get_cache_dir",
+            lambda: cache_path,
+        )
         yield cache_path
 
 

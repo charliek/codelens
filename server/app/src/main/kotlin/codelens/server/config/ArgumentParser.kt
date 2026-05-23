@@ -11,41 +11,44 @@ import kotlinx.cli.required
 fun parseArgs(args: Array<String>): ServerConfig {
     val parser = ArgParser("codelens-server")
 
-    val projectPath by parser.option(
-        ArgType.String,
-        shortName = "p",
-        fullName = "project",
-        description = "Path to target project directory"
-    ).required()
+    val projectPath by parser
+        .option(
+            ArgType.String,
+            shortName = "p",
+            fullName = "project",
+            description = "Path to target project directory",
+        ).required()
 
     val port by parser.option(
         ArgType.Int,
         fullName = "port",
-        description = "Port to listen on (auto-assigns if not specified)"
+        description = "Port to listen on (auto-assigns if not specified)",
     )
 
-    val host by parser.option(
-        ArgType.String,
-        fullName = "host",
-        description = "Host to bind to"
-    ).default("127.0.0.1")
+    val host by parser
+        .option(
+            ArgType.String,
+            fullName = "host",
+            description = "Host to bind to",
+        ).default("127.0.0.1")
 
-    val idleTimeout by parser.option(
-        ArgType.String,
-        fullName = "idle-timeout",
-        description = "Idle timeout (e.g., 30m, 1h, 0 to disable)"
-    ).default("30m")
+    val idleTimeout by parser
+        .option(
+            ArgType.String,
+            fullName = "idle-timeout",
+            description = "Idle timeout (e.g., 30m, 1h, 0 to disable)",
+        ).default("30m")
 
     val classpathFile by parser.option(
         ArgType.String,
         fullName = "classpath-file",
-        description = "Path to a pre-generated classpath file (fallback mode). If not specified, uses Gradle Tooling API."
+        description = "Path to a pre-generated classpath file (fallback mode). If not specified, uses Gradle Tooling API.",
     )
 
     val projectJavaHome by parser.option(
         ArgType.String,
         fullName = "project-java-home",
-        description = "Path to Java home for target project's Gradle. Required when project uses Gradle < 8.5 and server runs on Java 21."
+        description = "Path to Java home for target project's Gradle. Required when project uses Gradle < 8.5 and server runs on Java 21.",
     )
 
     parser.parse(args)
@@ -58,7 +61,7 @@ fun parseArgs(args: Array<String>): ServerConfig {
         portRangeEnd = 8180,
         idleTimeoutMinutes = parseTimeoutMinutes(idleTimeout),
         classpathFile = classpathFile,
-        projectJavaHome = projectJavaHome
+        projectJavaHome = projectJavaHome,
     )
 }
 
@@ -86,7 +89,10 @@ fun parseTimeoutMinutes(timeout: String): Int {
  * @return An available port
  * @throws IllegalStateException if no port is available
  */
-fun findAvailablePort(start: Int, end: Int): Int {
+fun findAvailablePort(
+    start: Int,
+    end: Int,
+): Int {
     for (port in start..end) {
         try {
             java.net.ServerSocket(port).use { return port }

@@ -10,11 +10,9 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class MavenCentralClientTest {
-
     private lateinit var mockWebServer: MockWebServer
 
     @BeforeEach
@@ -37,17 +35,21 @@ class MavenCentralClientTest {
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .setBody(okio.Buffer().write(validZipBytes))
+                .setBody(okio.Buffer().write(validZipBytes)),
         )
 
-        val httpClient = OkHttpClient.Builder()
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(5, TimeUnit.SECONDS)
-            .build()
+        val httpClient =
+            OkHttpClient
+                .Builder()
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .build()
 
-        val request = okhttp3.Request.Builder()
-            .url(mockWebServer.url("/test.jar"))
-            .build()
+        val request =
+            okhttp3.Request
+                .Builder()
+                .url(mockWebServer.url("/test.jar"))
+                .build()
 
         val response = httpClient.newCall(request).execute()
 
@@ -62,9 +64,11 @@ class MavenCentralClientTest {
 
         val httpClient = OkHttpClient.Builder().build()
 
-        val request = okhttp3.Request.Builder()
-            .url(mockWebServer.url("/test.jar"))
-            .build()
+        val request =
+            okhttp3.Request
+                .Builder()
+                .url(mockWebServer.url("/test.jar"))
+                .build()
 
         val response = httpClient.newCall(request).execute()
 
@@ -78,10 +82,12 @@ class MavenCentralClientTest {
 
         val httpClient = OkHttpClient.Builder().build()
 
-        val request = okhttp3.Request.Builder()
-            .url(mockWebServer.url("/test.jar"))
-            .head()
-            .build()
+        val request =
+            okhttp3.Request
+                .Builder()
+                .url(mockWebServer.url("/test.jar"))
+                .head()
+                .build()
 
         val response = httpClient.newCall(request).execute()
 
@@ -97,10 +103,12 @@ class MavenCentralClientTest {
 
         val httpClient = OkHttpClient.Builder().build()
 
-        val request = okhttp3.Request.Builder()
-            .url(mockWebServer.url("/nonexistent.jar"))
-            .head()
-            .build()
+        val request =
+            okhttp3.Request
+                .Builder()
+                .url(mockWebServer.url("/nonexistent.jar"))
+                .head()
+                .build()
 
         val response = httpClient.newCall(request).execute()
 
@@ -201,10 +209,25 @@ class MavenCentralClientTest {
     @Test
     fun `real JAR magic bytes pass validation`() {
         // First bytes of a real JAR/ZIP file
-        val realJarStart = byteArrayOf(
-            0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
-            0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        )
+        val realJarStart =
+            byteArrayOf(
+                0x50,
+                0x4B,
+                0x03,
+                0x04,
+                0x14,
+                0x00,
+                0x08,
+                0x08,
+                0x08,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+            )
 
         assertTrue(isValidZipFile(realJarStart))
     }
@@ -213,9 +236,9 @@ class MavenCentralClientTest {
     private fun isValidZipFile(bytes: ByteArray): Boolean {
         if (bytes.size < 4) return false
         return bytes[0] == 0x50.toByte() &&
-               bytes[1] == 0x4B.toByte() &&
-               bytes[2] == 0x03.toByte() &&
-               bytes[3] == 0x04.toByte()
+            bytes[1] == 0x4B.toByte() &&
+            bytes[2] == 0x03.toByte() &&
+            bytes[3] == 0x04.toByte()
     }
 
     // ========== MavenCoordinates URL Generation Tests ==========
@@ -228,7 +251,7 @@ class MavenCentralClientTest {
 
         assertEquals(
             "https://repo1.maven.org/maven2/com/google/guava/guava/32.1.3-jre/guava-32.1.3-jre-sources.jar",
-            url
+            url,
         )
     }
 

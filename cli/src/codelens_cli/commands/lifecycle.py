@@ -38,7 +38,7 @@ def start(
         "--project-java",
         help="Java home for target project's Gradle (auto-detected if not specified)",
     ),
-    timeout: int = typer.Option(60, "--timeout", help="Startup timeout in seconds"),
+    timeout: int = typer.Option(180, "--timeout", help="Startup timeout in seconds"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Start the CodeLens server for a project."""
@@ -173,7 +173,7 @@ def restart(
         "--project-java",
         help="Java home for target project's Gradle (auto-detected if not specified)",
     ),
-    timeout: int = typer.Option(60, "--timeout", help="Startup timeout in seconds"),
+    timeout: int = typer.Option(180, "--timeout", help="Startup timeout in seconds"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Restart the CodeLens server for a project."""

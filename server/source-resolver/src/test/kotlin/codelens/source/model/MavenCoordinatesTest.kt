@@ -7,7 +7,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class MavenCoordinatesTest {
-
     @Test
     fun `parse valid notation`() {
         val coords = MavenCoordinates.parse("com.google.guava:guava:32.1.3-jre")
@@ -48,7 +47,7 @@ class MavenCoordinatesTest {
         val coords = MavenCoordinates("com.google.guava", "guava", "32.1.3-jre")
         assertEquals(
             "https://repo1.maven.org/maven2/com/google/guava/guava/32.1.3-jre/guava-32.1.3-jre-sources.jar",
-            coords.sourceJarUrl()
+            coords.sourceJarUrl(),
         )
     }
 

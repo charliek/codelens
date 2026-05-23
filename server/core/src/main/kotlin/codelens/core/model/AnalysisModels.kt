@@ -9,10 +9,12 @@ import kotlinx.serialization.Serializable
 enum class ClassSource {
     /** Class is from the project being analyzed */
     PROJECT,
+
     /** Class is from a library dependency */
     LIBRARY,
+
     /** Class is from the JDK */
-    JDK
+    JDK,
 }
 
 /**
@@ -23,7 +25,7 @@ enum class Visibility {
     PUBLIC,
     PROTECTED,
     PACKAGE_PRIVATE,
-    PRIVATE
+    PRIVATE,
 }
 
 /**
@@ -36,7 +38,7 @@ data class ClassName(
     /** Simple name (e.g., "MyClass") */
     val simpleName: String,
     /** Package name (e.g., "com.example") */
-    val packageName: String
+    val packageName: String,
 )
 
 /**
@@ -47,7 +49,7 @@ data class AnnotationInfo(
     /** Fully qualified name of the annotation type */
     val type: String,
     /** Annotation parameters (name -> value as string) */
-    val parameters: Map<String, String> = emptyMap()
+    val parameters: Map<String, String> = emptyMap(),
 )
 
 /**
@@ -60,7 +62,7 @@ data class ParameterInfo(
     /** Fully qualified type name */
     val type: String,
     /** Annotations on this parameter */
-    val annotations: List<AnnotationInfo> = emptyList()
+    val annotations: List<AnnotationInfo> = emptyList(),
 )
 
 /**
@@ -75,7 +77,7 @@ data class ConstructorInfo(
     /** Annotations on this constructor */
     val annotations: List<AnnotationInfo> = emptyList(),
     /** Is this constructor synthetic (compiler-generated)? */
-    val isSynthetic: Boolean = false
+    val isSynthetic: Boolean = false,
 )
 
 /**
@@ -100,7 +102,7 @@ data class MethodInfo(
     /** Is this method final? */
     val isFinal: Boolean = false,
     /** Is this method synthetic (compiler-generated)? */
-    val isSynthetic: Boolean = false
+    val isSynthetic: Boolean = false,
 )
 
 /**
@@ -119,7 +121,7 @@ data class FieldInfo(
     /** Is this field static? */
     val isStatic: Boolean = false,
     /** Is this field final? */
-    val isFinal: Boolean = false
+    val isFinal: Boolean = false,
 )
 
 /**
@@ -146,7 +148,7 @@ data class ClassSummary(
     /** Number of methods */
     val methodCount: Int,
     /** Number of fields */
-    val fieldCount: Int
+    val fieldCount: Int,
 )
 
 /**
@@ -185,5 +187,5 @@ data class ClassInfo(
     /** Fields in this class */
     val fields: List<FieldInfo> = emptyList(),
     /** Path to the JAR or directory containing this class (for library source resolution) */
-    val jarPath: String? = null
+    val jarPath: String? = null,
 )

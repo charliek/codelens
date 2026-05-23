@@ -1,28 +1,26 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
+    // Kover plugin classes are already on the classpath via buildSrc
+    // (so subprojects can apply it through `codelens.kotlin-module`); we
+    // apply it here without specifying a version so the root project can
+    // aggregate coverage from all modules.
+    id("org.jetbrains.kotlinx.kover")
 }
 
+// Licensed under the Apache License, Version 2.0. See LICENSE in the project root.
 val projectVersion = file("version.txt").readText().trim()
 
 allprojects {
     group = "dev.codelens"
     version = projectVersion
-
-    repositories {
-        mavenCentral()
-        // Required for Gradle Tooling API
-        maven {
-            url = uri("https://repo.gradle.org/gradle/libs-releases")
-        }
-    }
 }
 
-subprojects {
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "21"
-            freeCompilerArgs = listOf("-Xjsr305=strict")
-        }
-    }
+// Aggregate coverage across all server modules.
+dependencies {
+    kover(project(":server:core"))
+    kover(project(":server:classgraph"))
+    kover(project(":server:ktlint"))
+    kover(project(":server:gradle-resolver"))
+    kover(project(":server:source-resolver"))
+    kover(project(":server:app"))
 }

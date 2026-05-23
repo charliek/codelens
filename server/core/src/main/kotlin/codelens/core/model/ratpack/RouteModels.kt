@@ -18,7 +18,7 @@ enum class HttpMethod {
     DELETE,
     OPTIONS,
     HEAD,
-    ALL  // Represents any HTTP method
+    ALL, // Represents any HTTP method
 }
 
 /**
@@ -31,7 +31,7 @@ data class PathParameter(
     /** Position in the path segments (0-indexed) */
     val position: Int,
     /** Whether this is optional */
-    val optional: Boolean = false
+    val optional: Boolean = false,
 )
 
 /**
@@ -54,7 +54,7 @@ data class RouteInfo(
     /** Whether this is a prefix route */
     val isPrefix: Boolean = false,
     /** Nested routes under this prefix */
-    val nestedRoutes: List<RouteInfo> = emptyList()
+    val nestedRoutes: List<RouteInfo> = emptyList(),
 )
 
 /**
@@ -69,7 +69,7 @@ data class RouteTreeNode(
     /** Routes at this exact path */
     val routes: List<RouteInfo>,
     /** Child nodes */
-    val children: List<RouteTreeNode>
+    val children: List<RouteTreeNode>,
 )
 
 /**
@@ -86,7 +86,7 @@ data class RoutingSummary(
     /** All chain classes that define routes */
     val chainClasses: List<ChainClassInfo>,
     /** Number of unique paths */
-    val uniquePaths: Int
+    val uniquePaths: Int,
 )
 
 /**
@@ -101,7 +101,7 @@ data class ChainClassInfo(
     /** Number of routes defined in this chain */
     val routeCount: Int,
     /** Path prefix if any */
-    val pathPrefix: String?
+    val pathPrefix: String?,
 )
 
 /**
@@ -116,7 +116,7 @@ data class SpringMappingEquivalent(
     /** Controller method signature suggestion */
     val methodSignature: String,
     /** Notes about the mapping */
-    val notes: List<String> = emptyList()
+    val notes: List<String> = emptyList(),
 )
 
 /**
@@ -127,5 +127,5 @@ data class SpringMappingsResponse(
     /** All route mappings */
     val mappings: List<SpringMappingEquivalent>,
     /** Total count */
-    val totalCount: Int
+    val totalCount: Int,
 )

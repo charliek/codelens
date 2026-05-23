@@ -14,7 +14,7 @@ import io.ktor.server.routing.*
  */
 @kotlinx.serialization.Serializable
 data class SourceResponse(
-    val source: SourceInfo
+    val source: SourceInfo,
 )
 
 /**
@@ -22,7 +22,7 @@ data class SourceResponse(
  */
 @kotlinx.serialization.Serializable
 data class MethodSourceResponse(
-    val methodSource: MethodSourceInfo
+    val methodSource: MethodSourceInfo,
 )
 
 /**
@@ -52,8 +52,8 @@ fun Route.sourceRoutes(analysisService: AnalysisService) {
                     ErrorResponse(
                         code = 400,
                         type = "BadRequest",
-                        message = "Class FQN and method name are required"
-                    )
+                        message = "Class FQN and method name are required",
+                    ),
                 )
                 return@get
             }
@@ -71,20 +71,23 @@ fun Route.sourceRoutes(analysisService: AnalysisService) {
                 onFailure = { exception ->
                     when (exception) {
                         is SourceResolutionException -> {
-                            val statusCode = when (exception.reason) {
-                                SourceResolutionErrorReason.CLASS_NOT_FOUND,
-                                SourceResolutionErrorReason.METHOD_NOT_FOUND,
-                                SourceResolutionErrorReason.FILE_NOT_FOUND -> HttpStatusCode.NotFound
-                                SourceResolutionErrorReason.LIBRARY_CLASS,
-                                SourceResolutionErrorReason.JDK_CLASS -> HttpStatusCode.UnprocessableEntity
-                            }
+                            val statusCode =
+                                when (exception.reason) {
+                                    SourceResolutionErrorReason.CLASS_NOT_FOUND,
+                                    SourceResolutionErrorReason.METHOD_NOT_FOUND,
+                                    SourceResolutionErrorReason.FILE_NOT_FOUND,
+                                    -> HttpStatusCode.NotFound
+                                    SourceResolutionErrorReason.LIBRARY_CLASS,
+                                    SourceResolutionErrorReason.JDK_CLASS,
+                                    -> HttpStatusCode.UnprocessableEntity
+                                }
                             call.respond(
                                 statusCode,
                                 SourceResolutionError(
                                     fqn = exception.fqn,
                                     reason = exception.reason,
-                                    message = exception.message ?: "Source resolution failed"
-                                )
+                                    message = exception.message ?: "Source resolution failed",
+                                ),
                             )
                         }
                         else -> {
@@ -93,12 +96,12 @@ fun Route.sourceRoutes(analysisService: AnalysisService) {
                                 ErrorResponse(
                                     code = 500,
                                     type = "InternalError",
-                                    message = exception.message ?: "Failed to resolve method source"
-                                )
+                                    message = exception.message ?: "Failed to resolve method source",
+                                ),
                             )
                         }
                     }
-                }
+                },
             )
         }
 
@@ -129,8 +132,8 @@ fun Route.sourceRoutes(analysisService: AnalysisService) {
                     ErrorResponse(
                         code = 400,
                         type = "BadRequest",
-                        message = "Class FQN is required"
-                    )
+                        message = "Class FQN is required",
+                    ),
                 )
                 return@get
             }
@@ -144,53 +147,57 @@ fun Route.sourceRoutes(analysisService: AnalysisService) {
             val visibilityStr = call.request.queryParameters["visibility"]?.lowercase() ?: "all"
             val langStr = call.request.queryParameters["lang"]?.lowercase() ?: "java"
 
-            val format = when (formatStr) {
-                "stub" -> SourceFormat.STUB
-                "signatures" -> SourceFormat.SIGNATURES
-                "javadoc" -> SourceFormat.JAVADOC
-                else -> SourceFormat.FULL
-            }
+            val format =
+                when (formatStr) {
+                    "stub" -> SourceFormat.STUB
+                    "signatures" -> SourceFormat.SIGNATURES
+                    "javadoc" -> SourceFormat.JAVADOC
+                    else -> SourceFormat.FULL
+                }
 
-            val visibility = when (visibilityStr) {
-                "public" -> VisibilityFilter.PUBLIC
-                "protected" -> VisibilityFilter.PUBLIC_PROTECTED
-                else -> VisibilityFilter.ALL
-            }
+            val visibility =
+                when (visibilityStr) {
+                    "public" -> VisibilityFilter.PUBLIC
+                    "protected" -> VisibilityFilter.PUBLIC_PROTECTED
+                    else -> VisibilityFilter.ALL
+                }
 
-            val language = when (langStr) {
-                "kotlin", "kt" -> StubLanguage.KOTLIN
-                else -> StubLanguage.JAVA
-            }
+            val language =
+                when (langStr) {
+                    "kotlin", "kt" -> StubLanguage.KOTLIN
+                    else -> StubLanguage.JAVA
+                }
 
             // Use appropriate method based on format
-            val result = when (format) {
-                SourceFormat.STUB, SourceFormat.SIGNATURES -> {
-                    // Use stub generator (works from bytecode, no source needed)
-                    analysisService.getStub(
-                        fqn = fqn,
-                        language = language,
-                        visibility = visibility,
-                        format = format
-                    )
+            val result =
+                when (format) {
+                    SourceFormat.STUB, SourceFormat.SIGNATURES -> {
+                        // Use stub generator (works from bytecode, no source needed)
+                        analysisService.getStub(
+                            fqn = fqn,
+                            language = language,
+                            visibility = visibility,
+                            format = format,
+                        )
+                    }
+                    SourceFormat.JAVADOC -> {
+                        // Use javadoc extractor (requires actual source)
+                        analysisService.getSourceWithJavadoc(
+                            fqn = fqn,
+                            visibility = visibility,
+                            allowDecompilation = allowDecompilation,
+                            forceRefresh = forceRefresh,
+                        )
+                    }
+                    else -> {
+                        // Full source
+                        analysisService.getSource(
+                            fqn = fqn,
+                            allowDecompilation = allowDecompilation,
+                            forceRefresh = forceRefresh,
+                        )
+                    }
                 }
-                SourceFormat.JAVADOC -> {
-                    // Use javadoc extractor (requires actual source)
-                    analysisService.getSourceWithJavadoc(
-                        fqn = fqn,
-                        visibility = visibility,
-                        allowDecompilation = allowDecompilation,
-                        forceRefresh = forceRefresh
-                    )
-                }
-                else -> {
-                    // Full source
-                    analysisService.getSource(
-                        fqn = fqn,
-                        allowDecompilation = allowDecompilation,
-                        forceRefresh = forceRefresh
-                    )
-                }
-            }
 
             result.fold(
                 onSuccess = { sourceInfo ->
@@ -199,21 +206,23 @@ fun Route.sourceRoutes(analysisService: AnalysisService) {
                 onFailure = { exception ->
                     when (exception) {
                         is SourceResolutionException -> {
-                            val statusCode = when (exception.reason) {
-                                SourceResolutionErrorReason.CLASS_NOT_FOUND -> HttpStatusCode.NotFound
-                                SourceResolutionErrorReason.FILE_NOT_FOUND -> HttpStatusCode.NotFound
-                                SourceResolutionErrorReason.METHOD_NOT_FOUND -> HttpStatusCode.NotFound
-                                // Library/JDK classes now return 404 only if source truly unavailable
-                                SourceResolutionErrorReason.LIBRARY_CLASS,
-                                SourceResolutionErrorReason.JDK_CLASS -> HttpStatusCode.NotFound
-                            }
+                            val statusCode =
+                                when (exception.reason) {
+                                    SourceResolutionErrorReason.CLASS_NOT_FOUND -> HttpStatusCode.NotFound
+                                    SourceResolutionErrorReason.FILE_NOT_FOUND -> HttpStatusCode.NotFound
+                                    SourceResolutionErrorReason.METHOD_NOT_FOUND -> HttpStatusCode.NotFound
+                                    // Library/JDK classes now return 404 only if source truly unavailable
+                                    SourceResolutionErrorReason.LIBRARY_CLASS,
+                                    SourceResolutionErrorReason.JDK_CLASS,
+                                    -> HttpStatusCode.NotFound
+                                }
                             call.respond(
                                 statusCode,
                                 SourceResolutionError(
                                     fqn = exception.fqn,
                                     reason = exception.reason,
-                                    message = exception.message ?: "Source resolution failed"
-                                )
+                                    message = exception.message ?: "Source resolution failed",
+                                ),
                             )
                         }
                         else -> {
@@ -222,12 +231,12 @@ fun Route.sourceRoutes(analysisService: AnalysisService) {
                                 ErrorResponse(
                                     code = 500,
                                     type = "InternalError",
-                                    message = exception.message ?: "Failed to resolve source"
-                                )
+                                    message = exception.message ?: "Failed to resolve source",
+                                ),
                             )
                         }
                     }
-                }
+                },
             )
         }
     }

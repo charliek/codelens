@@ -12,7 +12,7 @@ data class ScanResult(
     /** Statistics about the scan */
     val statistics: ScanStatistics,
     /** Project output directories (used to classify PROJECT vs LIBRARY) */
-    val projectOutputDirs: Set<File>
+    val projectOutputDirs: Set<File>,
 )
 
 /**
@@ -27,7 +27,11 @@ interface ClassGraphProvider {
      * @param resolvedBy Name of the resolver that produced the classpath (e.g., "Gradle Tooling API")
      * @return Scan result with all class information
      */
-    fun scan(classpathEntries: List<File>, projectOutputDirs: Set<File>, resolvedBy: String = "ClassGraph"): ScanResult
+    fun scan(
+        classpathEntries: List<File>,
+        projectOutputDirs: Set<File>,
+        resolvedBy: String = "ClassGraph",
+    ): ScanResult
 
     /**
      * List classes matching the given filter.
@@ -64,7 +68,10 @@ interface ClassGraphProvider {
      * @param includeLibraries Include library classes in results
      * @return Pair of (direct implementations, indirect implementations)
      */
-    fun getImplementations(fqn: String, includeLibraries: Boolean = false): Pair<List<ClassSummary>, List<ClassSummary>>
+    fun getImplementations(
+        fqn: String,
+        includeLibraries: Boolean = false,
+    ): Pair<List<ClassSummary>, List<ClassSummary>>
 
     /**
      * Get the class hierarchy for a given class.
@@ -81,7 +88,10 @@ interface ClassGraphProvider {
      * @param includeLibraries Include library classes in dependencies
      * @return Pair of (outgoing dependencies, incoming dependencies)
      */
-    fun getDependencies(fqn: String, includeLibraries: Boolean = false): Pair<List<DependencyInfo>, List<DependencyInfo>>
+    fun getDependencies(
+        fqn: String,
+        includeLibraries: Boolean = false,
+    ): Pair<List<DependencyInfo>, List<DependencyInfo>>
 
     /**
      * Find all classes using a specific annotation.
@@ -90,7 +100,10 @@ interface ClassGraphProvider {
      * @param includeLibraries Include library classes in results
      * @return List of classes using the annotation
      */
-    fun getAnnotationUsages(annotationFqn: String, includeLibraries: Boolean = false): List<ClassSummary>
+    fun getAnnotationUsages(
+        annotationFqn: String,
+        includeLibraries: Boolean = false,
+    ): List<ClassSummary>
 
     /**
      * Search methods across all classes.

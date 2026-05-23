@@ -20,7 +20,7 @@ import java.security.MessageDigest
  * ```
  */
 class SourceCache(
-    private val cacheDir: File = File(System.getProperty("user.home"), ".cache/codelens/sources")
+    private val cacheDir: File = File(System.getProperty("user.home"), ".cache/codelens/sources"),
 ) {
     private val logger = LoggerFactory.getLogger(SourceCache::class.java)
 
@@ -49,7 +49,10 @@ class SourceCache(
      * Stores a source JAR in the cache.
      * Returns the cached file path.
      */
-    fun putSourceJar(coords: MavenCoordinates, jarBytes: ByteArray): File {
+    fun putSourceJar(
+        coords: MavenCoordinates,
+        jarBytes: ByteArray,
+    ): File {
         val jarFile = sourceJarPath(coords)
         jarFile.parentFile.mkdirs()
         jarFile.writeBytes(jarBytes)
@@ -73,7 +76,10 @@ class SourceCache(
      * Gets cached decompiled source for a class.
      * Returns null if not cached.
      */
-    fun getDecompiledSource(jarPath: String, className: String): String? {
+    fun getDecompiledSource(
+        jarPath: String,
+        className: String,
+    ): String? {
         val sourceFile = decompiledSourcePath(jarPath, className)
         return if (sourceFile.exists()) {
             logger.debug("Cache hit for decompiled source: {} in {}", className, jarPath)
@@ -87,7 +93,11 @@ class SourceCache(
     /**
      * Stores decompiled source in the cache.
      */
-    fun putDecompiledSource(jarPath: String, className: String, source: String) {
+    fun putDecompiledSource(
+        jarPath: String,
+        className: String,
+        source: String,
+    ) {
         val sourceFile = decompiledSourcePath(jarPath, className)
         sourceFile.parentFile.mkdirs()
         sourceFile.writeText(source)
@@ -97,10 +107,15 @@ class SourceCache(
     /**
      * Checks if decompiled source is cached.
      */
-    fun hasDecompiledSource(jarPath: String, className: String): Boolean =
-        decompiledSourcePath(jarPath, className).exists()
+    fun hasDecompiledSource(
+        jarPath: String,
+        className: String,
+    ): Boolean = decompiledSourcePath(jarPath, className).exists()
 
-    private fun decompiledSourcePath(jarPath: String, className: String): File {
+    private fun decompiledSourcePath(
+        jarPath: String,
+        className: String,
+    ): File {
         val sanitizedClassName = sanitizeClassName(className)
         val jarHash = hashString(jarPath).take(16)
         val sourcePath = sanitizedClassName.replace('.', File.separatorChar) + ".java"
@@ -113,7 +128,10 @@ class SourceCache(
      * Gets cached JDK source for a class.
      * Returns null if not cached.
      */
-    fun getJdkSource(jdkVersion: String, className: String): String? {
+    fun getJdkSource(
+        jdkVersion: String,
+        className: String,
+    ): String? {
         val sourceFile = jdkSourcePath(jdkVersion, className)
         return if (sourceFile.exists()) {
             logger.debug("Cache hit for JDK source: {} (JDK {})", className, jdkVersion)
@@ -127,7 +145,11 @@ class SourceCache(
     /**
      * Stores JDK source in the cache.
      */
-    fun putJdkSource(jdkVersion: String, className: String, source: String) {
+    fun putJdkSource(
+        jdkVersion: String,
+        className: String,
+        source: String,
+    ) {
         val sourceFile = jdkSourcePath(jdkVersion, className)
         sourceFile.parentFile.mkdirs()
         sourceFile.writeText(source)
@@ -137,10 +159,15 @@ class SourceCache(
     /**
      * Checks if JDK source is cached.
      */
-    fun hasJdkSource(jdkVersion: String, className: String): Boolean =
-        jdkSourcePath(jdkVersion, className).exists()
+    fun hasJdkSource(
+        jdkVersion: String,
+        className: String,
+    ): Boolean = jdkSourcePath(jdkVersion, className).exists()
 
-    private fun jdkSourcePath(jdkVersion: String, className: String): File {
+    private fun jdkSourcePath(
+        jdkVersion: String,
+        className: String,
+    ): File {
         val sanitizedClassName = sanitizeClassName(className)
         val sourcePath = sanitizedClassName.replace('.', File.separatorChar) + ".java"
         return File(cacheDir, "jdk/$jdkVersion/$sourcePath")
@@ -205,7 +232,7 @@ class SourceCache(
             decompiledCount = decompiledCount,
             decompiledSize = decompiledSize,
             jdkCount = jdkCount,
-            jdkSize = jdkSize
+            jdkSize = jdkSize,
         )
     }
 
@@ -242,7 +269,7 @@ data class CacheStats(
     val decompiledCount: Int,
     val decompiledSize: Long,
     val jdkCount: Int,
-    val jdkSize: Long
+    val jdkSize: Long,
 ) {
     val totalCount: Int get() = sourceJarCount + decompiledCount + jdkCount
     val totalSize: Long get() = sourceJarSize + decompiledSize + jdkSize

@@ -7,7 +7,6 @@ import codelens.source.model.VisibilityFilter
  * Returns source with only signatures and their doc comments.
  */
 class JavadocExtractor {
-
     /**
      * Extracts signatures with their doc comments from source code.
      *
@@ -19,7 +18,7 @@ class JavadocExtractor {
     fun extractWithDocs(
         source: String,
         language: String = "java",
-        visibility: VisibilityFilter = VisibilityFilter.ALL
+        visibility: VisibilityFilter = VisibilityFilter.ALL,
     ): String {
         val lines = source.lines()
         val result = StringBuilder()
@@ -124,8 +123,12 @@ class JavadocExtractor {
     private fun isClassDeclaration(line: String): Boolean {
         val keywords = listOf("class ", "interface ", "enum ", "@interface ", "object ")
         return keywords.any { line.contains(it) } &&
-            (line.contains("public ") || line.contains("protected ") ||
-             line.contains("private ") || !line.contains(" "))
+            (
+                line.contains("public ") ||
+                    line.contains("protected ") ||
+                    line.contains("private ") ||
+                    !line.contains(" ")
+            )
     }
 
     private fun isMemberDeclaration(line: String): Boolean {
@@ -135,33 +138,49 @@ class JavadocExtractor {
         }
 
         // Method or constructor declaration (contains parentheses but not just a call)
-        if (line.contains("(") && (
-            line.contains("public ") || line.contains("protected ") ||
-            line.contains("private ") || line.contains("fun ") ||
-            line.contains("void ") || line.matches(Regex("^\\s*\\w+\\s*\\(.*"))
-        )) {
+        if (line.contains("(") &&
+            (
+                line.contains("public ") ||
+                    line.contains("protected ") ||
+                    line.contains("private ") ||
+                    line.contains("fun ") ||
+                    line.contains("void ") ||
+                    line.matches(Regex("^\\s*\\w+\\s*\\(.*"))
+            )
+        ) {
             return true
         }
 
         // Field declaration (contains type and name, possibly with assignment)
-        if ((line.contains("public ") || line.contains("protected ") || line.contains("private ") ||
-             line.contains("val ") || line.contains("var ")) &&
-            !line.contains("(")) {
+        if ((
+                line.contains("public ") ||
+                    line.contains("protected ") ||
+                    line.contains("private ") ||
+                    line.contains("val ") ||
+                    line.contains("var ")
+            ) &&
+            !line.contains("(")
+        ) {
             return true
         }
 
         return false
     }
 
-    private fun matchesVisibilityFilter(line: String, filter: VisibilityFilter): Boolean {
-        return when (filter) {
+    private fun matchesVisibilityFilter(
+        line: String,
+        filter: VisibilityFilter,
+    ): Boolean =
+        when (filter) {
             VisibilityFilter.ALL -> true
             VisibilityFilter.PUBLIC -> line.contains("public ") || (!line.contains("private ") && !line.contains("protected "))
             VisibilityFilter.PUBLIC_PROTECTED -> !line.contains("private ")
         }
-    }
 
-    private fun extractSignature(originalLine: String, trimmedLine: String): String {
+    private fun extractSignature(
+        originalLine: String,
+        trimmedLine: String,
+    ): String {
         // Find where the body starts
         val braceIndex = originalLine.indexOf('{')
         return if (braceIndex != -1) {
@@ -183,16 +202,16 @@ class JavadocExtractor {
 
     private fun isInterfaceMethod(line: String): Boolean {
         // Interface methods don't have bodies in Java (before default methods)
-        return !line.contains("default ") && !line.contains("static ") &&
-               line.contains("(") && !line.contains("{")
+        return !line.contains("default ") &&
+            !line.contains("static ") &&
+            line.contains("(") &&
+            !line.contains("{")
     }
 
     companion object {
         /**
          * Quick check if source contains any doc comments.
          */
-        fun hasDocComments(source: String): Boolean {
-            return source.contains("/**")
-        }
+        fun hasDocComments(source: String): Boolean = source.contains("/**")
     }
 }

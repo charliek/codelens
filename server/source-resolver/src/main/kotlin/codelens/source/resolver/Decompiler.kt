@@ -20,7 +20,10 @@ class Decompiler {
      * @param className Fully qualified class name (e.g., "com.example.MyClass")
      * @return Result containing the decompiled source on success, or an error on failure
      */
-    fun decompile(jarPath: File, className: String): Result<String> {
+    fun decompile(
+        jarPath: File,
+        className: String,
+    ): Result<String> {
         if (!jarPath.exists()) {
             return Result.failure(DecompilationException(className, "JAR file not found: ${jarPath.absolutePath}"))
         }
@@ -31,55 +34,59 @@ class Decompiler {
             val output = StringBuilder()
             var decompilationError: String? = null
 
-            val outputSink = object : OutputSinkFactory {
-                override fun getSupportedSinks(
-                    sinkType: OutputSinkFactory.SinkType,
-                    collection: Collection<OutputSinkFactory.SinkClass>
-                ): List<OutputSinkFactory.SinkClass> {
-                    return listOf(OutputSinkFactory.SinkClass.STRING)
-                }
+            val outputSink =
+                object : OutputSinkFactory {
+                    override fun getSupportedSinks(
+                        sinkType: OutputSinkFactory.SinkType,
+                        collection: Collection<OutputSinkFactory.SinkClass>,
+                    ): List<OutputSinkFactory.SinkClass> = listOf(OutputSinkFactory.SinkClass.STRING)
 
-                override fun <T> getSink(
-                    sinkType: OutputSinkFactory.SinkType,
-                    sinkClass: OutputSinkFactory.SinkClass
-                ): OutputSinkFactory.Sink<T> {
-                    @Suppress("UNCHECKED_CAST")
-                    return when (sinkType) {
-                        OutputSinkFactory.SinkType.JAVA -> OutputSinkFactory.Sink { source: T ->
-                            if (source is SinkReturns.Decompiled) {
-                                output.append(source.java)
-                            }
-                        }
-                        OutputSinkFactory.SinkType.EXCEPTION -> OutputSinkFactory.Sink { source: T ->
-                            if (source is SinkReturns.ExceptionMessage) {
-                                decompilationError = source.message
-                                logger.warn("Decompilation warning for {}: {}", className, source.message)
-                            }
-                        }
-                        else -> OutputSinkFactory.Sink { }
-                    } as OutputSinkFactory.Sink<T>
+                    override fun <T> getSink(
+                        sinkType: OutputSinkFactory.SinkType,
+                        sinkClass: OutputSinkFactory.SinkClass,
+                    ): OutputSinkFactory.Sink<T> {
+                        @Suppress("UNCHECKED_CAST")
+                        return when (sinkType) {
+                            OutputSinkFactory.SinkType.JAVA ->
+                                OutputSinkFactory.Sink { source: T ->
+                                    if (source is SinkReturns.Decompiled) {
+                                        output.append(source.java)
+                                    }
+                                }
+                            OutputSinkFactory.SinkType.EXCEPTION ->
+                                OutputSinkFactory.Sink { source: T ->
+                                    if (source is SinkReturns.ExceptionMessage) {
+                                        decompilationError = source.message
+                                        logger.warn("Decompilation warning for {}: {}", className, source.message)
+                                    }
+                                }
+                            else -> OutputSinkFactory.Sink { }
+                        } as OutputSinkFactory.Sink<T>
+                    }
                 }
-            }
 
             // Convert class name to internal format for CFR
             val internalClassName = className.replace('.', '/')
 
-            val options = mapOf(
-                "jarfilter" to internalClassName,
-                "showversion" to "false",
-                "silent" to "true",
-                "comments" to "false",
-                "decodefinally" to "true",
-                "sugarenums" to "true",
-                "removeboilerplate" to "true",
-                "removedeadmethods" to "true",
-                "removebadgenerics" to "true"
-            )
+            val options =
+                mapOf(
+                    "jarfilter" to internalClassName,
+                    "showversion" to "false",
+                    "silent" to "true",
+                    "comments" to "false",
+                    "decodefinally" to "true",
+                    "sugarenums" to "true",
+                    "removeboilerplate" to "true",
+                    "removedeadmethods" to "true",
+                    "removebadgenerics" to "true",
+                )
 
-            val driver = CfrDriver.Builder()
-                .withOptions(options)
-                .withOutputSink(outputSink)
-                .build()
+            val driver =
+                CfrDriver
+                    .Builder()
+                    .withOptions(options)
+                    .withOutputSink(outputSink)
+                    .build()
 
             driver.analyse(listOf(jarPath.absolutePath))
 
@@ -105,7 +112,10 @@ class Decompiler {
      * @param classNames List of fully qualified class names
      * @return Map of class name to decompiled source (only successful decompilations)
      */
-    fun decompileMultiple(jarPath: File, classNames: List<String>): Map<String, String> {
+    fun decompileMultiple(
+        jarPath: File,
+        classNames: List<String>,
+    ): Map<String, String> {
         val results = mutableMapOf<String, String>()
 
         for (className in classNames) {
@@ -121,7 +131,10 @@ class Decompiler {
      * Checks if decompilation is likely to succeed for a class.
      * This does a quick check without full decompilation.
      */
-    fun canDecompile(jarPath: File, className: String): Boolean {
+    fun canDecompile(
+        jarPath: File,
+        className: String,
+    ): Boolean {
         if (!jarPath.exists()) return false
 
         return try {
@@ -141,5 +154,5 @@ class Decompiler {
 class DecompilationException(
     val className: String,
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : Exception("Failed to decompile $className: $message", cause)

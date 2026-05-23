@@ -184,45 +184,45 @@ After route identification, verify completeness:
 
 ## Example: Complete Route Discovery
 
-**Project:** moonracer
+**Project:** sample-ratpack-app
 
 **Step 1 - Routes output:**
-```
+```text
 GET    /ping
 GET    /config
-ALL    /locationgroups/:locationGroupId/locations/:locationId/devices  [DevicesApi]
-ALL    /locationgroups/:locationGroupId/locations                      [LocationsApi]
-ALL    /locationgroups                                                 [LocationGroupsApi]
+ALL    /accounts/:accountId/projects/:projectId/items  [ItemsApi]
+ALL    /accounts/:accountId/projects                   [ProjectsApi]
+ALL    /accounts                                       [AccountsApi]
 ```
 
 **Step 2 - Handlers output (filtered):**
-```
-DeviceStateGetHandler, DeviceStateUpdateHandler, DeviceStatePatchHandler, DeviceStateDeleteHandler
-LocationStatisticsGetHandler, LocationStatisticsListHandler
-LocationGroupStatisticsGetHandler, LocationGroupStatisticsListHandler
-LocationGroupDeviceStatesListHandler, LocationGroupReportGetHandler
+```text
+ItemGetHandler, ItemUpdateHandler, ItemPatchHandler, ItemDeleteHandler
+ProjectStatisticsGetHandler, ProjectStatisticsListHandler
+AccountStatisticsGetHandler, AccountStatisticsListHandler
+AccountItemsListHandler, AccountReportGetHandler
 ```
 
 **Step 3 - Expanded routes:**
-```
+```text
 GET    /ping
 GET    /config
 
-# DevicesApi prefix
-GET    /locationgroups/:lgId/locations/:locId/devices/:deviceId
-PUT    /locationgroups/:lgId/locations/:locId/devices/:deviceId
-PATCH  /locationgroups/:lgId/locations/:locId/devices/:deviceId
-DELETE /locationgroups/:lgId/locations/:locId/devices/:deviceId
+# ItemsApi prefix
+GET    /accounts/:accountId/projects/:projectId/items/:itemId
+PUT    /accounts/:accountId/projects/:projectId/items/:itemId
+PATCH  /accounts/:accountId/projects/:projectId/items/:itemId
+DELETE /accounts/:accountId/projects/:projectId/items/:itemId
 
-# LocationsApi prefix
-GET    /locationgroups/:lgId/locations/stats
-GET    /locationgroups/:lgId/locations/:locId/stats
+# ProjectsApi prefix
+GET    /accounts/:accountId/projects/stats
+GET    /accounts/:accountId/projects/:projectId/stats
 
-# LocationGroupsApi prefix
-GET    /locationgroups/stats
-GET    /locationgroups/:lgId/devices
-GET    /locationgroups/:lgId/stats
-GET    /locationgroups/:lgId/report
+# AccountsApi prefix
+GET    /accounts/stats
+GET    /accounts/:accountId/items
+GET    /accounts/:accountId/stats
+GET    /accounts/:accountId/report
 ```
 
 ## Limitations

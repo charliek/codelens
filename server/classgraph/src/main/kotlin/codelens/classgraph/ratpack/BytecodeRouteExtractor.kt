@@ -17,7 +17,7 @@ data class ExtractedRoute(
     val path: String,
     val method: HttpMethod,
     val handlerClassName: String?,
-    val isNestedChain: Boolean = false
+    val isNestedChain: Boolean = false,
 )
 
 /**
@@ -28,7 +28,7 @@ data class ExtractedRoute(
  * the path patterns and handler class references.
  */
 class BytecodeRouteExtractor(
-    private val classGraphProvider: ClassGraphProvider
+    private val classGraphProvider: ClassGraphProvider,
 ) {
     private val logger = LoggerFactory.getLogger(BytecodeRouteExtractor::class.java)
 
@@ -37,16 +37,17 @@ class BytecodeRouteExtractor(
         private const val CHAIN_INTERNAL_NAME = "ratpack/handling/Chain"
 
         // Routing methods on Chain that define routes
-        private val HTTP_METHOD_NAMES = mapOf(
-            "get" to HttpMethod.GET,
-            "post" to HttpMethod.POST,
-            "put" to HttpMethod.PUT,
-            "patch" to HttpMethod.PATCH,
-            "delete" to HttpMethod.DELETE,
-            "options" to HttpMethod.OPTIONS,
-            "head" to HttpMethod.HEAD,
-            "all" to HttpMethod.ALL
-        )
+        private val HTTP_METHOD_NAMES =
+            mapOf(
+                "get" to HttpMethod.GET,
+                "post" to HttpMethod.POST,
+                "put" to HttpMethod.PUT,
+                "patch" to HttpMethod.PATCH,
+                "delete" to HttpMethod.DELETE,
+                "options" to HttpMethod.OPTIONS,
+                "head" to HttpMethod.HEAD,
+                "all" to HttpMethod.ALL,
+            )
 
         // Methods that define path structure
         private const val PREFIX_METHOD = "prefix"
@@ -82,15 +83,14 @@ class BytecodeRouteExtractor(
      * ASM ClassVisitor that looks for execute(Chain) methods.
      */
     private inner class RouteExtractingClassVisitor(
-        private val routes: MutableList<ExtractedRoute>
+        private val routes: MutableList<ExtractedRoute>,
     ) : ClassVisitor(Opcodes.ASM9) {
-
         override fun visitMethod(
             access: Int,
             name: String?,
             descriptor: String?,
             signature: String?,
-            exceptions: Array<out String>?
+            exceptions: Array<out String>?,
         ): MethodVisitor? {
             // Look for execute(Chain) method
             if (name == "execute" && descriptor?.contains("Lratpack/handling/Chain;") == true) {
@@ -107,9 +107,8 @@ class BytecodeRouteExtractor(
      * and class references, then correlates them with subsequent Chain method calls.
      */
     private inner class RouteExtractingMethodVisitor(
-        private val routes: MutableList<ExtractedRoute>
+        private val routes: MutableList<ExtractedRoute>,
     ) : MethodVisitor(Opcodes.ASM9) {
-
         // Stack to track recent LDC constants (strings and class references)
         private val recentConstants = ArrayDeque<Any>()
         private val maxStackSize = 10
@@ -129,7 +128,7 @@ class BytecodeRouteExtractor(
             owner: String?,
             name: String?,
             descriptor: String?,
-            isInterface: Boolean
+            isInterface: Boolean,
         ) {
             // Only care about interface methods on Chain
             if (owner != CHAIN_INTERNAL_NAME || name == null) {
@@ -153,7 +152,10 @@ class BytecodeRouteExtractor(
         /**
          * Handle HTTP method calls like chain.get(path, handler).
          */
-        private fun handleHttpMethodCall(method: HttpMethod, descriptor: String?) {
+        private fun handleHttpMethodCall(
+            method: HttpMethod,
+            descriptor: String?,
+        ) {
             // Find the most recent string constant (the path)
             val path = findRecentString()
 
@@ -171,8 +173,8 @@ class BytecodeRouteExtractor(
                                 path = "",
                                 method = method,
                                 handlerClassName = handlerClass,
-                                isNestedChain = false
-                            )
+                                isNestedChain = false,
+                            ),
                         )
                     }
                     recentConstants.clear()
@@ -186,8 +188,8 @@ class BytecodeRouteExtractor(
                         path = path,
                         method = method,
                         handlerClassName = handlerClass,
-                        isNestedChain = false
-                    )
+                        isNestedChain = false,
+                    ),
                 )
             } else if (handlerClass != null) {
                 // Method call with just a handler class (e.g., chain.get(MyHandler.class))
@@ -197,8 +199,8 @@ class BytecodeRouteExtractor(
                         path = "",
                         method = method,
                         handlerClassName = handlerClass,
-                        isNestedChain = false
-                    )
+                        isNestedChain = false,
+                    ),
                 )
             }
 
@@ -220,7 +222,7 @@ class BytecodeRouteExtractor(
             if (!validPathPattern.matches(str)) return false
 
             // Common non-path patterns
-            if (str.startsWith("_") && !str.contains("/")) return false  // Likely a cookie or internal name
+            if (str.startsWith("_") && !str.contains("/")) return false // Likely a cookie or internal name
             if (str.length <= 10 && !str.contains("/") && !str.contains(":")) {
                 // Short strings without path separators might be config values
                 // but could also be short endpoints like "ping" or "config"
@@ -246,8 +248,8 @@ class BytecodeRouteExtractor(
                         path = path,
                         method = HttpMethod.ALL,
                         handlerClassName = handlerClass,
-                        isNestedChain = isNestedChain
-                    )
+                        isNestedChain = isNestedChain,
+                    ),
                 )
             }
 
@@ -267,8 +269,8 @@ class BytecodeRouteExtractor(
                         path = path,
                         method = HttpMethod.ALL,
                         handlerClassName = handlerClass,
-                        isNestedChain = false
-                    )
+                        isNestedChain = false,
+                    ),
                 )
             }
 
@@ -278,19 +280,16 @@ class BytecodeRouteExtractor(
         /**
          * Find the most recent string constant from the stack.
          */
-        private fun findRecentString(): String? {
-            return recentConstants.filterIsInstance<String>().lastOrNull()
-        }
+        private fun findRecentString(): String? = recentConstants.filterIsInstance<String>().lastOrNull()
 
         /**
          * Find the most recent class reference from the stack.
          */
-        private fun findRecentClass(): String? {
-            return recentConstants
+        private fun findRecentClass(): String? =
+            recentConstants
                 .filterIsInstance<Type>()
                 .lastOrNull()
                 ?.className
-        }
 
         /**
          * Check if a class is an Action<Chain> implementation.
@@ -317,7 +316,7 @@ class BytecodeRouteExtractor(
     fun extractRoutesRecursively(
         fqn: String,
         pathPrefix: String = "",
-        visited: MutableSet<String> = mutableSetOf()
+        visited: MutableSet<String> = mutableSetOf(),
     ): List<ExtractedRoute> {
         if (fqn in visited) {
             logger.debug("Skipping already visited class: $fqn")
@@ -333,11 +332,12 @@ class BytecodeRouteExtractor(
 
             if (route.isNestedChain && route.handlerClassName != null) {
                 // Recursively extract routes from nested chain
-                val nestedRoutes = extractRoutesRecursively(
-                    route.handlerClassName,
-                    fullPath,
-                    visited
-                )
+                val nestedRoutes =
+                    extractRoutesRecursively(
+                        route.handlerClassName,
+                        fullPath,
+                        visited,
+                    )
                 if (nestedRoutes.isEmpty()) {
                     // If nested chain has no routes, add the prefix route as fallback
                     expandedRoutes.add(route.copy(path = fullPath, isNestedChain = false))
@@ -355,7 +355,10 @@ class BytecodeRouteExtractor(
     /**
      * Combine two path segments.
      */
-    private fun combinePaths(prefix: String, path: String): String {
+    private fun combinePaths(
+        prefix: String,
+        path: String,
+    ): String {
         val normalizedPrefix = prefix.trimEnd('/')
         val normalizedPath = path.trimStart('/')
 

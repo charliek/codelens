@@ -2,16 +2,16 @@ package codelens.classgraph
 
 import codelens.core.model.*
 import io.github.classgraph.ClassGraph
-import io.github.classgraph.ClassInfo as CGClassInfo
-import io.github.classgraph.FieldInfo as CGFieldInfo
-import io.github.classgraph.MethodInfo as CGMethodInfo
-import io.github.classgraph.AnnotationInfo as CGAnnotationInfo
-import io.github.classgraph.ScanResult as CGScanResult
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
+import io.github.classgraph.AnnotationInfo as CGAnnotationInfo
+import io.github.classgraph.ClassInfo as CGClassInfo
+import io.github.classgraph.FieldInfo as CGFieldInfo
+import io.github.classgraph.MethodInfo as CGMethodInfo
+import io.github.classgraph.ScanResult as CGScanResult
 
 /**
  * Implementation of ClassGraphProvider using the ClassGraph library.
@@ -23,7 +23,11 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     private var statistics: ScanStatistics? = null
     private var projectOutputDirs: Set<File> = emptySet()
 
-    override fun scan(classpathEntries: List<File>, projectOutputDirs: Set<File>, resolvedBy: String): ScanResult {
+    override fun scan(
+        classpathEntries: List<File>,
+        projectOutputDirs: Set<File>,
+        resolvedBy: String,
+    ): ScanResult {
         logger.info("Starting ClassGraph scan with ${classpathEntries.size} classpath entries (resolved by: $resolvedBy)")
         val startTime = System.currentTimeMillis()
 
@@ -31,9 +35,10 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         this.classes.clear()
 
         // Build the classpath string
-        val classpathStr = classpathEntries
-            .filter { it.exists() }
-            .joinToString(File.pathSeparator) { it.absolutePath }
+        val classpathStr =
+            classpathEntries
+                .filter { it.exists() }
+                .joinToString(File.pathSeparator) { it.absolutePath }
 
         if (classpathStr.isEmpty()) {
             logger.warn("No valid classpath entries found")
@@ -46,10 +51,11 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 
         var cgScanResult: CGScanResult? = null
         try {
-            cgScanResult = ClassGraph()
-                .overrideClasspath(classpathStr)
-                .enableAllInfo()
-                .scan()
+            cgScanResult =
+                ClassGraph()
+                    .overrideClasspath(classpathStr)
+                    .enableAllInfo()
+                    .scan()
 
             logger.info("ClassGraph scan found ${cgScanResult.allClasses.size} classes")
 
@@ -86,19 +92,16 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             .toList()
     }
 
-    override fun getClass(fqn: String): ClassInfo? {
-        return classes[fqn]
-    }
+    override fun getClass(fqn: String): ClassInfo? = classes[fqn]
 
-    override fun getStatistics(): ScanStatistics? {
-        return statistics
-    }
+    override fun getStatistics(): ScanStatistics? = statistics
 
-    override fun isScanned(): Boolean {
-        return statistics != null
-    }
+    override fun isScanned(): Boolean = statistics != null
 
-    override fun getImplementations(fqn: String, includeLibraries: Boolean): Pair<List<ClassSummary>, List<ClassSummary>> {
+    override fun getImplementations(
+        fqn: String,
+        includeLibraries: Boolean,
+    ): Pair<List<ClassSummary>, List<ClassSummary>> {
         val targetClass = classes[fqn] ?: return Pair(emptyList(), emptyList())
 
         // Build a map of class/interface -> direct implementors/subclasses
@@ -122,9 +125,10 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 
         // Get direct implementations of the target
         val directImplFqns = directImplementorsMap[fqn] ?: emptySet()
-        val directImpls = directImplFqns.mapNotNull { implFqn ->
-            classes[implFqn]?.toSummary()
-        }
+        val directImpls =
+            directImplFqns.mapNotNull { implFqn ->
+                classes[implFqn]?.toSummary()
+            }
 
         // Find indirect implementations (BFS through the hierarchy)
         val visited = mutableSetOf(fqn)
@@ -148,7 +152,7 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 
         return Pair(
             directImpls.sortedBy { it.fqn },
-            indirectImpls.sortedBy { it.fqn }
+            indirectImpls.sortedBy { it.fqn },
         )
     }
 
@@ -162,16 +166,17 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         val childrenTree = buildChildrenTree(fqn)
 
         // Build interface implementations
-        val interfaceNodes = targetClass.interfaces.mapNotNull { ifaceFqn ->
-            classes[ifaceFqn]?.let { ifaceInfo ->
-                HierarchyNode(
-                    classFqn = ifaceFqn,
-                    simpleName = ifaceInfo.name.simpleName,
-                    source = ifaceInfo.source,
-                    isInterface = true
-                )
+        val interfaceNodes =
+            targetClass.interfaces.mapNotNull { ifaceFqn ->
+                classes[ifaceFqn]?.let { ifaceInfo ->
+                    HierarchyNode(
+                        classFqn = ifaceFqn,
+                        simpleName = ifaceInfo.name.simpleName,
+                        source = ifaceInfo.source,
+                        isInterface = true,
+                    )
+                }
             }
-        }
 
         return HierarchyNode(
             classFqn = fqn,
@@ -180,19 +185,20 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             isInterface = targetClass.isInterface,
             parent = parentChain,
             interfaces = interfaceNodes,
-            children = childrenTree
+            children = childrenTree,
         )
     }
 
     private fun buildParentChain(classInfo: ClassInfo): HierarchyNode? {
         // If superclass is null but this is not an interface/annotation, default to java.lang.Object
         // This handles the case where ClassGraph doesn't return Object because it wasn't scanned
-        val superclassFqn = classInfo.superclass
-            ?: if (!classInfo.isInterface && !classInfo.isAnnotation) {
-                "java.lang.Object"  // Default for regular classes
-            } else {
-                return null  // Interfaces and annotations have no superclass
-            }
+        val superclassFqn =
+            classInfo.superclass
+                ?: if (!classInfo.isInterface && !classInfo.isAnnotation) {
+                    "java.lang.Object" // Default for regular classes
+                } else {
+                    return null // Interfaces and annotations have no superclass
+                }
 
         // Handle java.lang.Object explicitly - it's the root of the hierarchy
         if (superclassFqn == "java.lang.Object") {
@@ -201,24 +207,25 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                 simpleName = "Object",
                 source = ClassSource.JDK,
                 isInterface = false,
-                parent = null  // Object is the root
+                parent = null, // Object is the root
             )
         }
 
-        val superclassInfo = classes[superclassFqn] ?: return HierarchyNode(
-            classFqn = superclassFqn,
-            simpleName = superclassFqn.substringAfterLast('.'),
-            source = ClassSource.LIBRARY,
-            isInterface = false,
-            parent = null  // Can't determine further ancestry for unscanned classes
-        )
+        val superclassInfo =
+            classes[superclassFqn] ?: return HierarchyNode(
+                classFqn = superclassFqn,
+                simpleName = superclassFqn.substringAfterLast('.'),
+                source = ClassSource.LIBRARY,
+                isInterface = false,
+                parent = null, // Can't determine further ancestry for unscanned classes
+            )
 
         return HierarchyNode(
             classFqn = superclassFqn,
             simpleName = superclassInfo.name.simpleName,
             source = superclassInfo.source,
             isInterface = superclassInfo.isInterface,
-            parent = buildParentChain(superclassInfo)
+            parent = buildParentChain(superclassInfo),
         )
     }
 
@@ -226,11 +233,12 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         val children = mutableListOf<HierarchyNode>()
 
         for (classInfo in classes.values) {
-            val isDirectChild = if (classes[fqn]?.isInterface == true) {
-                classInfo.interfaces.contains(fqn)
-            } else {
-                classInfo.superclass == fqn
-            }
+            val isDirectChild =
+                if (classes[fqn]?.isInterface == true) {
+                    classInfo.interfaces.contains(fqn)
+                } else {
+                    classInfo.superclass == fqn
+                }
 
             if (isDirectChild) {
                 children.add(
@@ -239,8 +247,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                         simpleName = classInfo.name.simpleName,
                         source = classInfo.source,
                         isInterface = classInfo.isInterface,
-                        children = buildChildrenTree(classInfo.name.fqn)
-                    )
+                        children = buildChildrenTree(classInfo.name.fqn),
+                    ),
                 )
             }
         }
@@ -248,21 +256,23 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         return children.sortedBy { it.classFqn }
     }
 
-    override fun getDependencies(fqn: String, includeLibraries: Boolean): Pair<List<DependencyInfo>, List<DependencyInfo>> {
-        return DependencyAnalyzer(classes).analyze(fqn, includeLibraries)
-    }
+    override fun getDependencies(
+        fqn: String,
+        includeLibraries: Boolean,
+    ): Pair<List<DependencyInfo>, List<DependencyInfo>> = DependencyAnalyzer(classes).analyze(fqn, includeLibraries)
 
-    override fun getAnnotationUsages(annotationFqn: String, includeLibraries: Boolean): List<ClassSummary> {
-        return classes.values
+    override fun getAnnotationUsages(
+        annotationFqn: String,
+        includeLibraries: Boolean,
+    ): List<ClassSummary> =
+        classes.values
             .asSequence()
             .filter { classInfo ->
                 (includeLibraries || classInfo.source == ClassSource.PROJECT) &&
                     classInfo.annotations.any { it.type == annotationFqn }
-            }
-            .map { it.toSummary() }
+            }.map { it.toSummary() }
             .sortedBy { it.fqn }
             .toList()
-    }
 
     override fun searchMethods(filter: MethodFilter): List<MethodSearchResult> {
         val results = mutableListOf<MethodSearchResult>()
@@ -313,8 +323,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                             classFqn = classInfo.name.fqn,
                             classSimpleName = classInfo.name.simpleName,
                             classSource = classInfo.source,
-                            method = method
-                        )
+                            method = method,
+                        ),
                     )
                 }
             }
@@ -323,9 +333,7 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         return results.sortedWith(compareBy({ it.classFqn }, { it.method.name }))
     }
 
-    override fun getAllClasses(): Map<String, ClassInfo> {
-        return classes.toMap()
-    }
+    override fun getAllClasses(): Map<String, ClassInfo> = classes.toMap()
 
     override fun getClassBytes(fqn: String): ByteArray? {
         val classInfo = classes[fqn] ?: return null
@@ -394,15 +402,19 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     /**
      * Converts a ClassGraph ClassInfo to our model.
      */
-    private fun convertClassInfo(cgClass: CGClassInfo, projectOutputPaths: Set<String>): ClassInfo {
+    private fun convertClassInfo(
+        cgClass: CGClassInfo,
+        projectOutputPaths: Set<String>,
+    ): ClassInfo {
         val source = classifySource(cgClass, projectOutputPaths)
 
         return ClassInfo(
-            name = ClassName(
-                fqn = cgClass.name,
-                simpleName = cgClass.simpleName,
-                packageName = cgClass.packageName ?: ""
-            ),
+            name =
+                ClassName(
+                    fqn = cgClass.name,
+                    simpleName = cgClass.simpleName,
+                    packageName = cgClass.packageName ?: "",
+                ),
             source = source,
             visibility = getVisibility(cgClass),
             isInterface = cgClass.isInterface,
@@ -417,14 +429,17 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             constructors = cgClass.declaredConstructorInfo.map { convertConstructor(it) },
             methods = cgClass.declaredMethodInfo.map { convertMethod(it) },
             fields = cgClass.declaredFieldInfo.map { convertField(it) },
-            jarPath = cgClass.classpathElementFile?.absolutePath
+            jarPath = cgClass.classpathElementFile?.absolutePath,
         )
     }
 
     /**
      * Classifies the source of a class.
      */
-    private fun classifySource(cgClass: CGClassInfo, projectOutputPaths: Set<String>): ClassSource {
+    private fun classifySource(
+        cgClass: CGClassInfo,
+        projectOutputPaths: Set<String>,
+    ): ClassSource {
         val classLocation = cgClass.classpathElementFile?.absolutePath
 
         return when {
@@ -438,11 +453,21 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     /**
      * Checks if a class is from the JDK.
      */
-    private fun isJdkClass(className: String, location: String): Boolean {
-        val jdkPackages = listOf(
-            "java.", "javax.", "sun.", "com.sun.", "jdk.",
-            "org.w3c.", "org.xml.", "org.ietf."
-        )
+    private fun isJdkClass(
+        className: String,
+        location: String,
+    ): Boolean {
+        val jdkPackages =
+            listOf(
+                "java.",
+                "javax.",
+                "sun.",
+                "com.sun.",
+                "jdk.",
+                "org.w3c.",
+                "org.xml.",
+                "org.ietf.",
+            )
         if (jdkPackages.any { className.startsWith(it) }) {
             return true
         }
@@ -454,14 +479,13 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     /**
      * Gets the visibility modifier for a class.
      */
-    private fun getVisibility(cgClass: CGClassInfo): Visibility {
-        return when {
+    private fun getVisibility(cgClass: CGClassInfo): Visibility =
+        when {
             cgClass.isPublic -> Visibility.PUBLIC
             cgClass.isProtected -> Visibility.PROTECTED
             cgClass.isPrivate -> Visibility.PRIVATE
             else -> Visibility.PACKAGE_PRIVATE
         }
-    }
 
     /**
      * Converts an annotation.
@@ -473,7 +497,7 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         }
         return AnnotationInfo(
             type = ann.name,
-            parameters = params
+            parameters = params,
         )
     }
 
@@ -481,8 +505,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
      * Formats an annotation parameter value to a human-readable string.
      * Handles arrays properly instead of showing Java object references.
      */
-    private fun formatAnnotationValue(value: Any?): String {
-        return when (value) {
+    private fun formatAnnotationValue(value: Any?): String =
+        when (value) {
             null -> "null"
             is BooleanArray -> value.contentToString()
             is ByteArray -> value.contentToString()
@@ -497,86 +521,82 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             is Class<*> -> value.name
             else -> value.toString()
         }
-    }
 
     /**
      * Converts a constructor.
      */
-    private fun convertConstructor(ctor: CGMethodInfo): ConstructorInfo {
-        return ConstructorInfo(
+    private fun convertConstructor(ctor: CGMethodInfo): ConstructorInfo =
+        ConstructorInfo(
             visibility = getMethodVisibility(ctor),
-            parameters = ctor.parameterInfo.mapIndexed { index, param ->
-                ParameterInfo(
-                    name = param.name ?: "arg$index",
-                    type = param.typeDescriptor?.toString() ?: "java.lang.Object",
-                    annotations = param.annotationInfo.map { convertAnnotation(it) }
-                )
-            },
+            parameters =
+                ctor.parameterInfo.mapIndexed { index, param ->
+                    ParameterInfo(
+                        name = param.name ?: "arg$index",
+                        type = param.typeDescriptor?.toString() ?: "java.lang.Object",
+                        annotations = param.annotationInfo.map { convertAnnotation(it) },
+                    )
+                },
             annotations = ctor.annotationInfo.map { convertAnnotation(it) },
-            isSynthetic = ctor.isSynthetic
+            isSynthetic = ctor.isSynthetic,
         )
-    }
 
     /**
      * Converts a method.
      */
-    private fun convertMethod(method: CGMethodInfo): MethodInfo {
-        return MethodInfo(
+    private fun convertMethod(method: CGMethodInfo): MethodInfo =
+        MethodInfo(
             name = method.name,
             visibility = getMethodVisibility(method),
             returnType = method.typeDescriptor?.resultType?.toString() ?: "void",
-            parameters = method.parameterInfo.mapIndexed { index, param ->
-                ParameterInfo(
-                    name = param.name ?: "arg$index",
-                    type = param.typeDescriptor?.toString() ?: "java.lang.Object",
-                    annotations = param.annotationInfo.map { convertAnnotation(it) }
-                )
-            },
+            parameters =
+                method.parameterInfo.mapIndexed { index, param ->
+                    ParameterInfo(
+                        name = param.name ?: "arg$index",
+                        type = param.typeDescriptor?.toString() ?: "java.lang.Object",
+                        annotations = param.annotationInfo.map { convertAnnotation(it) },
+                    )
+                },
             annotations = method.annotationInfo.map { convertAnnotation(it) },
             isStatic = method.isStatic,
             isAbstract = method.isAbstract,
             isFinal = method.isFinal,
-            isSynthetic = method.isSynthetic
+            isSynthetic = method.isSynthetic,
         )
-    }
 
     /**
      * Gets the visibility modifier for a method.
      */
-    private fun getMethodVisibility(method: CGMethodInfo): Visibility {
-        return when {
+    private fun getMethodVisibility(method: CGMethodInfo): Visibility =
+        when {
             method.isPublic -> Visibility.PUBLIC
             method.isProtected -> Visibility.PROTECTED
             method.isPrivate -> Visibility.PRIVATE
             else -> Visibility.PACKAGE_PRIVATE
         }
-    }
 
     /**
      * Converts a field.
      */
-    private fun convertField(field: CGFieldInfo): FieldInfo {
-        return FieldInfo(
+    private fun convertField(field: CGFieldInfo): FieldInfo =
+        FieldInfo(
             name = field.name,
             visibility = getFieldVisibility(field),
             type = field.typeDescriptor?.toString() ?: "java.lang.Object",
             annotations = field.annotationInfo.map { convertAnnotation(it) },
             isStatic = field.isStatic,
-            isFinal = field.isFinal
+            isFinal = field.isFinal,
         )
-    }
 
     /**
      * Gets the visibility modifier for a field.
      */
-    private fun getFieldVisibility(field: CGFieldInfo): Visibility {
-        return when {
+    private fun getFieldVisibility(field: CGFieldInfo): Visibility =
+        when {
             field.isPublic -> Visibility.PUBLIC
             field.isProtected -> Visibility.PROTECTED
             field.isPrivate -> Visibility.PRIVATE
             else -> Visibility.PACKAGE_PRIVATE
         }
-    }
 
     /**
      * Checks if a class matches the given filter.
@@ -584,7 +604,7 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     private fun matchesFilter(
         classInfo: ClassInfo,
         filter: ClassFilter,
-        effectiveSource: ClassSource?
+        effectiveSource: ClassSource?,
     ): Boolean {
         // Source filter
         if (effectiveSource != null && classInfo.source != effectiveSource) {
@@ -605,7 +625,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         // Name pattern
         filter.namePattern?.let { pattern ->
             if (!matchesPattern(classInfo.name.simpleName, pattern) &&
-                !matchesPattern(classInfo.name.fqn, pattern)) {
+                !matchesPattern(classInfo.name.fqn, pattern)
+            ) {
                 return false
             }
         }
@@ -637,22 +658,29 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     /**
      * Matches a string against a pattern with * wildcards.
      */
-    private fun matchesPattern(value: String, pattern: String): Boolean {
+    private fun matchesPattern(
+        value: String,
+        pattern: String,
+    ): Boolean {
         if (!pattern.contains("*")) {
             return value == pattern
         }
 
-        val regex = pattern
-            .replace(".", "\\.")
-            .replace("*", ".*")
+        val regex =
+            pattern
+                .replace(".", "\\.")
+                .replace("*", ".*")
         return value.matches(Regex(regex))
     }
 
     /**
      * Creates empty statistics for when no classes were found.
      */
-    private fun createEmptyStatistics(startTime: Long, resolvedBy: String): ScanStatistics {
-        return ScanStatistics(
+    private fun createEmptyStatistics(
+        startTime: Long,
+        resolvedBy: String,
+    ): ScanStatistics =
+        ScanStatistics(
             projectClassCount = 0,
             libraryClassCount = 0,
             jdkClassCount = 0,
@@ -665,14 +693,17 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             classpathResolvedBy = resolvedBy,
             classpathEntryCount = 0,
             scanDurationMs = System.currentTimeMillis() - startTime,
-            scannedAt = Instant.now().toString()
+            scannedAt = Instant.now().toString(),
         )
-    }
 
     /**
      * Builds statistics from the scanned classes.
      */
-    private fun buildStatistics(startTime: Long, classpathEntryCount: Int, resolvedBy: String): ScanStatistics {
+    private fun buildStatistics(
+        startTime: Long,
+        classpathEntryCount: Int,
+        resolvedBy: String,
+    ): ScanStatistics {
         var projectClassCount = 0
         var libraryClassCount = 0
         var jdkClassCount = 0
@@ -712,7 +743,7 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             classpathResolvedBy = resolvedBy,
             classpathEntryCount = classpathEntryCount,
             scanDurationMs = System.currentTimeMillis() - startTime,
-            scannedAt = Instant.now().toString()
+            scannedAt = Instant.now().toString(),
         )
     }
 }
@@ -720,8 +751,8 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 /**
  * Extension function to convert ClassInfo to ClassSummary.
  */
-private fun ClassInfo.toSummary(): ClassSummary {
-    return ClassSummary(
+private fun ClassInfo.toSummary(): ClassSummary =
+    ClassSummary(
         fqn = this.name.fqn,
         simpleName = this.name.simpleName,
         packageName = this.name.packageName,
@@ -731,6 +762,5 @@ private fun ClassInfo.toSummary(): ClassSummary {
         isEnum = this.isEnum,
         isAnnotation = this.isAnnotation,
         methodCount = this.methods.size,
-        fieldCount = this.fields.size
+        fieldCount = this.fields.size,
     )
-}

@@ -20,5 +20,5 @@ data class ServerConfig(
     val portRangeEnd: Int,
     val idleTimeoutMinutes: Int,
     val classpathFile: String? = null,
-    val projectJavaHome: String? = null
+    val projectJavaHome: String? = null,
 )

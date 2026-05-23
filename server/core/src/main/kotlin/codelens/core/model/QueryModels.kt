@@ -24,19 +24,18 @@ data class ClassFilter(
     /** Include only classes (not interfaces) */
     val onlyClasses: Boolean = false,
     /** Include libraries in results (default: false, only PROJECT) */
-    val includeLibraries: Boolean = false
+    val includeLibraries: Boolean = false,
 ) {
     /**
      * Returns an effective source filter.
      * If includeLibraries is false and no explicit source is set, defaults to PROJECT.
      */
-    fun effectiveSourceFilter(): ClassSource? {
-        return when {
+    fun effectiveSourceFilter(): ClassSource? =
+        when {
             source != null -> source
             !includeLibraries -> ClassSource.PROJECT
             else -> null
         }
-    }
 }
 
 /**
@@ -55,7 +54,7 @@ data class MethodFilter(
     /** Filter by containing package pattern */
     val inPackage: String? = null,
     /** Include libraries in results */
-    val includeLibraries: Boolean = false
+    val includeLibraries: Boolean = false,
 )
 
 /**
@@ -70,7 +69,7 @@ data class PageRequest(
     /** Sort field */
     val sortBy: String = "fqn",
     /** Sort direction */
-    val sortDirection: SortDirection = SortDirection.ASC
+    val sortDirection: SortDirection = SortDirection.ASC,
 )
 
 /**
@@ -78,7 +77,8 @@ data class PageRequest(
  */
 @Serializable
 enum class SortDirection {
-    ASC, DESC
+    ASC,
+    DESC,
 }
 
 /**
@@ -95,13 +95,13 @@ data class PagedResponse<T>(
     /** Number of items per page */
     val pageSize: Int,
     /** Total number of pages */
-    val totalPages: Int
+    val totalPages: Int,
 ) {
     companion object {
         fun <T> of(
             items: List<T>,
             allItems: List<T>,
-            pageRequest: PageRequest
+            pageRequest: PageRequest,
         ): PagedResponse<T> {
             val totalItems = allItems.size
             val totalPages = if (totalItems == 0) 1 else (totalItems + pageRequest.size - 1) / pageRequest.size
@@ -110,7 +110,7 @@ data class PagedResponse<T>(
                 totalItems = totalItems,
                 page = pageRequest.page,
                 pageSize = pageRequest.size,
-                totalPages = totalPages
+                totalPages = totalPages,
             )
         }
     }

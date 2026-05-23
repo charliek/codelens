@@ -10,41 +10,45 @@ import org.slf4j.LoggerFactory
  */
 object AntiPatternIndicators {
     // JDBC types that indicate database calls
-    val JDBC_TYPES = setOf(
-        "java.sql.Connection",
-        "java.sql.Statement",
-        "java.sql.PreparedStatement",
-        "java.sql.CallableStatement",
-        "java.sql.ResultSet",
-        "javax.sql.DataSource"
-    )
+    val JDBC_TYPES =
+        setOf(
+            "java.sql.Connection",
+            "java.sql.Statement",
+            "java.sql.PreparedStatement",
+            "java.sql.CallableStatement",
+            "java.sql.ResultSet",
+            "javax.sql.DataSource",
+        )
 
     // Blocking HTTP client types
-    val BLOCKING_HTTP_TYPES = setOf(
-        "org.apache.http.client.HttpClient",
-        "org.apache.http.impl.client.CloseableHttpClient",
-        "org.apache.http.impl.client.HttpClients",
-        "java.net.HttpURLConnection",
-        "java.net.URL"
-    )
+    val BLOCKING_HTTP_TYPES =
+        setOf(
+            "org.apache.http.client.HttpClient",
+            "org.apache.http.impl.client.CloseableHttpClient",
+            "org.apache.http.impl.client.HttpClients",
+            "java.net.HttpURLConnection",
+            "java.net.URL",
+        )
 
     // Synchronous file I/O types
-    val FILE_IO_TYPES = setOf(
-        "java.io.FileInputStream",
-        "java.io.FileOutputStream",
-        "java.io.FileReader",
-        "java.io.FileWriter",
-        "java.io.RandomAccessFile",
-        "java.io.BufferedReader",
-        "java.io.BufferedWriter"
-    )
+    val FILE_IO_TYPES =
+        setOf(
+            "java.io.FileInputStream",
+            "java.io.FileOutputStream",
+            "java.io.FileReader",
+            "java.io.FileWriter",
+            "java.io.RandomAccessFile",
+            "java.io.BufferedReader",
+            "java.io.BufferedWriter",
+        )
 
     // Types that indicate async patterns are being used
-    val ASYNC_TYPES = setOf(
-        "ratpack.exec.Blocking",
-        "ratpack.exec.Promise",
-        "ratpack.exec.Operation"
-    )
+    val ASYNC_TYPES =
+        setOf(
+            "ratpack.exec.Blocking",
+            "ratpack.exec.Promise",
+            "ratpack.exec.Operation",
+        )
 }
 
 /**
@@ -54,7 +58,7 @@ object AntiPatternIndicators {
  * This is a heuristic approach since we cannot analyze method bodies without source code.
  */
 class AntiPatternDetector(
-    private val classGraphProvider: ClassGraphProvider
+    private val classGraphProvider: ClassGraphProvider,
 ) {
     private val logger = LoggerFactory.getLogger(AntiPatternDetector::class.java)
 
@@ -62,30 +66,30 @@ class AntiPatternDetector(
     private val ratpackDetector by lazy { RatpackDetector(classGraphProvider) }
 
     // Bounded LRU cache of known handler FQNs (max 1000 entries)
-    private val handlerCache = object : LinkedHashMap<String, Boolean>(100, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
-            return size > 1000
+    private val handlerCache =
+        object : LinkedHashMap<String, Boolean>(100, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean = size > 1000
         }
-    }
 
     /**
      * Check if a type matches any of the indicator types.
      * Uses exact FQN matching or suffix matching with proper boundaries.
      */
-    private fun typeMatchesAny(type: String, indicators: Set<String>): Boolean {
-        return indicators.any { indicator ->
+    private fun typeMatchesAny(
+        type: String,
+        indicators: Set<String>,
+    ): Boolean =
+        indicators.any { indicator ->
             type == indicator || type.endsWith(".$indicator")
         }
-    }
 
     /**
      * Check if a class is a Ratpack handler.
      */
-    private fun isHandler(fqn: String): Boolean {
-        return handlerCache.getOrPut(fqn) {
+    private fun isHandler(fqn: String): Boolean =
+        handlerCache.getOrPut(fqn) {
             ratpackDetector.getHandlerDetail(fqn) != null
         }
-    }
 
     /**
      * Analyze a specific class for anti-patterns.
@@ -100,7 +104,7 @@ class AntiPatternDetector(
      */
     private fun analyzeClassForAntiPatterns(
         classInfo: codelens.core.model.ClassInfo,
-        fqn: String
+        fqn: String,
     ): List<AntiPatternInstance> {
         val antiPatterns = mutableListOf<AntiPatternInstance>()
 
@@ -111,9 +115,10 @@ class AntiPatternDetector(
         val allTypes = collectAllTypes(classInfo)
 
         // Check if class uses async patterns
-        val usesAsyncPatterns = allTypes.any { type ->
-            typeMatchesAny(type, AntiPatternIndicators.ASYNC_TYPES)
-        }
+        val usesAsyncPatterns =
+            allTypes.any { type ->
+                typeMatchesAny(type, AntiPatternIndicators.ASYNC_TYPES)
+            }
 
         // Check for blocking JDBC usage
         antiPatterns.addAll(detectBlockingJdbc(classInfo, fqn, isHandler, usesAsyncPatterns))
@@ -160,18 +165,21 @@ class AntiPatternDetector(
         classInfo: codelens.core.model.ClassInfo,
         fqn: String,
         isHandler: Boolean,
-        usesAsyncPatterns: Boolean
+        usesAsyncPatterns: Boolean,
     ): List<AntiPatternInstance> {
         val results = mutableListOf<AntiPatternInstance>()
 
         // Check fields for JDBC types
-        val jdbcFields = classInfo.fields.filter { field ->
-            typeMatchesAny(field.type, AntiPatternIndicators.JDBC_TYPES)
-        }
+        val jdbcFields =
+            classInfo.fields.filter { field ->
+                typeMatchesAny(field.type, AntiPatternIndicators.JDBC_TYPES)
+            }
 
         // Check constructor params for JDBC types
-        val jdbcParams = classInfo.constructors.flatMap { it.parameters }
-            .filter { param -> typeMatchesAny(param.type, AntiPatternIndicators.JDBC_TYPES) }
+        val jdbcParams =
+            classInfo.constructors
+                .flatMap { it.parameters }
+                .filter { param -> typeMatchesAny(param.type, AntiPatternIndicators.JDBC_TYPES) }
 
         if (jdbcFields.isNotEmpty() || jdbcParams.isNotEmpty()) {
             // If using JDBC but not using async patterns, flag it
@@ -184,10 +192,12 @@ class AntiPatternDetector(
                         classFqn = fqn,
                         methodName = null,
                         confidence = 0.8,
-                        reason = "JDBC types (${fieldNames.ifEmpty { jdbcParams.map { it.type.substringAfterLast(".") } }.joinToString()}) " +
-                            "are used without visible Blocking.get() usage. This may block the event loop.",
+                        reason =
+                            "JDBC types (${fieldNames.ifEmpty { jdbcParams.map { it.type.substringAfterLast(".") } }.joinToString()}) " +
+                                "are used without visible Blocking.get() usage. This may block the event loop.",
                         recommendation = "Wrap JDBC calls in Blocking.get { ... } to move them off the compute thread.",
-                        fixExample = """
+                        fixExample =
+                            """
                             |// Before (blocking):
                             |val result = connection.prepareStatement(sql).executeQuery()
                             |
@@ -197,8 +207,8 @@ class AntiPatternDetector(
                             |}.then { result ->
                             |    // handle result
                             |}
-                        """.trimMargin()
-                    )
+                            """.trimMargin(),
+                    ),
                 )
             }
         }
@@ -212,26 +222,32 @@ class AntiPatternDetector(
     private fun detectBlockingHttpClient(
         classInfo: codelens.core.model.ClassInfo,
         fqn: String,
-        isHandler: Boolean
+        isHandler: Boolean,
     ): List<AntiPatternInstance> {
         val results = mutableListOf<AntiPatternInstance>()
 
         // Check fields for blocking HTTP types
-        val blockingHttpFields = classInfo.fields.filter { field ->
-            typeMatchesAny(field.type, AntiPatternIndicators.BLOCKING_HTTP_TYPES)
-        }
+        val blockingHttpFields =
+            classInfo.fields.filter { field ->
+                typeMatchesAny(field.type, AntiPatternIndicators.BLOCKING_HTTP_TYPES)
+            }
 
         // Check constructor params for blocking HTTP types
-        val blockingHttpParams = classInfo.constructors.flatMap { it.parameters }
-            .filter { param -> typeMatchesAny(param.type, AntiPatternIndicators.BLOCKING_HTTP_TYPES) }
+        val blockingHttpParams =
+            classInfo.constructors
+                .flatMap { it.parameters }
+                .filter { param -> typeMatchesAny(param.type, AntiPatternIndicators.BLOCKING_HTTP_TYPES) }
 
         if (blockingHttpFields.isNotEmpty() || blockingHttpParams.isNotEmpty()) {
             // Check if also using Ratpack's HttpClient
             val ratpackHttpClientType = setOf("ratpack.http.client.HttpClient")
-            val usesRatpackHttpClient = classInfo.fields.any { field ->
-                typeMatchesAny(field.type, ratpackHttpClientType)
-            } || classInfo.constructors.flatMap { it.parameters }
-                .any { typeMatchesAny(it.type, ratpackHttpClientType) }
+            val usesRatpackHttpClient =
+                classInfo.fields.any { field ->
+                    typeMatchesAny(field.type, ratpackHttpClientType)
+                } ||
+                    classInfo.constructors
+                        .flatMap { it.parameters }
+                        .any { typeMatchesAny(it.type, ratpackHttpClientType) }
 
             if (!usesRatpackHttpClient) {
                 val fieldNames = blockingHttpFields.map { it.name }
@@ -242,10 +258,18 @@ class AntiPatternDetector(
                         classFqn = fqn,
                         methodName = null,
                         confidence = 0.85,
-                        reason = "Blocking HTTP client (${fieldNames.ifEmpty { blockingHttpParams.map { it.type.substringAfterLast(".") } }.joinToString()}) " +
-                            "detected. Apache HttpClient and java.net.URL perform blocking I/O.",
+                        reason =
+                            "Blocking HTTP client (${fieldNames.ifEmpty {
+                                blockingHttpParams.map {
+                                    it.type.substringAfterLast(
+                                        ".",
+                                    )
+                                }
+                            }.joinToString()}) " +
+                                "detected. Apache HttpClient and java.net.URL perform blocking I/O.",
                         recommendation = "Use Ratpack's HttpClient which returns Promises for async HTTP calls.",
-                        fixExample = """
+                        fixExample =
+                            """
                             |// Before (blocking with Apache HttpClient):
                             |val response = httpClient.execute(request)
                             |
@@ -253,8 +277,8 @@ class AntiPatternDetector(
                             |httpClient.get(uri).then { response ->
                             |    // handle response
                             |}
-                        """.trimMargin()
-                    )
+                            """.trimMargin(),
+                    ),
                 )
             }
         }
@@ -269,18 +293,21 @@ class AntiPatternDetector(
         classInfo: codelens.core.model.ClassInfo,
         fqn: String,
         isHandler: Boolean,
-        usesAsyncPatterns: Boolean
+        usesAsyncPatterns: Boolean,
     ): List<AntiPatternInstance> {
         val results = mutableListOf<AntiPatternInstance>()
 
         // Check fields for file I/O types
-        val fileIoFields = classInfo.fields.filter { field ->
-            typeMatchesAny(field.type, AntiPatternIndicators.FILE_IO_TYPES)
-        }
+        val fileIoFields =
+            classInfo.fields.filter { field ->
+                typeMatchesAny(field.type, AntiPatternIndicators.FILE_IO_TYPES)
+            }
 
         // Check constructor params for file I/O types
-        val fileIoParams = classInfo.constructors.flatMap { it.parameters }
-            .filter { param -> typeMatchesAny(param.type, AntiPatternIndicators.FILE_IO_TYPES) }
+        val fileIoParams =
+            classInfo.constructors
+                .flatMap { it.parameters }
+                .filter { param -> typeMatchesAny(param.type, AntiPatternIndicators.FILE_IO_TYPES) }
 
         if ((fileIoFields.isNotEmpty() || fileIoParams.isNotEmpty()) && !usesAsyncPatterns) {
             val fieldNames = fileIoFields.map { it.name }
@@ -291,10 +318,18 @@ class AntiPatternDetector(
                     classFqn = fqn,
                     methodName = null,
                     confidence = 0.75,
-                    reason = "Synchronous file I/O types (${fieldNames.ifEmpty { fileIoParams.map { it.type.substringAfterLast(".") } }.joinToString()}) " +
-                        "detected without visible Blocking usage.",
+                    reason =
+                        "Synchronous file I/O types (${fieldNames.ifEmpty {
+                            fileIoParams.map {
+                                it.type.substringAfterLast(
+                                    ".",
+                                )
+                            }
+                        }.joinToString()}) " +
+                            "detected without visible Blocking usage.",
                     recommendation = "Wrap file I/O in Blocking.get { ... } or use async file APIs.",
-                    fixExample = """
+                    fixExample =
+                        """
                         |// Before (blocking):
                         |val content = Files.readAllBytes(path)
                         |
@@ -304,8 +339,8 @@ class AntiPatternDetector(
                         |}.then { content ->
                         |    // handle content
                         |}
-                    """.trimMargin()
-                )
+                        """.trimMargin(),
+                ),
             )
         }
 
@@ -317,26 +352,30 @@ class AntiPatternDetector(
      */
     private fun detectConsoleLogging(
         classInfo: codelens.core.model.ClassInfo,
-        fqn: String
+        fqn: String,
     ): List<AntiPatternInstance> {
         val results = mutableListOf<AntiPatternInstance>()
 
         // Check if any field is a PrintStream (but not named as logger)
         val printStreamType = setOf("java.io.PrintStream")
-        val printStreamFields = classInfo.fields.filter { field ->
-            typeMatchesAny(field.type, printStreamType) &&
-                !field.name.lowercase().contains("log")
-        }
+        val printStreamFields =
+            classInfo.fields.filter { field ->
+                typeMatchesAny(field.type, printStreamType) &&
+                    !field.name.lowercase().contains("log")
+            }
 
         // Check method parameters for PrintStream
-        val printStreamParams = classInfo.methods.flatMap { it.parameters }
-            .filter { param -> typeMatchesAny(param.type, printStreamType) }
+        val printStreamParams =
+            classInfo.methods
+                .flatMap { it.parameters }
+                .filter { param -> typeMatchesAny(param.type, printStreamType) }
 
         if (printStreamFields.isNotEmpty() || printStreamParams.isNotEmpty()) {
             // Check if class has a logger (using suffix check for Logger types)
-            val hasLogger = classInfo.fields.any { field ->
-                field.type.endsWith("Logger") || field.type.endsWith("Log")
-            }
+            val hasLogger =
+                classInfo.fields.any { field ->
+                    field.type.endsWith("Logger") || field.type.endsWith("Log")
+                }
 
             if (!hasLogger) {
                 results.add(
@@ -346,18 +385,20 @@ class AntiPatternDetector(
                         classFqn = fqn,
                         methodName = null,
                         confidence = 0.6,
-                        reason = "PrintStream usage detected without a logger field. " +
-                            "Direct console output is synchronous and not captured by logging frameworks.",
+                        reason =
+                            "PrintStream usage detected without a logger field. " +
+                                "Direct console output is synchronous and not captured by logging frameworks.",
                         recommendation = "Use SLF4J or another logging framework for proper log management.",
-                        fixExample = """
+                        fixExample =
+                            """
                             |// Before:
                             |System.out.println("Processing request")
                             |
                             |// After:
                             |private val logger = LoggerFactory.getLogger(MyClass::class.java)
                             |logger.info("Processing request")
-                        """.trimMargin()
-                    )
+                            """.trimMargin(),
+                    ),
                 )
             }
         }
@@ -371,7 +412,7 @@ class AntiPatternDetector(
     fun getProjectSummary(
         severityFilter: AntiPatternSeverity? = null,
         typeFilter: AntiPatternType? = null,
-        includeLibraries: Boolean = false
+        includeLibraries: Boolean = false,
     ): AntiPatternSummary {
         val allInstances = mutableListOf<AntiPatternInstance>()
         val filter = ClassFilter(includeLibraries = includeLibraries)
@@ -383,42 +424,49 @@ class AntiPatternDetector(
         }
 
         // Apply filters
-        val filteredInstances = allInstances.filter { instance ->
-            (severityFilter == null || instance.severity == severityFilter) &&
-                (typeFilter == null || instance.type == typeFilter)
-        }
+        val filteredInstances =
+            allInstances.filter { instance ->
+                (severityFilter == null || instance.severity == severityFilter) &&
+                    (typeFilter == null || instance.type == typeFilter)
+            }
 
         // Build count by type
-        val countByType = filteredInstances.groupBy { it.type }
-            .mapValues { it.value.size }
+        val countByType =
+            filteredInstances
+                .groupBy { it.type }
+                .mapValues { it.value.size }
 
         // Build count by severity
-        val countBySeverity = filteredInstances.groupBy { it.severity }
-            .mapValues { it.value.size }
+        val countBySeverity =
+            filteredInstances
+                .groupBy { it.severity }
+                .mapValues { it.value.size }
 
         // Find worst offenders (top 10 classes by anti-pattern count)
-        val classCounts = filteredInstances.groupBy { it.classFqn }
-            .map { (classFqn, instances) ->
-                ClassAntiPatternCount(
-                    classFqn = classFqn,
-                    count = instances.size,
-                    criticalCount = instances.count { it.severity == AntiPatternSeverity.CRITICAL },
-                    errorCount = instances.count { it.severity == AntiPatternSeverity.ERROR }
-                )
-            }
-            .sortedWith(compareBy(
-                { -it.criticalCount },
-                { -it.errorCount },
-                { -it.count }
-            ))
-            .take(10)
+        val classCounts =
+            filteredInstances
+                .groupBy { it.classFqn }
+                .map { (classFqn, instances) ->
+                    ClassAntiPatternCount(
+                        classFqn = classFqn,
+                        count = instances.size,
+                        criticalCount = instances.count { it.severity == AntiPatternSeverity.CRITICAL },
+                        errorCount = instances.count { it.severity == AntiPatternSeverity.ERROR },
+                    )
+                }.sortedWith(
+                    compareBy(
+                        { -it.criticalCount },
+                        { -it.errorCount },
+                        { -it.count },
+                    ),
+                ).take(10)
 
         return AntiPatternSummary(
             instances = filteredInstances,
             countByType = countByType,
             countBySeverity = countBySeverity,
             worstOffenders = classCounts,
-            totalCount = filteredInstances.size
+            totalCount = filteredInstances.size,
         )
     }
 }

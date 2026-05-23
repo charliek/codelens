@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
  * - Guice module analysis
  */
 class RatpackAnalysisService(
-    private val classGraphProvider: ClassGraphProvider
+    private val classGraphProvider: ClassGraphProvider,
 ) {
     private val logger = LoggerFactory.getLogger(RatpackAnalysisService::class.java)
 
@@ -50,7 +50,7 @@ class RatpackAnalysisService(
     fun listHandlers(
         handlerType: HandlerType? = null,
         tier: ComplexityTier? = null,
-        includeLibraries: Boolean = false
+        includeLibraries: Boolean = false,
     ): List<HandlerSummary> {
         val handlers = ratpackDetector.findAllHandlers(includeLibraries)
 
@@ -66,9 +66,7 @@ class RatpackAnalysisService(
      * @param fqn Fully qualified class name
      * @return Handler info, or null if not found
      */
-    fun getHandlerDetail(fqn: String): HandlerInfo? {
-        return ratpackDetector.getHandlerDetail(fqn)
-    }
+    fun getHandlerDetail(fqn: String): HandlerInfo? = ratpackDetector.getHandlerDetail(fqn)
 
     // =========================================================================
     // Promise Analysis
@@ -80,9 +78,7 @@ class RatpackAnalysisService(
      * @param includeLibraries Include library classes
      * @return Promise usage summary
      */
-    fun getPromiseSummary(includeLibraries: Boolean = false): PromiseSummary {
-        return promiseDetector.getProjectSummary(includeLibraries)
-    }
+    fun getPromiseSummary(includeLibraries: Boolean = false): PromiseSummary = promiseDetector.getProjectSummary(includeLibraries)
 
     /**
      * Get Promise usage for a specific class.
@@ -90,9 +86,7 @@ class RatpackAnalysisService(
      * @param fqn Fully qualified class name
      * @return Promise usage info
      */
-    fun getPromiseUsage(fqn: String): PromiseUsageInfo {
-        return promiseDetector.analyzeClass(fqn)
-    }
+    fun getPromiseUsage(fqn: String): PromiseUsageInfo = promiseDetector.analyzeClass(fqn)
 
     /**
      * Search for classes with specific Promise usage patterns.
@@ -107,15 +101,14 @@ class RatpackAnalysisService(
         usesBlocking: Boolean? = null,
         usesAsync: Boolean? = null,
         usesFork: Boolean? = null,
-        minOperations: Int = 0
-    ): List<PromiseUsageInfo> {
-        return promiseDetector.search(
+        minOperations: Int = 0,
+    ): List<PromiseUsageInfo> =
+        promiseDetector.search(
             usesBlocking = usesBlocking,
             usesAsync = usesAsync,
             usesFork = usesFork,
-            minOperations = minOperations
+            minOperations = minOperations,
         )
-    }
 
     // =========================================================================
     // Complexity Analysis
@@ -137,9 +130,7 @@ class RatpackAnalysisService(
      * @param fqn Fully qualified class name
      * @return Complexity result
      */
-    fun getComplexity(fqn: String): ComplexityResult {
-        return complexityCalculator.calculate(fqn)
-    }
+    fun getComplexity(fqn: String): ComplexityResult = complexityCalculator.calculate(fqn)
 
     /**
      * Get suggested migration order.
@@ -161,9 +152,7 @@ class RatpackAnalysisService(
      * @param includeLibraries Include modules from libraries
      * @return List of module summaries
      */
-    fun listModules(includeLibraries: Boolean = false): List<GuiceModuleSummary> {
-        return guiceModuleDetector.findAllModules(includeLibraries)
-    }
+    fun listModules(includeLibraries: Boolean = false): List<GuiceModuleSummary> = guiceModuleDetector.findAllModules(includeLibraries)
 
     /**
      * Get detailed information about a Guice module.
@@ -171,9 +160,7 @@ class RatpackAnalysisService(
      * @param fqn Fully qualified class name
      * @return Module info, or null if not found
      */
-    fun getModuleDetail(fqn: String): GuiceModuleInfo? {
-        return guiceModuleDetector.getModuleDetail(fqn)
-    }
+    fun getModuleDetail(fqn: String): GuiceModuleInfo? = guiceModuleDetector.getModuleDetail(fqn)
 
     /**
      * Find all bindings for a specific type.
@@ -181,9 +168,7 @@ class RatpackAnalysisService(
      * @param typeFqn Fully qualified type name
      * @return List of (module FQN, binding) pairs
      */
-    fun findBindingsForType(typeFqn: String): List<Pair<String, GuiceBinding>> {
-        return guiceModuleDetector.findBindingsForType(typeFqn)
-    }
+    fun findBindingsForType(typeFqn: String): List<Pair<String, GuiceBinding>> = guiceModuleDetector.findBindingsForType(typeFqn)
 
     // =========================================================================
     // Integration Analysis
@@ -195,9 +180,8 @@ class RatpackAnalysisService(
      * @param includeLibraries Include library classes
      * @return Integration summary
      */
-    fun getIntegrationsSummary(includeLibraries: Boolean = false): ProjectIntegrationSummary {
-        return integrationDetector.getProjectSummary(includeLibraries)
-    }
+    fun getIntegrationsSummary(includeLibraries: Boolean = false): ProjectIntegrationSummary =
+        integrationDetector.getProjectSummary(includeLibraries)
 
     /**
      * Get integrations for a specific class.
@@ -205,9 +189,7 @@ class RatpackAnalysisService(
      * @param fqn Fully qualified class name
      * @return Class integrations, or null if class not found
      */
-    fun getClassIntegrations(fqn: String): ClassIntegrations? {
-        return integrationDetector.analyzeClass(fqn)
-    }
+    fun getClassIntegrations(fqn: String): ClassIntegrations? = integrationDetector.analyzeClass(fqn)
 
     /**
      * Find classes by integration type.
@@ -220,10 +202,8 @@ class RatpackAnalysisService(
     fun findIntegrationsByType(
         type: IntegrationType,
         subType: IntegrationSubType? = null,
-        includeLibraries: Boolean = false
-    ): List<ClassIntegrations> {
-        return integrationDetector.findByType(type, subType, includeLibraries)
-    }
+        includeLibraries: Boolean = false,
+    ): List<ClassIntegrations> = integrationDetector.findByType(type, subType, includeLibraries)
 
     // =========================================================================
     // Anti-Pattern Detection
@@ -240,14 +220,13 @@ class RatpackAnalysisService(
     fun getAntiPatternSummary(
         severity: AntiPatternSeverity? = null,
         type: AntiPatternType? = null,
-        includeLibraries: Boolean = false
-    ): AntiPatternSummary {
-        return antiPatternDetector.getProjectSummary(
+        includeLibraries: Boolean = false,
+    ): AntiPatternSummary =
+        antiPatternDetector.getProjectSummary(
             severityFilter = severity,
             typeFilter = type,
-            includeLibraries = includeLibraries
+            includeLibraries = includeLibraries,
         )
-    }
 
     /**
      * Get anti-patterns for a specific class.
@@ -255,9 +234,7 @@ class RatpackAnalysisService(
      * @param fqn Fully qualified class name
      * @return List of anti-pattern instances
      */
-    fun getClassAntiPatterns(fqn: String): List<AntiPatternInstance> {
-        return antiPatternDetector.analyzeClass(fqn)
-    }
+    fun getClassAntiPatterns(fqn: String): List<AntiPatternInstance> = antiPatternDetector.analyzeClass(fqn)
 
     // =========================================================================
     // Route Analysis
@@ -269,9 +246,7 @@ class RatpackAnalysisService(
      * @param includeLibraries Include library classes
      * @return Routing summary
      */
-    fun getRoutingSummary(includeLibraries: Boolean = false): RoutingSummary {
-        return routeAnalyzer.getRoutingSummary(includeLibraries)
-    }
+    fun getRoutingSummary(includeLibraries: Boolean = false): RoutingSummary = routeAnalyzer.getRoutingSummary(includeLibraries)
 
     /**
      * Get route tree structure.
@@ -295,7 +270,7 @@ class RatpackAnalysisService(
         val mappings = routeAnalyzer.generateSpringMappings(summary.routes)
         return SpringMappingsResponse(
             mappings = mappings,
-            totalCount = mappings.size
+            totalCount = mappings.size,
         )
     }
 
@@ -308,43 +283,33 @@ class RatpackAnalysisService(
      *
      * @return Dependency analysis with foundation classes, quick wins, cycles, and tiers
      */
-    fun getDependencyAnalysis(): DependencyAnalysis {
-        return dependencyAnalyzer.analyze()
-    }
+    fun getDependencyAnalysis(): DependencyAnalysis = dependencyAnalyzer.analyze()
 
     /**
      * Get foundation classes (most depended-on classes).
      *
      * @return List of foundation classes sorted by dependent count
      */
-    fun getFoundationClasses(): List<FoundationClass> {
-        return dependencyAnalyzer.getFoundationClasses()
-    }
+    fun getFoundationClasses(): List<FoundationClass> = dependencyAnalyzer.getFoundationClasses()
 
     /**
      * Get quick win handlers (few dependencies, low complexity).
      *
      * @return List of quick win handlers
      */
-    fun getQuickWins(): List<QuickWinHandler> {
-        return dependencyAnalyzer.getQuickWins()
-    }
+    fun getQuickWins(): List<QuickWinHandler> = dependencyAnalyzer.getQuickWins()
 
     /**
      * Get full dependency graph for visualization.
      *
      * @return Dependency graph with nodes, edges, and cycles
      */
-    fun getDependencyGraph(): DependencyGraph {
-        return dependencyAnalyzer.getDependencyGraph()
-    }
+    fun getDependencyGraph(): DependencyGraph = dependencyAnalyzer.getDependencyGraph()
 
     /**
      * Get dependency graph in DOT format for Graphviz.
      *
      * @return DOT format string
      */
-    fun getDependencyGraphDot(): String {
-        return dependencyAnalyzer.toDotFormat()
-    }
+    fun getDependencyGraphDot(): String = dependencyAnalyzer.toDotFormat()
 }

@@ -1,6 +1,12 @@
 # CodeLens
 
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 A developer tool for analyzing Ratpack-based JVM codebases to assist with migration planning.
+
+Ratpack is a lightweight asynchronous JVM web framework. CodeLens focuses on
+Ratpack applications that need static analysis support for framework migration,
+route discovery, handler inventory, dependency mapping, and source lookup.
 
 ## Overview
 
@@ -8,6 +14,29 @@ CodeLens consists of two components:
 
 1. **Server** (Kotlin/Ktor): Runs in the background, loads a target project's bytecode using ClassGraph, and serves analysis queries via HTTP REST API
 2. **CLI** (Python/Typer): User-facing command-line interface that manages server lifecycle and presents analysis results
+
+## Quick Start
+
+Prerequisites: JDK 21+, Python 3.13+, and [uv](https://docs.astral.sh/uv/).
+Gradle is included via the wrapper.
+
+```bash
+# Build the server fat JAR
+./gradlew :server:app:shadowJar
+
+# Install the CLI in editable mode
+cd cli
+uv tool install --editable .
+
+# Smoke-test against the bundled sample Ratpack project
+cd ../test-fixtures/sample-ratpack-app
+codelens start
+codelens project
+codelens stop
+```
+
+For a real project, build the target application's classes first, then run
+`codelens start --project /path/to/ratpack-project`.
 
 ## Architecture
 
@@ -47,7 +76,14 @@ codelens/
 │
 ├── docs/
 │   ├── api.md                       # API endpoint documentation
-│   └── cli.md                       # CLI command documentation
+│   ├── cli.md                       # CLI command documentation
+│   ├── cli-spec.md                  # CLI behavior specification
+│   ├── jvm-detect.md                # JVM detection and troubleshooting
+│   ├── target-project-setup.md      # Target-project prerequisites
+│   ├── research-and-features.md     # Ratpack migration research notes
+│   ├── bootstrap-project.md         # Original bootstrap plan
+│   ├── phase1-spec.md               # Phase 1 server/CLI specification
+│   └── route-identification.md      # Route discovery guidance
 │
 ├── .github/
 │   └── workflows/
@@ -491,6 +527,30 @@ The server exposes a REST API. For complete documentation, see [docs/api.md](doc
 | `GET /api/v1/ratpack/routes/tree` | Route tree structure |
 | `GET /api/v1/ratpack/routes/spring` | Spring mappings |
 
+## Server Startup Contract
+
+The server emits structured lines to stdout that any client (the bundled Python
+CLI today, a future Go port, or third-party integrations) can use to track
+startup. The contract has three lines:
+
+| Line | Meaning |
+|------|---------|
+| `CODELENS_STARTING port=<p> host=<h>` | Informational. The HTTP listener is bound but the initial classpath resolution and bytecode scan are still running. Clients should ignore this line for readiness. |
+| `CODELENS_READY port=<p> host=<h> version=<v>` | Success. The initial scan has completed and every analysis endpoint is ready to serve real data. Clients should match this line and only then start issuing analysis requests. |
+| `CODELENS_ERROR reason=<r> message="<m>"` | Failure. The initial scan failed; the server stops itself and exits with code 1. `reason` is one of `CLASSPATH_RESOLUTION`, `SCAN`, or `UNKNOWN`. |
+
+Example output:
+
+```
+CODELENS_STARTING port=8080 host=127.0.0.1
+CODELENS_READY port=8080 host=127.0.0.1 version=0.1.0
+```
+
+Note: the server delays the ready signal until the initial scan finishes, so
+clients should use a startup timeout large enough to cover the first scan
+(typically 5-60 seconds, longer for large dependency graphs). The bundled CLI
+defaults to 180 seconds and exposes `--timeout` on `codelens start`/`restart`.
+
 ## Development
 
 ### Running the Server Directly
@@ -537,8 +597,6 @@ codelens project
 codelens stop
 ```
 
-## Development
-
 ### Running Tests
 
 **Kotlin:**
@@ -560,6 +618,10 @@ The codebase follows a service/repository pattern:
 - **Repositories** handle data persistence (`ServerStateRepository`)
 - **Routes/Commands** are thin wrappers that delegate to services
 - **Container** provides dependency injection for the CLI (`ServiceContainer`)
+
+## License
+
+CodeLens is licensed under the [Apache License, Version 2.0](LICENSE).
 
 ## Requirements
 

@@ -10,7 +10,6 @@ import codelens.source.model.VisibilityFilter
  * Works for ANY class - no source code required.
  */
 class StubGenerator {
-
     /**
      * Generates a source stub from ClassInfo.
      *
@@ -24,20 +23,19 @@ class StubGenerator {
         classInfo: ClassInfo,
         language: StubLanguage = StubLanguage.JAVA,
         visibility: VisibilityFilter = VisibilityFilter.ALL,
-        format: SourceFormat = SourceFormat.STUB
-    ): String {
-        return when (language) {
+        format: SourceFormat = SourceFormat.STUB,
+    ): String =
+        when (language) {
             StubLanguage.JAVA -> generateJavaStub(classInfo, visibility, format)
             StubLanguage.KOTLIN -> generateKotlinStub(classInfo, visibility, format)
         }
-    }
 
     // ========== Java Stub Generation ==========
 
     private fun generateJavaStub(
         classInfo: ClassInfo,
         visibility: VisibilityFilter,
-        format: SourceFormat
+        format: SourceFormat,
     ): String {
         val sb = StringBuilder()
 
@@ -97,9 +95,10 @@ class StubGenerator {
         }
 
         // Constructors
-        val filteredConstructors = classInfo.constructors.filter {
-            matchesVisibility(it.visibility, visibility) && !it.isSynthetic
-        }
+        val filteredConstructors =
+            classInfo.constructors.filter {
+                matchesVisibility(it.visibility, visibility) && !it.isSynthetic
+            }
         for (ctor in filteredConstructors) {
             sb.append("    ")
             sb.append(javaVisibility(ctor.visibility))
@@ -119,9 +118,10 @@ class StubGenerator {
         }
 
         // Methods
-        val filteredMethods = classInfo.methods.filter {
-            matchesVisibility(it.visibility, visibility) && !it.isSynthetic && !it.isBridgeMethod()
-        }
+        val filteredMethods =
+            classInfo.methods.filter {
+                matchesVisibility(it.visibility, visibility) && !it.isSynthetic && !it.isBridgeMethod()
+            }
         for (method in filteredMethods) {
             sb.append("    ")
             sb.append(javaVisibility(method.visibility))
@@ -149,7 +149,7 @@ class StubGenerator {
     private fun generateKotlinStub(
         classInfo: ClassInfo,
         visibility: VisibilityFilter,
-        format: SourceFormat
+        format: SourceFormat,
     ): String {
         val sb = StringBuilder()
 
@@ -188,9 +188,11 @@ class StubGenerator {
             val ctor = constructors[0]
             if (ctor.parameters.isNotEmpty()) {
                 sb.append("(")
-                sb.append(ctor.parameters.joinToString(", ") {
-                    "${it.name}: ${kotlinType(it.type)}"
-                })
+                sb.append(
+                    ctor.parameters.joinToString(", ") {
+                        "${it.name}: ${kotlinType(it.type)}"
+                    },
+                )
                 sb.append(")")
             }
         }
@@ -211,12 +213,14 @@ class StubGenerator {
         sb.appendLine(" {")
 
         // Companion object for static members
-        val staticMethods = classInfo.methods.filter {
-            it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic && !it.isBridgeMethod()
-        }
-        val staticFields = classInfo.fields.filter {
-            it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic()
-        }
+        val staticMethods =
+            classInfo.methods.filter {
+                it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic && !it.isBridgeMethod()
+            }
+        val staticFields =
+            classInfo.fields.filter {
+                it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic()
+            }
 
         if (staticMethods.isNotEmpty() || staticFields.isNotEmpty()) {
             sb.appendLine("    companion object {")
@@ -242,9 +246,10 @@ class StubGenerator {
         }
 
         // Instance fields (properties)
-        val instanceFields = classInfo.fields.filter {
-            !it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic()
-        }
+        val instanceFields =
+            classInfo.fields.filter {
+                !it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic()
+            }
         for (field in instanceFields) {
             sb.append("    ")
             sb.append(kotlinVisibility(field.visibility))
@@ -261,9 +266,10 @@ class StubGenerator {
         }
 
         // Instance methods
-        val instanceMethods = classInfo.methods.filter {
-            !it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic && !it.isBridgeMethod()
-        }
+        val instanceMethods =
+            classInfo.methods.filter {
+                !it.isStatic && matchesVisibility(it.visibility, visibility) && !it.isSynthetic && !it.isBridgeMethod()
+            }
         for (method in instanceMethods) {
             sb.append("    ")
             sb.append(kotlinFun(method, visibility, format, classInfo.isInterface))
@@ -279,7 +285,7 @@ class StubGenerator {
         method: MethodInfo,
         visibility: VisibilityFilter,
         format: SourceFormat,
-        isInterface: Boolean = false
+        isInterface: Boolean = false,
     ): String {
         val sb = StringBuilder()
 
@@ -288,9 +294,11 @@ class StubGenerator {
         if (!method.isFinal && !method.isAbstract && !isInterface) sb.append("open ")
 
         sb.append("fun ${method.name}(")
-        sb.append(method.parameters.joinToString(", ") {
-            "${it.name}: ${kotlinType(it.type)}"
-        })
+        sb.append(
+            method.parameters.joinToString(", ") {
+                "${it.name}: ${kotlinType(it.type)}"
+            },
+        )
         sb.append("): ${kotlinType(method.returnType)}")
 
         when {
@@ -304,32 +312,32 @@ class StubGenerator {
 
     // ========== Helper Methods ==========
 
-    private fun matchesVisibility(visibility: Visibility, filter: VisibilityFilter): Boolean {
-        return when (filter) {
+    private fun matchesVisibility(
+        visibility: Visibility,
+        filter: VisibilityFilter,
+    ): Boolean =
+        when (filter) {
             VisibilityFilter.ALL -> true
             VisibilityFilter.PUBLIC -> visibility == Visibility.PUBLIC
             VisibilityFilter.PUBLIC_PROTECTED ->
                 visibility == Visibility.PUBLIC || visibility == Visibility.PROTECTED
         }
-    }
 
-    private fun javaVisibility(visibility: Visibility): String {
-        return when (visibility) {
+    private fun javaVisibility(visibility: Visibility): String =
+        when (visibility) {
             Visibility.PUBLIC -> "public "
             Visibility.PROTECTED -> "protected "
             Visibility.PRIVATE -> "private "
             Visibility.PACKAGE_PRIVATE -> ""
         }
-    }
 
-    private fun kotlinVisibility(visibility: Visibility): String {
-        return when (visibility) {
+    private fun kotlinVisibility(visibility: Visibility): String =
+        when (visibility) {
             Visibility.PUBLIC -> "" // public is default in Kotlin
             Visibility.PROTECTED -> "protected "
             Visibility.PRIVATE -> "private "
             Visibility.PACKAGE_PRIVATE -> "internal "
         }
-    }
 
     private fun simplifyType(fqn: String): String {
         // Handle arrays
@@ -388,13 +396,13 @@ class StubGenerator {
     private fun FieldInfo.isSynthetic(): Boolean {
         // Detect synthetic fields by common naming patterns
         return name.startsWith("this$") ||
-               name.contains("$") ||
-               name == "serialVersionUID"
+            name.contains("$") ||
+            name == "serialVersionUID"
     }
 
     private fun MethodInfo.isBridgeMethod(): Boolean {
         // Bridge methods typically have synthetic-looking patterns
         return name.contains("$") ||
-               (isSynthetic && name.startsWith("access$"))
+            (isSynthetic && name.startsWith("access$"))
     }
 }

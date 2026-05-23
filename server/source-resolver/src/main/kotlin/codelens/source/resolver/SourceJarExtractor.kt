@@ -18,7 +18,10 @@ class SourceJarExtractor {
      * @param className Fully qualified class name (e.g., "com.example.MyClass")
      * @return The source code, or null if not found
      */
-    fun extractSource(sourceJar: File, className: String): String? {
+    fun extractSource(
+        sourceJar: File,
+        className: String,
+    ): String? {
         if (!sourceJar.exists()) {
             logger.warn("Source JAR does not exist: {}", sourceJar.absolutePath)
             return null
@@ -79,7 +82,9 @@ class SourceJarExtractor {
 
         return try {
             ZipFile(sourceJar).use { zip ->
-                zip.entries().asSequence()
+                zip
+                    .entries()
+                    .asSequence()
                     .filter { !it.isDirectory }
                     .map { it.name }
                     .filter { it.endsWith(".java") || it.endsWith(".kt") }
@@ -98,7 +103,10 @@ class SourceJarExtractor {
      * @param targetDir The directory to extract to
      * @return Number of files extracted
      */
-    fun extractAll(sourceJar: File, targetDir: File): Int {
+    fun extractAll(
+        sourceJar: File,
+        targetDir: File,
+    ): Int {
         if (!sourceJar.exists()) {
             return 0
         }
@@ -109,7 +117,9 @@ class SourceJarExtractor {
 
         try {
             ZipFile(sourceJar).use { zip ->
-                zip.entries().asSequence()
+                zip
+                    .entries()
+                    .asSequence()
                     .filter { !it.isDirectory }
                     .filter { it.name.endsWith(".java") || it.name.endsWith(".kt") }
                     .forEach { entry ->
@@ -140,7 +150,10 @@ class SourceJarExtractor {
     /**
      * Validates that a ZIP entry path does not escape the target directory (ZIP slip prevention).
      */
-    private fun isValidZipEntry(entry: ZipEntry, targetDir: File): Boolean {
+    private fun isValidZipEntry(
+        entry: ZipEntry,
+        targetDir: File,
+    ): Boolean {
         val targetFile = File(targetDir, entry.name).canonicalFile
         return targetFile.toPath().startsWith(targetDir.toPath())
     }

@@ -13,14 +13,18 @@ import kotlinx.serialization.Serializable
 enum class ClassType {
     /** Ratpack handler class */
     HANDLER,
+
     /** Service class (business logic) */
     SERVICE,
+
     /** Repository/DAO class */
     REPOSITORY,
+
     /** Utility/helper class */
     UTILITY,
+
     /** Other project class */
-    OTHER
+    OTHER,
 }
 
 /**
@@ -37,7 +41,7 @@ data class DependencyAnalysis(
     /** Handlers grouped by dependency depth */
     val handlerTiers: List<DependencyTier>,
     /** Overall statistics */
-    val stats: DependencyStats
+    val stats: DependencyStats,
 )
 
 /**
@@ -54,7 +58,7 @@ data class FoundationClass(
     /** Number of handlers that depend on this class */
     val dependentCount: Int,
     /** Simple names of handlers that depend on this class */
-    val dependentHandlers: List<String>
+    val dependentHandlers: List<String>,
 )
 
 /**
@@ -69,7 +73,7 @@ data class QuickWinHandler(
     /** Number of project-level dependencies */
     val dependencyCount: Int,
     /** Complexity tier from ComplexityCalculator */
-    val complexity: ComplexityTier
+    val complexity: ComplexityTier,
 )
 
 /**
@@ -80,7 +84,7 @@ data class DependencyCycle(
     /** FQNs of classes in the cycle, in order */
     val classes: List<String>,
     /** Human-readable description (e.g., "A -> B -> C -> A") */
-    val description: String
+    val description: String,
 )
 
 /**
@@ -95,7 +99,7 @@ data class DependencyTier(
     /** Simple names of handlers in this tier */
     val handlers: List<String>,
     /** Number of handlers in this tier */
-    val count: Int
+    val count: Int,
 )
 
 /**
@@ -112,7 +116,7 @@ data class DependencyStats(
     /** Maximum dependencies for any handler */
     val maxDependencies: Int,
     /** Number of circular dependencies detected */
-    val cycleCount: Int
+    val cycleCount: Int,
 )
 
 // ============================================================================
@@ -135,7 +139,7 @@ data class DependencyNode(
     /** Number of classes that depend on this */
     val inDegree: Int,
     /** Number of classes this depends on */
-    val outDegree: Int
+    val outDegree: Int,
 )
 
 /**
@@ -148,7 +152,7 @@ data class DependencyEdge(
     /** Target class FQN (the dependency) */
     val target: String,
     /** Type of dependency */
-    val type: DependencyEdgeType
+    val type: DependencyEdgeType,
 )
 
 /**
@@ -158,14 +162,18 @@ data class DependencyEdge(
 enum class DependencyEdgeType {
     /** Field injection or direct field reference */
     FIELD,
+
     /** Constructor parameter */
     CONSTRUCTOR,
+
     /** Method parameter */
     METHOD_PARAM,
+
     /** Extends (inheritance) */
     EXTENDS,
+
     /** Implements (interface) */
-    IMPLEMENTS
+    IMPLEMENTS,
 }
 
 /**
@@ -180,7 +188,7 @@ data class DependencyGraph(
     /** Detected cycles */
     val cycles: List<DependencyCycle>,
     /** Is the graph acyclic? */
-    val isAcyclic: Boolean
+    val isAcyclic: Boolean,
 )
 
 // ============================================================================
@@ -189,22 +197,22 @@ data class DependencyGraph(
 
 @Serializable
 data class DependencyAnalysisResponse(
-    val analysis: DependencyAnalysis
+    val analysis: DependencyAnalysis,
 )
 
 @Serializable
 data class FoundationClassesResponse(
     val foundationClasses: List<FoundationClass>,
-    val count: Int
+    val count: Int,
 )
 
 @Serializable
 data class QuickWinsResponse(
     val quickWins: List<QuickWinHandler>,
-    val count: Int
+    val count: Int,
 )
 
 @Serializable
 data class DependencyGraphResponse(
-    val graph: DependencyGraph
+    val graph: DependencyGraph,
 )

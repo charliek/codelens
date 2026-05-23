@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
  * - Have methods accepting Context that call next()
  */
 class RatpackDetector(
-    private val classGraphProvider: ClassGraphProvider
+    private val classGraphProvider: ClassGraphProvider,
 ) {
     private val logger = LoggerFactory.getLogger(RatpackDetector::class.java)
 
@@ -35,10 +35,11 @@ class RatpackDetector(
         val handlers = mutableListOf<HandlerSummary>()
 
         // Get direct Handler implementations
-        val (directHandlers, indirectHandlers) = classGraphProvider.getImplementations(
-            RatpackTypes.HANDLER,
-            includeLibraries
-        )
+        val (directHandlers, indirectHandlers) =
+            classGraphProvider.getImplementations(
+                RatpackTypes.HANDLER,
+                includeLibraries,
+            )
 
         // Process direct implementations
         for (classSummary in directHandlers) {
@@ -107,7 +108,7 @@ class RatpackDetector(
             allMethods = classInfo.methods,
             promiseAnalysis = promiseAnalysis,
             complexity = complexity,
-            injectedDependencies = injectedDeps
+            injectedDependencies = injectedDeps,
         )
     }
 
@@ -120,21 +121,23 @@ class RatpackDetector(
         // Action<Chain> implementations are detected by:
         // 1. Implementing ratpack.func.Action interface
         // 2. Having an execute(Chain) method
-        val (directActions, _) = classGraphProvider.getImplementations(
-            RatpackTypes.CHAIN_ACTION,
-            includeLibraries
-        )
+        val (directActions, _) =
+            classGraphProvider.getImplementations(
+                RatpackTypes.CHAIN_ACTION,
+                includeLibraries,
+            )
 
         for (classSummary in directActions) {
             val classInfo = classGraphProvider.getClass(classSummary.fqn) ?: continue
             if (!includeLibraries && classInfo.source != ClassSource.PROJECT) continue
 
             // Check if this is specifically Action<Chain> by looking for execute(Chain) method
-            val hasChainExecute = classInfo.methods.any { method ->
-                method.name == "execute" &&
-                    method.parameters.size == 1 &&
-                    method.parameters[0].type.contains(RatpackTypes.CHAIN)
-            }
+            val hasChainExecute =
+                classInfo.methods.any { method ->
+                    method.name == "execute" &&
+                        method.parameters.size == 1 &&
+                        method.parameters[0].type.contains(RatpackTypes.CHAIN)
+                }
 
             if (hasChainExecute) {
                 handlers.add(createHandlerSummary(classInfo, HandlerType.CHAIN_ACTION))
@@ -198,13 +201,12 @@ class RatpackDetector(
     /**
      * Check if the class has a method that looks like an inline handler.
      */
-    private fun hasInlineHandlerMethod(classInfo: ClassInfo): Boolean {
-        return classInfo.methods.any { method ->
+    private fun hasInlineHandlerMethod(classInfo: ClassInfo): Boolean =
+        classInfo.methods.any { method ->
             method.parameters.any { param ->
                 param.type.contains(RatpackTypes.CONTEXT)
             }
         }
-    }
 
     /**
      * Check if this class implements Action<Chain>.
@@ -224,18 +226,23 @@ class RatpackDetector(
     /**
      * Find methods that are handler entry points (accept Context).
      */
-    private fun findHandlerMethods(classInfo: ClassInfo): List<MethodInfo> {
-        return classInfo.methods.filter { method ->
+    private fun findHandlerMethods(classInfo: ClassInfo): List<MethodInfo> =
+        classInfo.methods.filter { method ->
             // Handler.handle(Context) method
-            (method.name == "handle" && method.parameters.any {
-                it.type.contains(RatpackTypes.CONTEXT)
-            }) ||
+            (
+                method.name == "handle" &&
+                    method.parameters.any {
+                        it.type.contains(RatpackTypes.CONTEXT)
+                    }
+            ) ||
                 // Action.execute(Chain) method
-                (method.name == "execute" && method.parameters.any {
-                    it.type.contains(RatpackTypes.CHAIN)
-                })
+                (
+                    method.name == "execute" &&
+                        method.parameters.any {
+                            it.type.contains(RatpackTypes.CHAIN)
+                        }
+                )
         }
-    }
 
     /**
      * Find dependencies injected via constructor, @Inject fields, or @Inject methods.
@@ -250,32 +257,34 @@ class RatpackDetector(
 
         // Check @Inject annotated fields
         for (field in classInfo.fields) {
-            val hasInjectAnnotation = field.annotations.any { ann ->
-                ann.type in RatpackTypes.INJECT_ANNOTATIONS
-            }
+            val hasInjectAnnotation =
+                field.annotations.any { ann ->
+                    ann.type in RatpackTypes.INJECT_ANNOTATIONS
+                }
             if (hasInjectAnnotation) {
                 dependencies.add(
                     InjectedDependency(
                         name = field.name,
                         typeFqn = field.type,
-                        injectionType = InjectionType.FIELD
-                    )
+                        injectionType = InjectionType.FIELD,
+                    ),
                 )
             }
         }
 
         // Check for setter injection (@Inject annotated methods)
         for (method in classInfo.methods) {
-            val hasInjectAnnotation = method.annotations.any { ann ->
-                ann.type in RatpackTypes.INJECT_ANNOTATIONS
-            }
+            val hasInjectAnnotation =
+                method.annotations.any { ann ->
+                    ann.type in RatpackTypes.INJECT_ANNOTATIONS
+                }
             if (hasInjectAnnotation && method.name.startsWith("set") && method.parameters.size == 1) {
                 dependencies.add(
                     InjectedDependency(
                         name = method.name.removePrefix("set").replaceFirstChar { it.lowercase() },
                         typeFqn = method.parameters[0].type,
-                        injectionType = InjectionType.METHOD
-                    )
+                        injectionType = InjectionType.METHOD,
+                    ),
                 )
             }
         }
@@ -290,8 +299,8 @@ class RatpackDetector(
                     InjectedDependency(
                         name = field.name,
                         typeFqn = field.type,
-                        injectionType = InjectionType.CONSTRUCTOR
-                    )
+                        injectionType = InjectionType.CONSTRUCTOR,
+                    ),
                 )
             }
         }
@@ -302,7 +311,10 @@ class RatpackDetector(
     /**
      * Create a handler summary from class info.
      */
-    private fun createHandlerSummary(classInfo: ClassInfo, handlerType: HandlerType): HandlerSummary {
+    private fun createHandlerSummary(
+        classInfo: ClassInfo,
+        handlerType: HandlerType,
+    ): HandlerSummary {
         // Analyze Promise usage for summary stats
         val promiseAnalysis = promiseDetector.analyzeClass(classInfo.name.fqn)
 
@@ -322,18 +334,17 @@ class RatpackDetector(
             complexityTier = complexity.tier,
             promiseOperationCount = promiseAnalysis.totalOperationCount,
             usesBlocking = promiseAnalysis.usesBlocking,
-            hasInjectAnnotation = hasInjectAnnotation
+            hasInjectAnnotation = hasInjectAnnotation,
         )
     }
 
     /**
      * Check if any constructor has an @Inject annotation.
      */
-    private fun hasInjectAnnotatedConstructor(classInfo: ClassInfo): Boolean {
-        return classInfo.constructors.any { constructor ->
+    private fun hasInjectAnnotatedConstructor(classInfo: ClassInfo): Boolean =
+        classInfo.constructors.any { constructor ->
             constructor.annotations.any { ann ->
                 ann.type in RatpackTypes.INJECT_ANNOTATIONS
             }
         }
-    }
 }

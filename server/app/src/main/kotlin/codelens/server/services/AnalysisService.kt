@@ -4,13 +4,13 @@ import codelens.classgraph.ClassGraphProvider
 import codelens.classgraph.ClassGraphProviderImpl
 import codelens.classgraph.source.SourceResolver
 import codelens.core.model.*
+import codelens.core.model.MavenCoordinates
 import codelens.core.model.source.*
 import codelens.gradle.ClasspathFileResolver
 import codelens.gradle.ClasspathResolutionException
 import codelens.gradle.ClasspathResolver
 import codelens.gradle.GradleProjectResolver
 import codelens.gradle.ResolvedClasspath
-import codelens.core.model.MavenCoordinates
 import codelens.source.cache.SourceCache
 import codelens.source.format.JavadocExtractor
 import codelens.source.format.StubGenerator
@@ -19,9 +19,13 @@ import codelens.source.model.VisibilityFilter
 import codelens.source.resolver.LibrarySourceResolver
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -34,52 +38,92 @@ import java.util.concurrent.atomic.AtomicReference
 class AnalysisService(
     private val projectDir: File,
     classpathFile: String? = null,
-    projectJavaHome: String? = null
+    projectJavaHome: String? = null,
+    classpathResolverOverride: ClasspathResolver? = null,
+    classGraphProviderOverride: ClassGraphProvider? = null,
 ) {
     private val logger = LoggerFactory.getLogger(AnalysisService::class.java)
 
     private val classpathResolver: ClasspathResolver
     private val projectJavaHomeFile: File? = projectJavaHome?.let { File(it) }
-    private val classGraphProvider: ClassGraphProvider = ClassGraphProviderImpl()
+    private val classGraphProvider: ClassGraphProvider =
+        classGraphProviderOverride ?: ClassGraphProviderImpl()
 
     /**
      * Gets the ClassGraphProvider for use by other services (e.g., RatpackAnalysisService).
      */
     fun getClassGraphProvider(): ClassGraphProvider = classGraphProvider
-    private val scanExecutor: ExecutorService = Executors.newSingleThreadExecutor { r ->
-        Thread(r, "codelens-scan-${projectDir.name}").apply { isDaemon = true }
-    }
+
+    private val scanExecutor: ExecutorService =
+        Executors.newSingleThreadExecutor { r ->
+            Thread(r, "codelens-scan-${projectDir.name}").apply { isDaemon = true }
+        }
 
     private val projectInfo: AtomicReference<ProjectInfo>
     private var resolvedClasspath: ResolvedClasspath? = null
 
+    /**
+     * Completes when the initial scan finishes (success or failure).
+     * Holds the terminal [ProjectStatus] - either [ProjectStatus.READY] or
+     * [ProjectStatus.ERROR]. Used by the server's startup contract to gate
+     * the `CODELENS_READY` stdout signal on actual analysis readiness.
+     *
+     * One-shot: subsequent [refresh] calls do not affect this future.
+     */
+    private val initialScan = CompletableFuture<ProjectStatus>()
+
+    /**
+     * Captures the underlying failure from the initial scan, if any.
+     * Only populated when the initial scan fails; later [refresh] failures
+     * do not overwrite it.
+     */
+    private val initialScanError = AtomicReference<Throwable?>(null)
+
     init {
         // Choose classpath resolver based on configuration
-        classpathResolver = if (classpathFile != null) {
-            logger.info("Using classpath file resolver: $classpathFile")
-            ClasspathFileResolver(File(classpathFile))
-        } else {
-            logger.info("Using Gradle Tooling API resolver")
-            if (projectJavaHomeFile != null) {
-                logger.info("Will use project Java home: ${projectJavaHomeFile.absolutePath}")
+        classpathResolver = classpathResolverOverride ?: run {
+            if (classpathFile != null) {
+                logger.info("Using classpath file resolver: $classpathFile")
+                ClasspathFileResolver(File(classpathFile))
+            } else {
+                logger.info("Using Gradle Tooling API resolver")
+                if (projectJavaHomeFile != null) {
+                    logger.info("Will use project Java home: ${projectJavaHomeFile.absolutePath}")
+                }
+                GradleProjectResolver()
             }
-            GradleProjectResolver()
         }
 
-        projectInfo = AtomicReference(ProjectInfo(
-            name = projectDir.name,
-            path = projectDir.absolutePath,
-            status = ProjectStatus.LOADING
-        ))
+        projectInfo =
+            AtomicReference(
+                ProjectInfo(
+                    name = projectDir.name,
+                    path = projectDir.absolutePath,
+                    status = ProjectStatus.LOADING,
+                ),
+            )
 
-        // Start initial scan in background
-        scanExecutor.submit { performScan() }
+        // Start initial scan in background; complete the readiness future
+        // exactly once, regardless of success/failure, so awaitInitialScan()
+        // unblocks the server's startup path.
+        scanExecutor.submit {
+            try {
+                performScan(captureInitialError = true)
+            } finally {
+                initialScan.complete(projectInfo.get().status)
+            }
+        }
     }
 
     /**
      * Performs the classpath resolution and bytecode scanning.
+     *
+     * @param captureInitialError When true, any thrown exception is also recorded
+     *   in [initialScanError] so the startup path can surface a precise failure
+     *   reason. Refresh-triggered scans pass false to avoid clobbering the
+     *   original startup error.
      */
-    private fun performScan() {
+    private fun performScan(captureInitialError: Boolean = false) {
         try {
             logger.info("Starting scan for project: ${projectDir.name}")
 
@@ -98,28 +142,58 @@ class AnalysisService(
                     status = ProjectStatus.READY,
                     classCount = stats.projectClassCount,
                     handlerCount = countHandlers(), // Count Ratpack handlers
-                    scannedAt = now.toString()
+                    scannedAt = now.toString(),
                 )
             }
-            logger.info("Scan completed for ${projectDir.name}: ${stats.projectClassCount} project classes, ${stats.libraryClassCount} library classes")
+            logger.info(
+                "Scan completed for ${projectDir.name}: ${stats.projectClassCount} project classes, ${stats.libraryClassCount} library classes",
+            )
         } catch (e: ClasspathResolutionException) {
             logger.error("Classpath resolution failed for ${projectDir.name}: ${e.message}", e)
             projectInfo.updateAndGet { it.copy(status = ProjectStatus.ERROR) }
+            if (captureInitialError) initialScanError.set(e)
         } catch (e: Exception) {
             logger.error("Scan failed for ${projectDir.name}", e)
             projectInfo.updateAndGet { it.copy(status = ProjectStatus.ERROR) }
+            if (captureInitialError) initialScanError.set(e)
         }
     }
 
     /**
+     * Blocks until the initial scan finishes and returns its terminal status.
+     *
+     * The server's startup path calls this before printing `CODELENS_READY`
+     * so the stdout signal accurately reflects analysis readiness rather than
+     * just "the HTTP listener is bound".
+     *
+     * @param timeout Optional upper bound on how long to wait.
+     * @return [ProjectStatus.READY] on success or [ProjectStatus.ERROR] on failure.
+     * @throws TimeoutException if [timeout] is non-null and elapses before the
+     *   initial scan completes.
+     */
+    fun awaitInitialScan(timeout: Duration? = null): ProjectStatus =
+        if (timeout != null) {
+            initialScan.get(timeout.toNanos(), TimeUnit.NANOSECONDS)
+        } else {
+            initialScan.get()
+        }
+
+    /**
+     * Returns the underlying error from the initial scan, or null if the
+     * initial scan succeeded or has not finished yet.
+     */
+    fun getInitialScanError(): Throwable? = initialScanError.get()
+
+    /**
      * Counts Ratpack Handler implementations in the project.
      */
-    private fun countHandlers(): Int {
-        return listClasses(ClassFilter(
-            implementsInterface = "ratpack.handling.Handler",
-            includeLibraries = false
-        )).size
-    }
+    private fun countHandlers(): Int =
+        listClasses(
+            ClassFilter(
+                implementsInterface = "ratpack.handling.Handler",
+                includeLibraries = false,
+            ),
+        ).size
 
     /**
      * Gets the current project info.
@@ -144,65 +218,56 @@ class AnalysisService(
     /**
      * Lists classes matching the given filter.
      */
-    fun listClasses(filter: ClassFilter): List<ClassSummary> {
-        return classGraphProvider.listClasses(filter)
-    }
+    fun listClasses(filter: ClassFilter): List<ClassSummary> = classGraphProvider.listClasses(filter)
 
     /**
      * Gets full details for a specific class.
      */
-    fun getClass(fqn: String): ClassInfo? {
-        return classGraphProvider.getClass(fqn)
-    }
+    fun getClass(fqn: String): ClassInfo? = classGraphProvider.getClass(fqn)
 
     /**
      * Gets scan statistics.
      */
-    fun getStatistics(): ScanStatistics? {
-        return classGraphProvider.getStatistics()
-    }
+    fun getStatistics(): ScanStatistics? = classGraphProvider.getStatistics()
 
     /**
      * Checks if the scan is complete.
      */
-    fun isReady(): Boolean {
-        return projectInfo.get().status == ProjectStatus.READY
-    }
+    fun isReady(): Boolean = projectInfo.get().status == ProjectStatus.READY
 
     /**
      * Find all implementations of an interface or subclasses of a class.
      */
-    fun getImplementations(fqn: String, includeLibraries: Boolean = false): Pair<List<ClassSummary>, List<ClassSummary>> {
-        return classGraphProvider.getImplementations(fqn, includeLibraries)
-    }
+    fun getImplementations(
+        fqn: String,
+        includeLibraries: Boolean = false,
+    ): Pair<List<ClassSummary>, List<ClassSummary>> = classGraphProvider.getImplementations(fqn, includeLibraries)
 
     /**
      * Get the class hierarchy for a given class.
      */
-    fun getHierarchy(fqn: String): HierarchyNode? {
-        return classGraphProvider.getHierarchy(fqn)
-    }
+    fun getHierarchy(fqn: String): HierarchyNode? = classGraphProvider.getHierarchy(fqn)
 
     /**
      * Get dependencies for a class.
      */
-    fun getDependencies(fqn: String, includeLibraries: Boolean = false): Pair<List<DependencyInfo>, List<DependencyInfo>> {
-        return classGraphProvider.getDependencies(fqn, includeLibraries)
-    }
+    fun getDependencies(
+        fqn: String,
+        includeLibraries: Boolean = false,
+    ): Pair<List<DependencyInfo>, List<DependencyInfo>> = classGraphProvider.getDependencies(fqn, includeLibraries)
 
     /**
      * Find all classes using a specific annotation.
      */
-    fun getAnnotationUsages(annotationFqn: String, includeLibraries: Boolean = false): List<ClassSummary> {
-        return classGraphProvider.getAnnotationUsages(annotationFqn, includeLibraries)
-    }
+    fun getAnnotationUsages(
+        annotationFqn: String,
+        includeLibraries: Boolean = false,
+    ): List<ClassSummary> = classGraphProvider.getAnnotationUsages(annotationFqn, includeLibraries)
 
     /**
      * Search methods across all classes.
      */
-    fun searchMethods(filter: MethodFilter): List<MethodSearchResult> {
-        return classGraphProvider.searchMethods(filter)
-    }
+    fun searchMethods(filter: MethodFilter): List<MethodSearchResult> = classGraphProvider.searchMethods(filter)
 
     /**
      * Lazily initialized source resolver for project sources.
@@ -233,7 +298,7 @@ class AnalysisService(
         logger.info("Initialized library source resolver with ${mappings.size} artifact mappings")
         LibrarySourceResolver(
             artifactMappings = mappings,
-            cache = sourceCache
+            cache = sourceCache,
         )
     }
 
@@ -250,7 +315,7 @@ class AnalysisService(
     fun getSource(
         fqn: String,
         allowDecompilation: Boolean = true,
-        forceRefresh: Boolean = false
+        forceRefresh: Boolean = false,
     ): Result<SourceInfo> {
         // First, check what type of class this is
         val classInfo = classGraphProvider.getClass(fqn)
@@ -261,59 +326,71 @@ class AnalysisService(
             if (isJdkPackage(fqn)) {
                 return resolveJdkSource(fqn, allowDecompilation)
             }
-            return Result.failure(SourceResolutionException(
-                fqn, SourceResolutionErrorReason.CLASS_NOT_FOUND,
-                "Class not found: $fqn"
-            ))
+            return Result.failure(
+                SourceResolutionException(
+                    fqn,
+                    SourceResolutionErrorReason.CLASS_NOT_FOUND,
+                    "Class not found: $fqn",
+                ),
+            )
         }
 
         return when (classInfo.source) {
             ClassSource.PROJECT -> {
                 // Use project source resolver
-                val resolver = sourceResolver
-                    ?: return Result.failure(SourceResolutionException(
-                        fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
-                        "Source resolver not initialized - scan may still be in progress"
-                    ))
+                val resolver =
+                    sourceResolver
+                        ?: return Result.failure(
+                            SourceResolutionException(
+                                fqn,
+                                SourceResolutionErrorReason.FILE_NOT_FOUND,
+                                "Source resolver not initialized - scan may still be in progress",
+                            ),
+                        )
                 resolver.resolveClass(fqn)
             }
 
             ClassSource.LIBRARY, ClassSource.JDK -> {
                 // Use library source resolver
-                val resolver = librarySourceResolver
-                    ?: return Result.failure(SourceResolutionException(
-                        fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
-                        "Library source resolver not initialized - scan may still be in progress"
-                    ))
+                val resolver =
+                    librarySourceResolver
+                        ?: return Result.failure(
+                            SourceResolutionException(
+                                fqn,
+                                SourceResolutionErrorReason.FILE_NOT_FOUND,
+                                "Library source resolver not initialized - scan may still be in progress",
+                            ),
+                        )
 
                 val isJdk = classInfo.source == ClassSource.JDK
-                resolver.resolveSource(
-                    fqn = fqn,
-                    jarPath = classInfo.jarPath,
-                    isJdkClass = isJdk,
-                    allowDecompilation = allowDecompilation,
-                    forceRefresh = forceRefresh
-                ).map { libSourceInfo ->
-                    // Convert LibrarySourceInfo to SourceInfo
-                    SourceInfo(
+                resolver
+                    .resolveSource(
                         fqn = fqn,
-                        filePath = null,
-                        language = if (libSourceInfo.language == "KOTLIN") SourceLanguage.KOTLIN else SourceLanguage.JAVA,
-                        content = libSourceInfo.source,
-                        lineCount = libSourceInfo.source.lines().size,
-                        module = null,
-                        sourceOrigin = libSourceInfo.sourceOrigin,
-                        mavenCoordinates = libSourceInfo.mavenCoordinates?.toGradleNotation(),
-                        isDecompiled = libSourceInfo.isDecompiled,
-                        format = SourceFormat.FULL
-                    )
-                }.recoverCatching { error ->
-                    throw SourceResolutionException(
-                        fqn,
-                        if (isJdk) SourceResolutionErrorReason.JDK_CLASS else SourceResolutionErrorReason.LIBRARY_CLASS,
-                        error.message ?: "Unknown error"
-                    )
-                }
+                        jarPath = classInfo.jarPath,
+                        isJdkClass = isJdk,
+                        allowDecompilation = allowDecompilation,
+                        forceRefresh = forceRefresh,
+                    ).map { libSourceInfo ->
+                        // Convert LibrarySourceInfo to SourceInfo
+                        SourceInfo(
+                            fqn = fqn,
+                            filePath = null,
+                            language = if (libSourceInfo.language == "KOTLIN") SourceLanguage.KOTLIN else SourceLanguage.JAVA,
+                            content = libSourceInfo.source,
+                            lineCount = libSourceInfo.source.lines().size,
+                            module = null,
+                            sourceOrigin = libSourceInfo.sourceOrigin,
+                            mavenCoordinates = libSourceInfo.mavenCoordinates?.toGradleNotation(),
+                            isDecompiled = libSourceInfo.isDecompiled,
+                            format = SourceFormat.FULL,
+                        )
+                    }.recoverCatching { error ->
+                        throw SourceResolutionException(
+                            fqn,
+                            if (isJdk) SourceResolutionErrorReason.JDK_CLASS else SourceResolutionErrorReason.LIBRARY_CLASS,
+                            error.message ?: "Unknown error",
+                        )
+                    }
             }
         }
     }
@@ -322,16 +399,17 @@ class AnalysisService(
      * Checks if a fully qualified class name belongs to a JDK package.
      */
     private fun isJdkPackage(fqn: String): Boolean {
-        val jdkPrefixes = listOf(
-            "java.",
-            "javax.",
-            "sun.",
-            "com.sun.",
-            "jdk.",
-            "org.w3c.",
-            "org.xml.",
-            "org.ietf."
-        )
+        val jdkPrefixes =
+            listOf(
+                "java.",
+                "javax.",
+                "sun.",
+                "com.sun.",
+                "jdk.",
+                "org.w3c.",
+                "org.xml.",
+                "org.ietf.",
+            )
         return jdkPrefixes.any { fqn.startsWith(it) }
     }
 
@@ -340,40 +418,45 @@ class AnalysisService(
      */
     private fun resolveJdkSource(
         fqn: String,
-        allowDecompilation: Boolean
+        allowDecompilation: Boolean,
     ): Result<SourceInfo> {
-        val resolver = librarySourceResolver
-            ?: return Result.failure(SourceResolutionException(
-                fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
-                "Library source resolver not initialized - scan may still be in progress"
-            ))
+        val resolver =
+            librarySourceResolver
+                ?: return Result.failure(
+                    SourceResolutionException(
+                        fqn,
+                        SourceResolutionErrorReason.FILE_NOT_FOUND,
+                        "Library source resolver not initialized - scan may still be in progress",
+                    ),
+                )
 
-        return resolver.resolveSource(
-            fqn = fqn,
-            jarPath = null, // JDK classes don't have a jar path
-            isJdkClass = true,
-            allowDecompilation = allowDecompilation,
-            forceRefresh = false
-        ).map { libSourceInfo ->
-            SourceInfo(
+        return resolver
+            .resolveSource(
                 fqn = fqn,
-                filePath = null,
-                language = if (libSourceInfo.language == "KOTLIN") SourceLanguage.KOTLIN else SourceLanguage.JAVA,
-                content = libSourceInfo.source,
-                lineCount = libSourceInfo.source.lines().size,
-                module = null,
-                sourceOrigin = libSourceInfo.sourceOrigin,
-                mavenCoordinates = null,
-                isDecompiled = libSourceInfo.isDecompiled,
-                format = SourceFormat.FULL
-            )
-        }.recoverCatching { error ->
-            throw SourceResolutionException(
-                fqn,
-                SourceResolutionErrorReason.JDK_CLASS,
-                error.message ?: "Unknown error resolving JDK source"
-            )
-        }
+                jarPath = null, // JDK classes don't have a jar path
+                isJdkClass = true,
+                allowDecompilation = allowDecompilation,
+                forceRefresh = false,
+            ).map { libSourceInfo ->
+                SourceInfo(
+                    fqn = fqn,
+                    filePath = null,
+                    language = if (libSourceInfo.language == "KOTLIN") SourceLanguage.KOTLIN else SourceLanguage.JAVA,
+                    content = libSourceInfo.source,
+                    lineCount = libSourceInfo.source.lines().size,
+                    module = null,
+                    sourceOrigin = libSourceInfo.sourceOrigin,
+                    mavenCoordinates = null,
+                    isDecompiled = libSourceInfo.isDecompiled,
+                    format = SourceFormat.FULL,
+                )
+            }.recoverCatching { error ->
+                throw SourceResolutionException(
+                    fqn,
+                    SourceResolutionErrorReason.JDK_CLASS,
+                    error.message ?: "Unknown error resolving JDK source",
+                )
+            }
     }
 
     /**
@@ -389,13 +472,17 @@ class AnalysisService(
         fqn: String,
         methodName: String,
         parameterTypes: List<String>? = null,
-        contextLines: Int = 0
+        contextLines: Int = 0,
     ): Result<MethodSourceInfo> {
-        val resolver = sourceResolver
-            ?: return Result.failure(SourceResolutionException(
-                fqn, SourceResolutionErrorReason.FILE_NOT_FOUND,
-                "Source resolver not initialized - scan may still be in progress"
-            ))
+        val resolver =
+            sourceResolver
+                ?: return Result.failure(
+                    SourceResolutionException(
+                        fqn,
+                        SourceResolutionErrorReason.FILE_NOT_FOUND,
+                        "Source resolver not initialized - scan may still be in progress",
+                    ),
+                )
         return resolver.resolveMethod(fqn, methodName, parameterTypes, contextLines)
     }
 
@@ -423,32 +510,39 @@ class AnalysisService(
         fqn: String,
         language: StubLanguage = StubLanguage.JAVA,
         visibility: VisibilityFilter = VisibilityFilter.ALL,
-        format: SourceFormat = SourceFormat.STUB
+        format: SourceFormat = SourceFormat.STUB,
     ): Result<SourceInfo> {
-        val classInfo = classGraphProvider.getClass(fqn)
-            ?: return Result.failure(SourceResolutionException(
-                fqn, SourceResolutionErrorReason.CLASS_NOT_FOUND,
-                "Class not found: $fqn"
-            ))
+        val classInfo =
+            classGraphProvider.getClass(fqn)
+                ?: return Result.failure(
+                    SourceResolutionException(
+                        fqn,
+                        SourceResolutionErrorReason.CLASS_NOT_FOUND,
+                        "Class not found: $fqn",
+                    ),
+                )
 
         val stubSource = stubGenerator.generateStub(classInfo, language, visibility, format)
 
-        return Result.success(SourceInfo(
-            fqn = fqn,
-            filePath = null,
-            language = if (language == StubLanguage.KOTLIN) SourceLanguage.KOTLIN else SourceLanguage.JAVA,
-            content = stubSource,
-            lineCount = stubSource.lines().size,
-            module = null,
-            sourceOrigin = when (classInfo.source) {
-                ClassSource.PROJECT -> SourceOrigin.PROJECT_SOURCE
-                ClassSource.LIBRARY -> SourceOrigin.SOURCE_JAR // Stub from bytecode
-                ClassSource.JDK -> SourceOrigin.JDK_SOURCE
-            },
-            mavenCoordinates = null,
-            isDecompiled = false,
-            format = format
-        ))
+        return Result.success(
+            SourceInfo(
+                fqn = fqn,
+                filePath = null,
+                language = if (language == StubLanguage.KOTLIN) SourceLanguage.KOTLIN else SourceLanguage.JAVA,
+                content = stubSource,
+                lineCount = stubSource.lines().size,
+                module = null,
+                sourceOrigin =
+                    when (classInfo.source) {
+                        ClassSource.PROJECT -> SourceOrigin.PROJECT_SOURCE
+                        ClassSource.LIBRARY -> SourceOrigin.SOURCE_JAR // Stub from bytecode
+                        ClassSource.JDK -> SourceOrigin.JDK_SOURCE
+                    },
+                mavenCoordinates = null,
+                isDecompiled = false,
+                format = format,
+            ),
+        )
     }
 
     /**
@@ -465,23 +559,24 @@ class AnalysisService(
         fqn: String,
         visibility: VisibilityFilter = VisibilityFilter.ALL,
         allowDecompilation: Boolean = true,
-        forceRefresh: Boolean = false
+        forceRefresh: Boolean = false,
     ): Result<SourceInfo> {
         // First get the full source
         val sourceResult = getSource(fqn, allowDecompilation, forceRefresh)
 
         return sourceResult.map { sourceInfo ->
             val language = if (sourceInfo.language == SourceLanguage.KOTLIN) "kotlin" else "java"
-            val extractedContent = javadocExtractor.extractWithDocs(
-                source = sourceInfo.content,
-                language = language,
-                visibility = visibility
-            )
+            val extractedContent =
+                javadocExtractor.extractWithDocs(
+                    source = sourceInfo.content,
+                    language = language,
+                    visibility = visibility,
+                )
 
             sourceInfo.copy(
                 content = extractedContent,
                 lineCount = extractedContent.lines().size,
-                format = SourceFormat.JAVADOC
+                format = SourceFormat.JAVADOC,
             )
         }
     }

@@ -145,4 +145,4 @@ CodeLens resolves source in this order:
 ## Related Skills
 
 - `codelens-jvm-analysis` - Find classes and methods to view
-- `codelens-ratpack-migration` - Analyze Ratpack-specific handler source
+- `codelens-ratpack-analysis` - Analyze Ratpack-specific handler source

@@ -14,7 +14,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class SourceJarExtractorTest {
-
     @TempDir
     lateinit var tempDir: File
 
@@ -49,9 +48,10 @@ class SourceJarExtractorTest {
     @Test
     fun `extractSource finds Java source file`() {
         val sourceContent = "package com.example;\n\npublic class MyClass { }"
-        val jar = createTestJar(
-            "com/example/MyClass.java" to sourceContent
-        )
+        val jar =
+            createTestJar(
+                "com/example/MyClass.java" to sourceContent,
+            )
 
         val result = extractor.extractSource(jar, "com.example.MyClass")
 
@@ -62,9 +62,10 @@ class SourceJarExtractorTest {
     @Test
     fun `extractSource finds Kotlin source file`() {
         val sourceContent = "package com.example\n\nclass MyClass"
-        val jar = createTestJar(
-            "com/example/MyClass.kt" to sourceContent
-        )
+        val jar =
+            createTestJar(
+                "com/example/MyClass.kt" to sourceContent,
+            )
 
         val result = extractor.extractSource(jar, "com.example.MyClass")
 
@@ -76,10 +77,11 @@ class SourceJarExtractorTest {
     fun `extractSource prefers Java over Kotlin when both exist`() {
         val javaContent = "// Java version"
         val kotlinContent = "// Kotlin version"
-        val jar = createTestJar(
-            "com/example/MyClass.java" to javaContent,
-            "com/example/MyClass.kt" to kotlinContent
-        )
+        val jar =
+            createTestJar(
+                "com/example/MyClass.java" to javaContent,
+                "com/example/MyClass.kt" to kotlinContent,
+            )
 
         val result = extractor.extractSource(jar, "com.example.MyClass")
 
@@ -89,9 +91,10 @@ class SourceJarExtractorTest {
 
     @Test
     fun `extractSource returns null for missing class`() {
-        val jar = createTestJar(
-            "com/example/OtherClass.java" to "public class OtherClass { }"
-        )
+        val jar =
+            createTestJar(
+                "com/example/OtherClass.java" to "public class OtherClass { }",
+            )
 
         val result = extractor.extractSource(jar, "com.example.Missing")
 
@@ -110,9 +113,10 @@ class SourceJarExtractorTest {
     @Test
     fun `extractSource handles inner class by finding outer class file`() {
         val sourceContent = "public class Outer { class Inner { } }"
-        val jar = createTestJar(
-            "com/example/Outer.java" to sourceContent
-        )
+        val jar =
+            createTestJar(
+                "com/example/Outer.java" to sourceContent,
+            )
 
         val result = extractor.extractSource(jar, "com.example.Outer\$Inner")
 
@@ -123,9 +127,10 @@ class SourceJarExtractorTest {
     @Test
     fun `extractSource handles nested inner classes`() {
         val sourceContent = "public class Outer { class Middle { class Inner { } } }"
-        val jar = createTestJar(
-            "com/example/Outer.java" to sourceContent
-        )
+        val jar =
+            createTestJar(
+                "com/example/Outer.java" to sourceContent,
+            )
 
         val result = extractor.extractSource(jar, "com.example.Outer\$Middle\$Inner")
 
@@ -136,9 +141,10 @@ class SourceJarExtractorTest {
     @Test
     fun `extractSource handles Kotlin inner class`() {
         val sourceContent = "class Outer { inner class Inner }"
-        val jar = createTestJar(
-            "com/example/Outer.kt" to sourceContent
-        )
+        val jar =
+            createTestJar(
+                "com/example/Outer.kt" to sourceContent,
+            )
 
         val result = extractor.extractSource(jar, "com.example.Outer\$Inner")
 
@@ -150,12 +156,13 @@ class SourceJarExtractorTest {
 
     @Test
     fun `listSourceFiles returns all Java and Kotlin files`() {
-        val jar = createTestJar(
-            "com/example/ClassA.java" to "class A",
-            "com/example/ClassB.kt" to "class B",
-            "com/example/ClassC.java" to "class C",
-            "META-INF/MANIFEST.MF" to "Manifest"
-        )
+        val jar =
+            createTestJar(
+                "com/example/ClassA.java" to "class A",
+                "com/example/ClassB.kt" to "class B",
+                "com/example/ClassC.java" to "class C",
+                "META-INF/MANIFEST.MF" to "Manifest",
+            )
 
         val files = extractor.listSourceFiles(jar)
 
@@ -177,9 +184,10 @@ class SourceJarExtractorTest {
 
     @Test
     fun `listSourceFiles excludes directories`() {
-        val jar = createTestJar(
-            "com/example/MyClass.java" to "class MyClass"
-        )
+        val jar =
+            createTestJar(
+                "com/example/MyClass.java" to "class MyClass",
+            )
 
         val files = extractor.listSourceFiles(jar)
 
@@ -191,10 +199,11 @@ class SourceJarExtractorTest {
 
     @Test
     fun `extractAll extracts all source files`() {
-        val jar = createTestJar(
-            "com/example/ClassA.java" to "class A",
-            "com/example/sub/ClassB.kt" to "class B"
-        )
+        val jar =
+            createTestJar(
+                "com/example/ClassA.java" to "class A",
+                "com/example/sub/ClassB.kt" to "class B",
+            )
         val targetDir = File(tempDir, "extracted")
 
         val count = extractor.extractAll(jar, targetDir)
@@ -216,11 +225,12 @@ class SourceJarExtractorTest {
 
     @Test
     fun `extractAll skips non-source files`() {
-        val jar = createTestJar(
-            "com/example/MyClass.java" to "class MyClass",
-            "META-INF/MANIFEST.MF" to "Manifest",
-            "com/example/data.txt" to "data"
-        )
+        val jar =
+            createTestJar(
+                "com/example/MyClass.java" to "class MyClass",
+                "META-INF/MANIFEST.MF" to "Manifest",
+                "com/example/data.txt" to "data",
+            )
         val targetDir = File(tempDir, "extracted")
 
         val count = extractor.extractAll(jar, targetDir)
@@ -294,9 +304,10 @@ class SourceJarExtractorTest {
     @Test
     fun `extractSource handles class in default package`() {
         val sourceContent = "public class MyClass { }"
-        val jar = createTestJar(
-            "MyClass.java" to sourceContent
-        )
+        val jar =
+            createTestJar(
+                "MyClass.java" to sourceContent,
+            )
 
         val result = extractor.extractSource(jar, "MyClass")
 
@@ -307,9 +318,10 @@ class SourceJarExtractorTest {
     @Test
     fun `extractSource handles deeply nested package`() {
         val sourceContent = "package a.b.c.d.e;\n\npublic class Deep { }"
-        val jar = createTestJar(
-            "a/b/c/d/e/Deep.java" to sourceContent
-        )
+        val jar =
+            createTestJar(
+                "a/b/c/d/e/Deep.java" to sourceContent,
+            )
 
         val result = extractor.extractSource(jar, "a.b.c.d.e.Deep")
 

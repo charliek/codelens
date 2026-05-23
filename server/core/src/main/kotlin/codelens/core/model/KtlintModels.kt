@@ -16,7 +16,7 @@ data class LintError(
     /** Human-readable description of the error */
     val detail: String,
     /** Whether this error can be auto-fixed */
-    val canBeAutoCorrected: Boolean
+    val canBeAutoCorrected: Boolean,
 )
 
 /**
@@ -29,7 +29,7 @@ data class FileLintResult(
     /** List of lint errors found */
     val errors: List<LintError>,
     /** Number of errors */
-    val errorCount: Int
+    val errorCount: Int,
 )
 
 /**
@@ -44,7 +44,7 @@ data class LintFileResponse(
     /** Total error count */
     val errorCount: Int,
     /** Lint duration in milliseconds */
-    val durationMs: Long
+    val durationMs: Long,
 )
 
 /**
@@ -63,7 +63,7 @@ data class LintProjectResponse(
     /** Total error count */
     val totalErrorCount: Int,
     /** Lint duration in milliseconds */
-    val durationMs: Long
+    val durationMs: Long,
 )
 
 /**
@@ -80,7 +80,7 @@ data class FormatFileResponse(
     /** Errors that could not be auto-corrected */
     val remainingErrors: List<LintError>,
     /** Format duration in milliseconds */
-    val durationMs: Long
+    val durationMs: Long,
 )
 
 /**
@@ -97,7 +97,7 @@ data class FormatProjectResponse(
     /** Files that had changes */
     val filesWithChanges: Int,
     /** Format duration in milliseconds */
-    val durationMs: Long
+    val durationMs: Long,
 )
 
 /**
@@ -106,7 +106,7 @@ data class FormatProjectResponse(
 @Serializable
 data class LintFileRequest(
     /** Absolute path to the file to lint */
-    val filePath: String
+    val filePath: String,
 )
 
 /**
@@ -117,7 +117,7 @@ data class LintProjectRequest(
     /** Optional glob pattern to filter files (default: all .kt and .kts files) */
     val pattern: String? = null,
     /** Include test files */
-    val includeTests: Boolean = true
+    val includeTests: Boolean = true,
 )
 
 /**
@@ -128,7 +128,7 @@ data class FormatFileRequest(
     /** Absolute path to the file to format */
     val filePath: String,
     /** If true, write changes back to file; if false, return formatted content */
-    val writeToFile: Boolean = false
+    val writeToFile: Boolean = false,
 )
 
 /**
@@ -141,5 +141,5 @@ data class FormatProjectRequest(
     /** Include test files */
     val includeTests: Boolean = true,
     /** Perform a dry run (report changes but don't write) */
-    val dryRun: Boolean = false
+    val dryRun: Boolean = false,
 )

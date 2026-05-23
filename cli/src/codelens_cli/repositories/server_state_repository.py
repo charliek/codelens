@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from codelens_cli import __version__
 from codelens_cli.models import ServerMode, ServerState, ProjectStatus
 from codelens_cli.settings import get_cache_dir
 
@@ -56,7 +57,7 @@ class ServerStateRepository:
             idleTimeout=idle_timeout,
             status=ProjectStatus.STARTING,
             serverMode=server_mode,
-            version="0.1.0",
+            version=__version__,
         )
 
         state_file = self._get_state_file(project_path)

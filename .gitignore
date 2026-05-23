@@ -47,7 +47,16 @@ Thumbs.db
 # Environment
 .env
 .env.local
+.env.*
+!.env.example
 *.local
+
+# Secrets and private keys
+secrets/
+*.pem
+*.key
+*.p12
+*.jks
 
 # Test artifacts
 test-output/
