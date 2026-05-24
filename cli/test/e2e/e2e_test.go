@@ -177,7 +177,15 @@ func runCLI(binary string, args ...string) *cliRun {
 // startServer brings up a single server we'll share across all cases.
 func startServer(t *testing.T) {
 	t.Helper()
-	r := runCLI(fixture.goBin, "start", "--project", fixture.projectPath, "--mode", "jar", "--timeout", "240")
+	// codelens now requires the target project's JDK to be declared/resolvable.
+	// On CI the JDK comes from actions/setup-java (a plain JAVA_HOME, not
+	// SDKMAN/Homebrew/mise), so pass it explicitly; locally we fall back to the
+	// fixture's .sdkmanrc.
+	startArgs := []string{"start", "--project", fixture.projectPath, "--mode", "jar", "--timeout", "240"}
+	if jh := os.Getenv("JAVA_HOME"); jh != "" {
+		startArgs = append(startArgs, "--project-java", jh)
+	}
+	r := runCLI(fixture.goBin, startArgs...)
 	if err := r.cmd.Run(); err != nil {
 		t.Fatalf("start failed: %v\nstderr=%s", err, r.stderr.String())
 	}

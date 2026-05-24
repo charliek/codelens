@@ -66,45 +66,51 @@ prefer it on the next start.
 ## Project JVM
 
 To resolve a target project's classpath, the server runs the project's Gradle.
-Older Gradle versions can't run on Java 21, so when needed the CLI detects the
-project's own JDK and passes it to the server as `--project-java-home`.
+That Gradle daemon must run on a JDK the project's Gradle version supports — often
+an **older** JVM than the server's. codelens runs it on the project's
+**declared** JDK, passed as `--project-java-home`, decoupled from the server JVM.
 
-### When it kicks in
+!!! warning "A declared project JDK is required"
 
-The CLI only resolves a project JDK when the target's Gradle is too old for the
-server JVM:
+    codelens does not guess the project's JDK. Every analyzed project must
+    **declare** one (or you pass `--project-java`). If none is declared — or the
+    declared version isn't installed — codelens prints an actionable error and
+    stops, rather than running the project's Gradle on the wrong JVM.
 
-| Gradle Version | Max Java Version |
-|----------------|------------------|
-| 7.x | Java 19 |
-| 8.0 – 8.4 | Java 20 |
-| 8.5+ | Java 21+ |
+### How the project JDK is declared
 
-For Gradle 8.5+ no project JDK is needed — the project builds on the server JVM.
+Declare it with any one of these (checked in order); the first that specifies a
+Java version wins:
 
-### How the project JDK is detected
-
-The requested version is read from the project, in order:
-
-| Priority | File | Example |
-|----------|------|---------|
+| Priority | Source | Example |
+|----------|--------|---------|
 | 1 | `.sdkmanrc` | `java=11.0.28-tem` |
 | 2 | `.java-version` | `11.0.28-tem` or `11` |
-| 3 | `gradle.properties` | `org.gradle.java.home=/path/to/java` |
+| 3 | `gradle.properties` | `org.gradle.java.home=/abs/path/to/jdk` |
+| 4 | mise | `.mise.toml` (`[tools]` `java = "21"`) or `.tool-versions` (`java temurin-21.0.9`) |
 
-That version is then located in **SDKMAN** (exact match, then a major-version
-fallback) or **Homebrew** (`openjdk@<major>`). If the version is requested but
-not installed, codelens prints a hint and continues; you can also point at a JDK
-explicitly with `--project-java`.
+A `.sdkmanrc` is the simplest. See [Target Project Setup](target-project.md).
+
+### How the declared version is resolved
+
+The declared version is located in order: **SDKMAN** (`~/.sdkman/candidates/java`,
+exact then major-prefix), **Homebrew** (`openjdk@<major>`), then **mise**
+(`~/.local/share/mise/installs/java`). An absolute `org.gradle.java.home` path is
+used directly.
+
+If nothing resolves, codelens stops with guidance to install the JDK
+(`sdk install java <v>` / `brew install openjdk@<major>` / `mise install java@<v>`)
+or to pass `--project-java`:
 
 ```bash
-# Pin the project's JDK explicitly
+# Explicit escape hatch (bypasses declaration/resolution)
 codelens start -p /path/to/project \
   --project-java ~/.sdkman/candidates/java/11.0.28-tem
 ```
 
-The most reliable setup is a `.sdkmanrc` in the target project — see
-[Target Project Setup](target-project.md).
+Because the daemon runs on the declared JDK, a project on an older Gradle works
+even when the server runs a newer JDK — and a server on Java 25 can still read
+the project's (older) bytecode via ClassGraph.
 
 ## Environment variables and flags
 
@@ -121,8 +127,8 @@ The most reliable setup is a `.sdkmanrc` in the target project — see
 |---------|--------------|-----|
 | `UnsupportedClassVersionError` at startup | Server JVM older than Java 21 | Install a JDK 21+ (SDKMAN or `brew install openjdk@21`), or set `CODELENS_JAVA_HOME` |
 | Warning that the target needs a newer Java | Target bytecode newer than the server JVM | Install an in-range JDK ≥ the target version |
-| `Unsupported class file major version …` from Gradle | Target's Gradle too old for the server JVM | Add a `.sdkmanrc` to the project, or pass `--project-java` |
-| "could not find Java … in SDKMAN" | Requested project JDK not installed | `sdk install java <version>` (or install the matching `openjdk@<major>`) |
+| `no JDK declared for project …` | Project doesn't declare a JDK | Add a `.sdkmanrc` / `.java-version` / mise config, or pass `--project-java` |
+| `project … declares Java X but it isn't installed` | Declared JDK missing | `sdk install java <X>`, `brew install openjdk@<major>`, or `mise install java@<X>` |
 | Server starts but shows 0 classes | Project not compiled | Build the target first (`./gradlew build -x test`) |
 
 To see what the server logged:

@@ -8,8 +8,9 @@ import (
 	"strings"
 )
 
-// DetectProjectJavaVersion mirrors settings.py:198-240. Checks .sdkmanrc,
-// .java-version, gradle.properties in that order.
+// DetectProjectJavaVersion checks .sdkmanrc, .java-version, gradle.properties,
+// and mise (.mise.toml / mise.toml / .tool-versions) in that order. Returns ""
+// when the project declares no JDK.
 func DetectProjectJavaVersion(projectPath string) string {
 	// 1. .sdkmanrc
 	cfg, _ := ParseSDKManRC(filepath.Join(projectPath, ".sdkmanrc"))
@@ -25,21 +26,20 @@ func DetectProjectJavaVersion(projectPath string) string {
 	}
 	// 3. gradle.properties — look for org.gradle.java.home and try to
 	//    extract a SDKMAN version from the path.
-	data, err := os.ReadFile(filepath.Join(projectPath, "gradle.properties"))
-	if err != nil {
-		return ""
-	}
-	re := regexp.MustCompile(`candidates/java/([^/]+)`)
-	for _, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "org.gradle.java.home=") {
-			value := strings.TrimSpace(strings.SplitN(line, "=", 2)[1])
-			if m := re.FindStringSubmatch(value); m != nil {
-				return m[1]
+	if data, err := os.ReadFile(filepath.Join(projectPath, "gradle.properties")); err == nil {
+		re := regexp.MustCompile(`candidates/java/([^/]+)`)
+		for _, line := range strings.Split(string(data), "\n") {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "org.gradle.java.home=") {
+				value := strings.TrimSpace(strings.SplitN(line, "=", 2)[1])
+				if m := re.FindStringSubmatch(value); m != nil {
+					return m[1]
+				}
 			}
 		}
 	}
-	return ""
+	// 4. mise (.mise.toml / mise.toml / .tool-versions)
+	return MiseProjectJavaVersion(projectPath)
 }
 
 // ResolveProjectJavaHome mirrors settings.py:243-275, extended to resolve the
