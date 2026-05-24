@@ -27,10 +27,14 @@ type Settings struct {
 // Mirrors AppSettings in cli/src/codelens_cli/settings.py.
 func Load() *Settings {
 	s := &Settings{
-		ServerMode:        getenv("CODELENS_SERVER__MODE", "auto"),
-		IdleTimeout:       getenv("CODELENS_SERVER__IDLE_TIMEOUT", "30m"),
-		PortRangeStart:    getenvInt("CODELENS_SERVER__PORT_RANGE__START", 8080),
-		PortRangeEnd:      getenvInt("CODELENS_SERVER__PORT_RANGE__END", 8180),
+		ServerMode:  getenv("CODELENS_SERVER__MODE", "auto"),
+		IdleTimeout: getenv("CODELENS_SERVER__IDLE_TIMEOUT", "30m"),
+		// Default to the IANA dynamic/private range, above Linux's default
+		// ephemeral range (32768-60999), so auto-allocated ports rarely collide
+		// with other programs. The actual port is discovered by the CLI via the
+		// server's ready-line and state file, so the specific number is opaque.
+		PortRangeStart:    getenvInt("CODELENS_SERVER__PORT_RANGE__START", 61000),
+		PortRangeEnd:      getenvInt("CODELENS_SERVER__PORT_RANGE__END", 65535),
 		Host:              getenv("CODELENS_SERVER__HOST", "127.0.0.1"),
 		JavaHome:          os.Getenv("CODELENS_JAVA_HOME"),
 		RepoPath:          os.Getenv("CODELENS_REPO_PATH"),

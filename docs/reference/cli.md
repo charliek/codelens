@@ -1771,8 +1771,8 @@ codelens classes list --json | jq '.classes[] | select(.methodCount > 10)'
 | `CODELENS_SERVER_MODE` | `auto` | Server mode: `auto`, `gradle`, or `jar` |
 | `CODELENS_SERVER_IDLE_TIMEOUT` | `30m` | Auto-shutdown timeout |
 | `CODELENS_SERVER_HOST` | `127.0.0.1` | Server bind address |
-| `CODELENS_SERVER_PORT_RANGE_START` | `8080` | Port range start |
-| `CODELENS_SERVER_PORT_RANGE_END` | `8180` | Port range end |
+| `CODELENS_SERVER_PORT_RANGE_START` | `61000` | Port range start (scanned from a randomized offset) |
+| `CODELENS_SERVER_PORT_RANGE_END` | `65535` | Port range end |
 | `CODELENS_JAVA_HOME` | (system) | JAVA_HOME override |
 | `CODELENS_REPO_PATH` | (auto-detect) | Path to CodeLens repository |
 
