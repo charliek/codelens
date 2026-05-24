@@ -236,9 +236,11 @@ func (s *Service) buildCommand(opts StartOptions, mode state.ServerMode, port in
 			return nil, err
 		}
 		gradlew := filepath.Join(repo, "gradlew")
-		serverArgs := fmt.Sprintf("--project %s --port %d --idle-timeout %s", opts.ProjectPath, port, idleTimeout)
+		// Gradle's --args is a single string it re-tokenizes (respecting quotes),
+		// so quote path values that may contain spaces.
+		serverArgs := fmt.Sprintf("--project %q --port %d --idle-timeout %s", opts.ProjectPath, port, idleTimeout)
 		if opts.ProjectJavaHome != "" {
-			serverArgs += fmt.Sprintf(" --project-java-home %s", opts.ProjectJavaHome)
+			serverArgs += fmt.Sprintf(" --project-java-home %q", opts.ProjectJavaHome)
 		}
 		args := []string{
 			":server:app:run",

@@ -72,7 +72,9 @@ JVM distinction.
 
 To list available JDK versions in SDKMAN: `sdk list java`.
 
-### 2. Standard Gradle Plugins
+## Recommended Configuration
+
+### Standard Gradle Plugins
 
 Your project should use standard Gradle plugins. CodeLens works best with:
 

@@ -147,7 +147,7 @@ func TestBuildCommand_GradleModePassesProjectJava(t *testing.T) {
 		t.Fatal(err)
 	}
 	args := strings.Join(cmd.Args, " ")
-	if !strings.Contains(args, "--project-java-home /fake/jdk21") {
-		t.Errorf("gradle mode should pass --project-java-home; got: %s", args)
+	if !strings.Contains(args, `--project-java-home "/fake/jdk21"`) {
+		t.Errorf("gradle mode should pass quoted --project-java-home; got: %s", args)
 	}
 }
