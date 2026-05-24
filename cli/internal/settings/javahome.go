@@ -45,9 +45,10 @@ type javaInstall struct {
 	major int
 }
 
-// installedJavaHomes enumerates JDKs from ~/.sdkman/candidates/java/* and the
-// Homebrew openjdk@<major> kegs across the supported range. SDKMAN entries are
-// listed first so they win ties in ResolveServerJavaHome.
+// installedJavaHomes enumerates JDKs from ~/.sdkman/candidates/java/*, mise, and
+// the Homebrew openjdk@<major> kegs across the supported range. SDKMAN entries
+// are listed first (then mise, then Homebrew) so they win ties in
+// ResolveServerJavaHome.
 func installedJavaHomes() []javaInstall {
 	var out []javaInstall
 
@@ -66,6 +67,8 @@ func installedJavaHomes() []javaInstall {
 			}
 		}
 	}
+
+	out = append(out, miseInstalledJavaHomes()...)
 
 	for major := ServerJavaFloor; major <= ServerJavaCeiling; major++ {
 		if home := FindHomebrewJava(strconv.Itoa(major)); home != "" {
@@ -104,13 +107,17 @@ func homebrewPrefixes() []string {
 }
 
 // FindJavaForVersion resolves a JDK home for a specifically requested version,
-// trying SDKMAN first (exact, then the major-prefix fallback) then Homebrew.
-// Used for the target project's JDK so Homebrew-only users keep auto-discovery.
+// trying SDKMAN first (exact, then the major-prefix fallback), then Homebrew,
+// then mise. Used for the target project's JDK so SDKMAN/Homebrew/mise users all
+// keep auto-discovery.
 func FindJavaForVersion(version string) string {
 	if home := FindSDKManJava(version); home != "" {
 		return home
 	}
-	return FindHomebrewJava(version)
+	if home := FindHomebrewJava(version); home != "" {
+		return home
+	}
+	return FindMiseJava(version)
 }
 
 // JavaMajor extracts the major version from a Java version string such as

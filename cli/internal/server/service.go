@@ -83,11 +83,15 @@ func (s *Service) Start(ctx context.Context, opts StartOptions) (*state.ServerSt
 		port = p
 	}
 
-	// Fill in --project-java-home automatically when the target project
-	// uses a Gradle version that can't run on Java 21 and we can resolve
-	// the project's preferred Java. Mirrors server_service.py:133-175.
+	// The target project's Gradle daemon must run on the project's declared
+	// JDK. Resolve it unless an explicit --project-java was passed; a missing or
+	// unresolvable declaration is a hard error (we never guess a JDK).
 	if opts.ProjectJavaHome == "" {
-		opts.ProjectJavaHome = s.autoResolveProjectJava(opts.ProjectPath)
+		home, err := s.resolveProjectJava(opts.ProjectPath)
+		if err != nil {
+			return nil, err
+		}
+		opts.ProjectJavaHome = home
 	}
 
 	cmd, err := s.buildCommand(opts, mode, port)
@@ -232,9 +236,13 @@ func (s *Service) buildCommand(opts StartOptions, mode state.ServerMode, port in
 			return nil, err
 		}
 		gradlew := filepath.Join(repo, "gradlew")
+		serverArgs := fmt.Sprintf("--project %s --port %d --idle-timeout %s", opts.ProjectPath, port, idleTimeout)
+		if opts.ProjectJavaHome != "" {
+			serverArgs += fmt.Sprintf(" --project-java-home %s", opts.ProjectJavaHome)
+		}
 		args := []string{
 			":server:app:run",
-			fmt.Sprintf("--args=--project %s --port %d --idle-timeout %s", opts.ProjectPath, port, idleTimeout),
+			"--args=" + serverArgs,
 		}
 		cmd := exec.Command(gradlew, args...)
 		cmd.Dir = repo
@@ -264,36 +272,35 @@ func (s *Service) buildCommand(opts StartOptions, mode state.ServerMode, port in
 	return nil, fmt.Errorf("unknown server mode: %s", mode)
 }
 
-// autoResolveProjectJava picks a Java home for the target project's Gradle
-// when the user didn't pass --project-java explicitly. Returns "" if no
-// detection is required (modern Gradle) or no usable JDK was found.
-//
-// Mirrors Python server_service.py:141-175: only fires when the project's
-// Gradle wrapper can't run on Java 21, then resolves via SDKMAN. When a
-// version is requested but absent from SDKMAN, log a one-line hint to
-// stderr (matches Python's logger.warning).
-func (s *Service) autoResolveProjectJava(projectPath string) string {
-	if !settings.NeedsOlderJavaForGradle(projectPath) {
-		return ""
+// resolveProjectJava resolves the JDK home for the target project's Gradle
+// daemon. The project must declare a JDK (.sdkmanrc / .java-version /
+// gradle.properties / mise) so its Gradle runs on a compatible JVM regardless
+// of the (possibly newer) server JVM. codelens never guesses: a missing or
+// unresolvable declaration is a hard error that aborts startup. Pass
+// --project-java to bypass.
+func (s *Service) resolveProjectJava(projectPath string) (string, error) {
+	if home := settings.ResolveProjectJavaHome(projectPath); home != "" {
+		return home, nil
 	}
-	home := settings.ResolveProjectJavaHome(projectPath)
-	if home != "" {
-		return home
-	}
-	// Detection failed — emit a helpful hint without aborting; the server
-	// may still start if the project happens to have a usable Java on PATH.
 	if v := settings.DetectProjectJavaVersion(projectPath); v != "" {
-		fmt.Fprintf(os.Stderr,
-			"warning: project requests Java %s but it's not installed in SDKMAN. "+
-				"Install with `sdk install java %s` or pass --project-java.\n",
-			v, v)
-	} else if g := settings.GradleVersion(projectPath); g != "" {
-		fmt.Fprintf(os.Stderr,
-			"warning: project uses Gradle %s which may require an older Java. "+
-				"If startup fails, add a .sdkmanrc to the project or pass --project-java.\n",
-			g)
+		brew := "`brew install openjdk@<major>`"
+		if m := settings.JavaMajor(v); m > 0 {
+			brew = fmt.Sprintf("`brew install openjdk@%d`", m)
+		}
+		return "", fmt.Errorf(
+			"project %s declares Java %s but it isn't installed; install it "+
+				"(`sdk install java %s`, %s, or `mise install java@%s`) or pass --project-java",
+			projectPath, v, v, brew, v)
 	}
-	return ""
+	hint := ""
+	if g := settings.GradleVersion(projectPath); g != "" {
+		hint = fmt.Sprintf(" (Gradle %s)", g)
+	}
+	return "", fmt.Errorf(
+		"no JDK declared for project %s%s; declare one via .sdkmanrc, .java-version, "+
+			"gradle.properties (org.gradle.java.home), or mise (.mise.toml / .tool-versions), "+
+			"or pass --project-java",
+		projectPath, hint)
 }
 
 // resolveServerJava resolves the JVM that runs the server JAR and, when known,

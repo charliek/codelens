@@ -128,8 +128,8 @@ This lets the binary work in three modes: dev (inside the repo), env-var overrid
 
 Two JVMs, resolved separately in `cli/internal/settings` (`javahome.go`, `projectjava.go`) — see `docs/concepts/jdk-resolution.md`:
 
-- **Server JVM** (runs the JAR): `CODELENS_JAVA_HOME` → highest installed JDK with major in `[ServerJavaFloor=21, ServerJavaCeiling=25]` across SDKMAN (`~/.sdkman/candidates/java/*`) and Homebrew (`openjdk@21..@25`) → `JAVA_HOME` → bare `java`. Picks the newest in range because the server JVM must be ≥ the target's bytecode; warns when a target is newer (`service.go`).
-- **Project JVM** (`--project-java-home`): auto-detected from the target's `.sdkmanrc`/`.java-version`/`gradle.properties`, resolved via SDKMAN **and** Homebrew (`FindJavaForVersion`), only when the target's Gradle is too old for the server JVM.
+- **Server JVM** (runs the JAR): `CODELENS_JAVA_HOME` → highest installed JDK with major in `[ServerJavaFloor=21, ServerJavaCeiling=25]` across SDKMAN (`~/.sdkman/candidates/java/*`), mise, and Homebrew (`openjdk@21..@25`) → `JAVA_HOME` → bare `java`. Picks the newest in range because the server JVM must be ≥ the target's bytecode; warns when a target is newer (`service.go`).
+- **Project JVM** (`--project-java-home`): the target project's Gradle daemon JDK. **Required and never guessed** — `resolveProjectJava` (`service.go`) resolves the project's *declared* JDK (`.sdkmanrc`/`.java-version`/`gradle.properties`/mise via `DetectProjectJavaVersion` + `ResolveProjectJavaHome`, resolved through SDKMAN→Homebrew→mise via `FindJavaForVersion`) and **hard-errors + aborts** if undeclared or unresolvable. `--project-java` bypasses it. Passed in both JAR and Gradle server modes.
 
 The ClassGraph version (`gradle/libs.versions.toml`) must support the ceiling JDK's class-file version.
 

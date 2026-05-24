@@ -46,31 +46,31 @@ Check your current Gradle version:
 ./gradlew --version
 ```
 
-## Recommended Configuration
+## Required: declare the project's JDK
 
-### 1. SDKMAN Configuration (Recommended)
+CodeLens runs your project's Gradle on the JDK your project **declares** — it
+does not guess. You must declare a JDK with one of the following (or pass
+`--project-java`), otherwise CodeLens stops with an error:
 
-For reliable JDK detection, create a `.sdkmanrc` file in your project root. This tells CodeLens which JDK version your project uses.
+| Source | Example |
+|--------|---------|
+| `.sdkmanrc` | `java=17.0.9-tem` |
+| `.java-version` | `17.0.9-tem` or `17` |
+| `gradle.properties` | `org.gradle.java.home=/abs/path/to/jdk` |
+| mise | `.mise.toml` (`[tools]` `java = "17"`) or `.tool-versions` (`java temurin-17.0.9`) |
+
+A `.sdkmanrc` is the simplest:
 
 ```bash
-# Create .sdkmanrc file
 echo "java=17.0.9-tem" > .sdkmanrc
 ```
 
-Example `.sdkmanrc` content:
+The declared version is resolved from SDKMAN, Homebrew (`openjdk@<major>`), or
+mise. If it isn't installed, CodeLens tells you how to install it. See
+[JDK Resolution](jdk-resolution.md) for the full order and the server-vs-project
+JVM distinction.
 
-```properties
-# Enable auto-env to automatically switch JDK when entering directory
-java=17.0.9-tem
-```
-
-**Why this helps:** CodeLens attempts to detect your project's JDK from multiple sources. The `.sdkmanrc` file provides an unambiguous signal of which JDK should be used, improving reliability of JDK source resolution (e.g., `java.util.HashMap`).
-
-To list available JDK versions in SDKMAN:
-
-```bash
-sdk list java
-```
+To list available JDK versions in SDKMAN: `sdk list java`.
 
 ### 2. Standard Gradle Plugins
 
