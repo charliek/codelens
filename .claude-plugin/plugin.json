@@ -1,0 +1,13 @@
+{
+  "name": "codelens",
+  "version": "0.0.2",
+  "description": "Analyze JVM codebases (Java and Kotlin): classes, methods, type hierarchies, dependencies, and source.",
+  "author": {
+    "name": "Charlie Knudsen",
+    "url": "https://github.com/charliek"
+  },
+  "homepage": "https://github.com/charliek/codelens",
+  "repository": "https://github.com/charliek/codelens",
+  "license": "Apache-2.0",
+  "keywords": ["codelens", "skills", "jvm", "java", "kotlin"]
+}
