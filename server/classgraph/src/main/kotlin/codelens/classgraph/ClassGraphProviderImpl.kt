@@ -281,13 +281,13 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             // Apply class-level filters
             if (!filter.includeLibraries && classInfo.source != ClassSource.PROJECT) continue
 
-            filter.inClass?.let { classFqn ->
-                if (classInfo.name.fqn != classFqn) return@searchMethods results
-            }
-
-            filter.inPackage?.let { packagePattern ->
-                if (!matchesPattern(classInfo.name.packageName, packagePattern)) return@searchMethods results
-            }
+            // Skip this class (not the whole search) when it fails a class-level filter.
+            // Capture into locals so matchesPattern's non-null String param can smart-cast
+            // (filter.* are cross-module properties and cannot be smart-cast directly).
+            val inClass = filter.inClass
+            if (inClass != null && classInfo.name.fqn != inClass) continue
+            val inPackage = filter.inPackage
+            if (inPackage != null && !matchesPattern(classInfo.name.packageName, inPackage)) continue
 
             // Search methods in this class
             for (method in classInfo.methods) {

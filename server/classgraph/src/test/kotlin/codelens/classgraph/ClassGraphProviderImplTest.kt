@@ -767,6 +767,78 @@ class ClassGraphProviderImplTest {
         assertNull(hierarchy.parent, "Interface should NOT have Object as parent")
     }
 
+    @Test
+    fun `searchMethods filtering by inClass returns only that class's methods even when other classes precede it`() {
+        // Three project classes in different packages, each with a distinct method. The target
+        // class is intentionally not the only one present: the old implementation aborted the
+        // whole search on the first non-matching class, so filtering returned nothing.
+        classesMap["com.example.a.Alpha"] =
+            createClassInfo(
+                fqn = "com.example.a.Alpha",
+                simpleName = "Alpha",
+                packageName = "com.example.a",
+                methods = listOf(method("alphaOne"), method("alphaTwo")),
+            )
+        classesMap["com.example.b.Beta"] =
+            createClassInfo(
+                fqn = "com.example.b.Beta",
+                simpleName = "Beta",
+                packageName = "com.example.b",
+                methods = listOf(method("betaOne")),
+            )
+        classesMap["com.example.c.Gamma"] =
+            createClassInfo(
+                fqn = "com.example.c.Gamma",
+                simpleName = "Gamma",
+                packageName = "com.example.c",
+                methods = listOf(method("gammaOne")),
+            )
+
+        val results = provider.searchMethods(MethodFilter(inClass = "com.example.b.Beta"))
+
+        assertEquals(1, results.size, "Should return exactly the target class's methods")
+        assertTrue(results.all { it.classFqn == "com.example.b.Beta" }, "All results must belong to the filtered class")
+        assertEquals(setOf("betaOne"), results.map { it.method.name }.toSet())
+    }
+
+    @Test
+    fun `searchMethods filtering by exact inPackage returns methods of classes in that package`() {
+        classesMap["com.example.a.Alpha"] =
+            createClassInfo(
+                fqn = "com.example.a.Alpha",
+                simpleName = "Alpha",
+                packageName = "com.example.a",
+                methods = listOf(method("alphaOne")),
+            )
+        classesMap["com.example.a.Alpha2"] =
+            createClassInfo(
+                fqn = "com.example.a.Alpha2",
+                simpleName = "Alpha2",
+                packageName = "com.example.a",
+                methods = listOf(method("alphaThree")),
+            )
+        classesMap["com.example.b.Beta"] =
+            createClassInfo(
+                fqn = "com.example.b.Beta",
+                simpleName = "Beta",
+                packageName = "com.example.b",
+                methods = listOf(method("betaOne")),
+            )
+
+        // Exact package match (no wildcard) must work, not just "com.example.a.*".
+        val results = provider.searchMethods(MethodFilter(inPackage = "com.example.a"))
+
+        assertEquals(setOf("alphaOne", "alphaThree"), results.map { it.method.name }.toSet())
+        assertTrue(results.all { it.classFqn.startsWith("com.example.a.") }, "Only com.example.a classes should match")
+    }
+
+    private fun method(name: String): MethodInfo =
+        MethodInfo(
+            name = name,
+            visibility = Visibility.PUBLIC,
+            returnType = "void",
+        )
+
     /**
      * Helper function to create ClassInfo for testing.
      */
