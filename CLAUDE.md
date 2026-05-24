@@ -107,9 +107,11 @@ The CLI uses this directory verbatim (Go does NOT use `os.UserCacheDir()` on mac
 
 Version is defined in `version.txt` at the repository root. Both Gradle and the Go CLI's `go generate` step read it; a copy lives at `cli/internal/version/version.txt` (gitignored — regenerated each build). The release workflow overwrites `version.txt` from the git tag before building, so released artifacts always match the tag.
 
+The Claude Code plugin manifest `.claude-plugin/plugin.json` also hardcodes the version, and Claude Code reads it straight from the committed default branch (not from a build artifact). The release workflow's `sync-version` job commits `version.txt` and `.claude-plugin/plugin.json` back to `main` from the tag after each release (idempotent), keeping the plugin version in lockstep so installers see the update. `scripts/set-version.sh X.Y.Z` is the underlying tool for setting both locally.
+
 ## Releases
 
-Tag-driven via GoReleaser. `/release:release` pushes a `vX.Y.Z` tag → `.github/workflows/release.yaml` builds the server JAR (Gradle) and the Go binaries (darwin/linux × amd64/arm64), bundles the JAR into each archive, publishes a GitHub Release, and pushes a Homebrew formula to `charliek/homebrew-tap` (needs the `HOMEBREW_TAP_TOKEN` secret). Config: `.goreleaser.yaml`. Docs deploy separately via `.github/workflows/docs.yml` (MkDocs → GitHub Pages).
+Tag-driven via GoReleaser. `/release:release` pushes a `vX.Y.Z` tag → `.github/workflows/release.yaml` builds the server JAR (Gradle) and the Go binaries (darwin/linux × amd64/arm64), bundles the JAR into each archive, publishes a GitHub Release, and pushes a Homebrew formula to `charliek/homebrew-tap` (needs the `HOMEBREW_TAP_TOKEN` secret). A follow-up `sync-version` job then commits `version.txt` and `.claude-plugin/plugin.json` back to `main` from the tag so the committed (installer-facing) versions match the release. Config: `.goreleaser.yaml`. Docs deploy separately via `.github/workflows/docs.yml` (MkDocs → GitHub Pages).
 
 ## Server JAR discovery
 

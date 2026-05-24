@@ -42,6 +42,28 @@ brew install openjdk@21        # Homebrew
 See [Installation](https://charliek.github.io/codelens/getting-started/installation/)
 for standalone/manual layouts and the JDK details.
 
+## Install the skills
+
+codelens publishes its four skills (JVM analysis, Kotlin linting, source lookup,
+and Ratpack migration) as agent skills. They drive the codelens CLI for you, so
+install the CLI with the steps above first.
+
+**Any agent, with [`skills`](https://skills.sh):** installs into Claude Code,
+Cursor, Codex, Copilot, Windsurf, and dozens of other agents, auto-detecting the
+ones you have.
+
+```bash
+npx skills add charliek/codelens
+```
+
+**Claude Code plugin:** a native alternative that namespaces the skills as
+`codelens:<skill-name>`.
+
+```bash
+/plugin marketplace add charliek/codelens
+/plugin install codelens@codelens
+```
+
 ## Quick start
 
 codelens analyzes compiled bytecode, so build the target project first, then run

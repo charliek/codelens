@@ -87,3 +87,11 @@ cd cli && golangci-lint run    # Go
 the JAR; the Go build copies it into `cli/internal/version/version.txt` (via
 `go generate`) and embeds it. Releases overwrite it from the git tag — see the
 release workflow.
+
+The Claude Code plugin manifest (`.claude-plugin/plugin.json`) hardcodes the same
+version, and Claude Code reads it directly from the committed default branch. The
+release workflow keeps the two in lockstep automatically: after the tag build, its
+`sync-version` job runs `scripts/set-version.sh` from the tag and commits
+`version.txt` and `.claude-plugin/plugin.json` back to `main` (a no-op when they
+already match). Run `scripts/set-version.sh X.Y.Z` yourself only to set the version
+locally between releases.

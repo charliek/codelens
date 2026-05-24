@@ -34,9 +34,10 @@ jobs:
           go-version: '1.24'
 
       - name: Set version from tag
-        # Trailing newline keeps the file byte-identical to the committed
-        # version.txt when the tag already matches (no spurious git diff).
-        run: printf '%s\n' "${GITHUB_REF_NAME#v}" > version.txt
+        # Ephemeral rewrite so the build tree (server JAR + embedded Go version)
+        # matches the tag. The committed, installer-facing version is reconciled on
+        # main by the sync-version job below.
+        run: scripts/set-version.sh "${GITHUB_REF_NAME#v}"
 
       - name: Build server JAR
         run: ./gradlew :server:app:shadowJar
@@ -59,3 +60,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+  sync-version:
+    name: Commit version to main
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          # Don't leave the token in git config; the push step below uses an
+          # explicit tokenized URL instead.
+          persist-credentials: false
+
+      - name: Set version from tag
+        run: scripts/set-version.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Commit and push if the version files drifted
+        # Keeps the committed version.txt and .claude-plugin/plugin.json in lockstep
+        # with the released tag (Claude Code reads plugin.json from main, not from a
+        # build artifact). Idempotent: a no-op when they already match, e.g. when the
+        # bump was made by hand before tagging. The GITHUB_TOKEN push does not
+        # re-trigger build.yml (GitHub blocks recursive workflow runs).
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$(git status --porcelain version.txt .claude-plugin/plugin.json)" ]; then
+            echo "version files already match ${GITHUB_REF_NAME}; nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.txt .claude-plugin/plugin.json
+          git commit -m "chore: set version ${GITHUB_REF_NAME}"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main

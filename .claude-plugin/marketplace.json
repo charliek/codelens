@@ -1,0 +1,15 @@
+{
+  "name": "codelens",
+  "description": "codelens skills for analyzing JVM codebases (Java and Kotlin).",
+  "owner": {
+    "name": "Charlie Knudsen",
+    "url": "https://github.com/charliek"
+  },
+  "plugins": [
+    {
+      "name": "codelens",
+      "source": "./",
+      "description": "Analyze JVM codebases (Java and Kotlin): classes, methods, type hierarchies, dependencies, and source."
+    }
+  ]
+}
