@@ -1,0 +1,49 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "CALL_RECEIVER": 1,
+    "RETURN": 2
+  },
+  "countsByPackage": {
+    "com.example.shop.service": 2,
+    "com.example.shop.web": 1
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": "reactor.core.publisher.Mono",
+      "fromFqn": "com.example.shop.service.ReactiveCatalogService",
+      "fromSimpleName": "ReactiveCatalogService",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "findProduct"
+    },
+    {
+      "detail": "justOrEmpty",
+      "fromFqn": "com.example.shop.service.ReactiveCatalogService",
+      "fromSimpleName": "ReactiveCatalogService",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 27,
+      "member": "findProduct"
+    },
+    {
+      "detail": "reactor.core.publisher.Mono",
+      "fromFqn": "com.example.shop.web.ReactiveController",
+      "fromSimpleName": "ReactiveController",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "one"
+    }
+  ],
+  "totalCount": 3,
+  "totalPages": 1,
+  "typeFqn": "reactor.core.publisher.Mono"
+}

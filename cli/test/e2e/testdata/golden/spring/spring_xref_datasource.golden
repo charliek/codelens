@@ -1,0 +1,60 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "CALL_RECEIVER": 1,
+    "FIELD": 1,
+    "PARAM": 1,
+    "RETURN": 1
+  },
+  "countsByPackage": {
+    "com.example.shop.config": 1,
+    "com.example.shop.service": 3
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": "javax.sql.DataSource",
+      "fromFqn": "com.example.shop.config.DatabaseConfig",
+      "fromSimpleName": "DatabaseConfig",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "dataSource"
+    },
+    {
+      "detail": "javax.sql.DataSource",
+      "fromFqn": "com.example.shop.service.InventoryService",
+      "fromSimpleName": "InventoryService",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "lineNumber": null,
+      "member": "dataSource"
+    },
+    {
+      "detail": "javax.sql.DataSource",
+      "fromFqn": "com.example.shop.service.InventoryService",
+      "fromSimpleName": "InventoryService",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "\u003cinit\u003e"
+    },
+    {
+      "detail": "getConnection",
+      "fromFqn": "com.example.shop.service.InventoryService",
+      "fromSimpleName": "InventoryService",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 25,
+      "member": "stockLevel"
+    }
+  ],
+  "totalCount": 4,
+  "totalPages": 1,
+  "typeFqn": "javax.sql.DataSource"
+}

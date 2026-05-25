@@ -1,0 +1,19 @@
+{
+  "directImplementations": [
+    {
+      "fieldCount": 2,
+      "fqn": "com.example.shop.service.ProductServiceImpl",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 4,
+      "packageName": "com.example.shop.service",
+      "simpleName": "ProductServiceImpl",
+      "source": "PROJECT"
+    }
+  ],
+  "indirectImplementations": [],
+  "targetClass": "com.example.shop.service.ProductService",
+  "totalCount": 1
+}

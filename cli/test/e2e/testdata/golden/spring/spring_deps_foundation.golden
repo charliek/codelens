@@ -1,0 +1,94 @@
+{
+  "count": 8,
+  "foundationClasses": [
+    {
+      "dependentCount": 5,
+      "dependents": [
+        "com.example.shop.report.ReportGenerator",
+        "com.example.shop.service.OrderService",
+        "com.example.shop.service.ProductServiceImpl",
+        "com.example.shop.service.ReactiveCatalogService",
+        "com.example.shop.web.ProductController"
+      ],
+      "fqn": "com.example.shop.service.ProductService",
+      "packageName": "com.example.shop.service",
+      "simpleName": "ProductService"
+    },
+    {
+      "dependentCount": 4,
+      "dependents": [
+        "com.example.shop.report.ReportGenerator",
+        "com.example.shop.service.CustomerService",
+        "com.example.shop.service.OrderService",
+        "com.example.shop.service.ProductServiceImpl"
+      ],
+      "fqn": "com.example.shop.service.NotificationService",
+      "packageName": "com.example.shop.service",
+      "simpleName": "NotificationService"
+    },
+    {
+      "dependentCount": 4,
+      "dependents": [
+        "com.example.shop.web.CustomerController",
+        "com.example.shop.web.OrderController",
+        "com.example.shop.web.ProductController",
+        "com.example.shop.web.ReactiveController"
+      ],
+      "fqn": "com.example.shop.web.BaseController",
+      "packageName": "com.example.shop.web",
+      "simpleName": "BaseController"
+    },
+    {
+      "dependentCount": 3,
+      "dependents": [
+        "com.example.shop.model.Order",
+        "com.example.shop.service.CustomerService",
+        "com.example.shop.web.CustomerController"
+      ],
+      "fqn": "com.example.shop.model.Customer",
+      "packageName": "com.example.shop.model",
+      "simpleName": "Customer"
+    },
+    {
+      "dependentCount": 3,
+      "dependents": [
+        "com.example.shop.service.ProductService",
+        "com.example.shop.service.ProductServiceImpl",
+        "com.example.shop.web.ProductController"
+      ],
+      "fqn": "com.example.shop.model.Product",
+      "packageName": "com.example.shop.model",
+      "simpleName": "Product"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "com.example.shop.service.OrderService",
+        "com.example.shop.web.OrderController"
+      ],
+      "fqn": "com.example.shop.model.Order",
+      "packageName": "com.example.shop.model",
+      "simpleName": "Order"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "com.example.shop.service.OrderService",
+        "com.example.shop.web.CustomerController"
+      ],
+      "fqn": "com.example.shop.service.CustomerService",
+      "packageName": "com.example.shop.service",
+      "simpleName": "CustomerService"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "com.example.shop.report.ReportGenerator",
+        "com.example.shop.web.OrderController"
+      ],
+      "fqn": "com.example.shop.service.OrderService",
+      "packageName": "com.example.shop.service",
+      "simpleName": "OrderService"
+    }
+  ]
+}

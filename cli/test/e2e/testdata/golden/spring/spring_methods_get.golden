@@ -1,0 +1,352 @@
+{
+  "methods": [
+    {
+      "classFqn": "com.example.shop.dto.OrderDto",
+      "classSimpleName": "OrderDto",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getCustomerId",
+        "parameters": [],
+        "returnType": "java.lang.Long",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.dto.OrderDto",
+      "classSimpleName": "OrderDto",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getTotal",
+        "parameters": [],
+        "returnType": "double",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.dto.ProductDto",
+      "classSimpleName": "ProductDto",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getName",
+        "parameters": [],
+        "returnType": "java.lang.String",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.dto.ProductDto",
+      "classSimpleName": "ProductDto",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getPrice",
+        "parameters": [],
+        "returnType": "double",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Customer",
+      "classSimpleName": "Customer",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getEmail",
+        "parameters": [],
+        "returnType": "java.lang.String",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Customer",
+      "classSimpleName": "Customer",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getId",
+        "parameters": [],
+        "returnType": "java.lang.Long",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Customer",
+      "classSimpleName": "Customer",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getName",
+        "parameters": [],
+        "returnType": "java.lang.String",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Order",
+      "classSimpleName": "Order",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getCustomer",
+        "parameters": [],
+        "returnType": "com.example.shop.model.Customer",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Order",
+      "classSimpleName": "Order",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getId",
+        "parameters": [],
+        "returnType": "java.lang.Long",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Order",
+      "classSimpleName": "Order",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getTotal",
+        "parameters": [],
+        "returnType": "double",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Product",
+      "classSimpleName": "Product",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getId",
+        "parameters": [],
+        "returnType": "java.lang.Long",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Product",
+      "classSimpleName": "Product",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getName",
+        "parameters": [],
+        "returnType": "java.lang.String",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.model.Product",
+      "classSimpleName": "Product",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getPrice",
+        "parameters": [],
+        "returnType": "double",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.CustomerController",
+      "classSimpleName": "CustomerController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "get",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "com.example.shop.model.Customer",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "get",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      }
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 15,
+  "totalPages": 1
+}

@@ -1,0 +1,28 @@
+{
+  "hierarchy": {
+    "children": [],
+    "classFqn": "com.example.shop.web.ProductController",
+    "interfaces": [],
+    "isInterface": false,
+    "parent": {
+      "children": [],
+      "classFqn": "com.example.shop.web.BaseController",
+      "interfaces": [],
+      "isInterface": false,
+      "parent": {
+        "children": [],
+        "classFqn": "java.lang.Object",
+        "interfaces": [],
+        "isInterface": false,
+        "parent": null,
+        "simpleName": "Object",
+        "source": "JDK"
+      },
+      "simpleName": "BaseController",
+      "source": "PROJECT"
+    },
+    "simpleName": "ProductController",
+    "source": "PROJECT"
+  },
+  "targetClass": "com.example.shop.web.ProductController"
+}

@@ -1,0 +1,270 @@
+{
+  "classInfo": {
+    "annotations": [
+      {
+        "parameters": {
+          "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+          "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+        },
+        "type": "org.springframework.aot.hint.annotation.Reflective"
+      },
+      {
+        "parameters": {
+          "value": ""
+        },
+        "type": "org.springframework.stereotype.Component"
+      },
+      {
+        "parameters": {
+          "value": ""
+        },
+        "type": "org.springframework.stereotype.Controller"
+      },
+      {
+        "parameters": {},
+        "type": "org.springframework.stereotype.Indexed"
+      },
+      {
+        "parameters": {},
+        "type": "org.springframework.web.bind.annotation.Mapping"
+      },
+      {
+        "parameters": {
+          "consumes": "[]",
+          "headers": "[]",
+          "method": "[]",
+          "name": "",
+          "params": "[]",
+          "path": "[]",
+          "produces": "[]",
+          "value": "[/products]"
+        },
+        "type": "org.springframework.web.bind.annotation.RequestMapping"
+      },
+      {
+        "parameters": {},
+        "type": "org.springframework.web.bind.annotation.ResponseBody"
+      },
+      {
+        "parameters": {
+          "value": ""
+        },
+        "type": "org.springframework.web.bind.annotation.RestController"
+      }
+    ],
+    "constructors": [
+      {
+        "annotations": [],
+        "isSynthetic": false,
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "com.example.shop.service.ProductService"
+          }
+        ],
+        "visibility": "PUBLIC"
+      }
+    ],
+    "fields": [
+      {
+        "annotations": [],
+        "isFinal": true,
+        "isStatic": false,
+        "name": "productService",
+        "type": "com.example.shop.service.ProductService",
+        "visibility": "PRIVATE"
+      }
+    ],
+    "interfaces": [],
+    "isAbstract": false,
+    "isAnnotation": false,
+    "isEnum": false,
+    "isFinal": false,
+    "isInterface": false,
+    "isSynthetic": false,
+    "jarPath": "{{PROJECT}}/build/classes/java/main",
+    "methods": [
+      {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "list",
+        "parameters": [],
+        "returnType": "java.util.List",
+        "visibility": "PUBLIC"
+      },
+      {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "get",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      },
+      {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.PostMapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.POST]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "create",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "required": "true"
+                },
+                "type": "org.springframework.web.bind.annotation.RequestBody"
+              }
+            ],
+            "name": "arg0",
+            "type": "com.example.shop.dto.ProductDto"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      }
+    ],
+    "name": {
+      "fqn": "com.example.shop.web.ProductController",
+      "packageName": "com.example.shop.web",
+      "simpleName": "ProductController"
+    },
+    "source": "PROJECT",
+    "superclass": "com.example.shop.web.BaseController",
+    "visibility": "PUBLIC"
+  }
+}

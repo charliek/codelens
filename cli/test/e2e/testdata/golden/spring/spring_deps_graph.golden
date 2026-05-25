@@ -1,0 +1,345 @@
+{
+  "edgeCount": 31,
+  "edges": [
+    {
+      "source": "com.example.shop.model.Order",
+      "target": "com.example.shop.model.Customer",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.report.ReportGenerator",
+      "target": "com.example.shop.service.NotificationService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.report.ReportGenerator",
+      "target": "com.example.shop.service.OrderService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.report.ReportGenerator",
+      "target": "com.example.shop.service.ProductService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.CustomerService",
+      "target": "com.example.shop.model.Customer",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.CustomerService",
+      "target": "com.example.shop.repository.CustomerRepository",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.CustomerService",
+      "target": "com.example.shop.service.NotificationService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.OrderService",
+      "target": "com.example.shop.model.Order",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.OrderService",
+      "target": "com.example.shop.repository.OrderRepository",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.OrderService",
+      "target": "com.example.shop.service.CustomerService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.OrderService",
+      "target": "com.example.shop.service.NotificationService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.OrderService",
+      "target": "com.example.shop.service.ProductService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.ProductService",
+      "target": "com.example.shop.model.Product",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.ProductServiceImpl",
+      "target": "com.example.shop.model.Product",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.ProductServiceImpl",
+      "target": "com.example.shop.repository.ProductRepository",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.ProductServiceImpl",
+      "target": "com.example.shop.service.NotificationService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.ProductServiceImpl",
+      "target": "com.example.shop.service.ProductService",
+      "type": "IMPLEMENTS"
+    },
+    {
+      "source": "com.example.shop.service.ReactiveCatalogService",
+      "target": "com.example.shop.service.ProductService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.CustomerController",
+      "target": "com.example.shop.model.Customer",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.CustomerController",
+      "target": "com.example.shop.service.CustomerService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.CustomerController",
+      "target": "com.example.shop.web.BaseController",
+      "type": "EXTENDS"
+    },
+    {
+      "source": "com.example.shop.web.OrderController",
+      "target": "com.example.shop.dto.OrderDto",
+      "type": "METHOD_PARAMETER"
+    },
+    {
+      "source": "com.example.shop.web.OrderController",
+      "target": "com.example.shop.model.Order",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.OrderController",
+      "target": "com.example.shop.service.OrderService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.OrderController",
+      "target": "com.example.shop.web.BaseController",
+      "type": "EXTENDS"
+    },
+    {
+      "source": "com.example.shop.web.ProductController",
+      "target": "com.example.shop.dto.ProductDto",
+      "type": "METHOD_PARAMETER"
+    },
+    {
+      "source": "com.example.shop.web.ProductController",
+      "target": "com.example.shop.model.Product",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.ProductController",
+      "target": "com.example.shop.service.ProductService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.ProductController",
+      "target": "com.example.shop.web.BaseController",
+      "type": "EXTENDS"
+    },
+    {
+      "source": "com.example.shop.web.ReactiveController",
+      "target": "com.example.shop.service.ReactiveCatalogService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.ReactiveController",
+      "target": "com.example.shop.web.BaseController",
+      "type": "EXTENDS"
+    }
+  ],
+  "nodeCount": 26,
+  "nodes": [
+    {
+      "fqn": "com.example.shop.Application",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop",
+      "simpleName": "Application"
+    },
+    {
+      "fqn": "com.example.shop.config.AppConfig",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop.config",
+      "simpleName": "AppConfig"
+    },
+    {
+      "fqn": "com.example.shop.config.DatabaseConfig",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop.config",
+      "simpleName": "DatabaseConfig"
+    },
+    {
+      "fqn": "com.example.shop.dto.OrderDto",
+      "inDegree": 1,
+      "outDegree": 0,
+      "packageName": "com.example.shop.dto",
+      "simpleName": "OrderDto"
+    },
+    {
+      "fqn": "com.example.shop.dto.ProductDto",
+      "inDegree": 1,
+      "outDegree": 0,
+      "packageName": "com.example.shop.dto",
+      "simpleName": "ProductDto"
+    },
+    {
+      "fqn": "com.example.shop.exception.NotFoundException",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop.exception",
+      "simpleName": "NotFoundException"
+    },
+    {
+      "fqn": "com.example.shop.exception.ValidationException",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop.exception",
+      "simpleName": "ValidationException"
+    },
+    {
+      "fqn": "com.example.shop.model.Customer",
+      "inDegree": 3,
+      "outDegree": 0,
+      "packageName": "com.example.shop.model",
+      "simpleName": "Customer"
+    },
+    {
+      "fqn": "com.example.shop.model.Order",
+      "inDegree": 2,
+      "outDegree": 1,
+      "packageName": "com.example.shop.model",
+      "simpleName": "Order"
+    },
+    {
+      "fqn": "com.example.shop.model.Product",
+      "inDegree": 3,
+      "outDegree": 0,
+      "packageName": "com.example.shop.model",
+      "simpleName": "Product"
+    },
+    {
+      "fqn": "com.example.shop.report.ReportGenerator",
+      "inDegree": 0,
+      "outDegree": 3,
+      "packageName": "com.example.shop.report",
+      "simpleName": "ReportGenerator"
+    },
+    {
+      "fqn": "com.example.shop.repository.CustomerRepository",
+      "inDegree": 1,
+      "outDegree": 0,
+      "packageName": "com.example.shop.repository",
+      "simpleName": "CustomerRepository"
+    },
+    {
+      "fqn": "com.example.shop.repository.OrderRepository",
+      "inDegree": 1,
+      "outDegree": 0,
+      "packageName": "com.example.shop.repository",
+      "simpleName": "OrderRepository"
+    },
+    {
+      "fqn": "com.example.shop.repository.ProductRepository",
+      "inDegree": 1,
+      "outDegree": 0,
+      "packageName": "com.example.shop.repository",
+      "simpleName": "ProductRepository"
+    },
+    {
+      "fqn": "com.example.shop.service.CustomerService",
+      "inDegree": 2,
+      "outDegree": 3,
+      "packageName": "com.example.shop.service",
+      "simpleName": "CustomerService"
+    },
+    {
+      "fqn": "com.example.shop.service.InventoryService",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop.service",
+      "simpleName": "InventoryService"
+    },
+    {
+      "fqn": "com.example.shop.service.NotificationService",
+      "inDegree": 4,
+      "outDegree": 0,
+      "packageName": "com.example.shop.service",
+      "simpleName": "NotificationService"
+    },
+    {
+      "fqn": "com.example.shop.service.OrderService",
+      "inDegree": 2,
+      "outDegree": 5,
+      "packageName": "com.example.shop.service",
+      "simpleName": "OrderService"
+    },
+    {
+      "fqn": "com.example.shop.service.ProductService",
+      "inDegree": 5,
+      "outDegree": 1,
+      "packageName": "com.example.shop.service",
+      "simpleName": "ProductService"
+    },
+    {
+      "fqn": "com.example.shop.service.ProductServiceImpl",
+      "inDegree": 0,
+      "outDegree": 4,
+      "packageName": "com.example.shop.service",
+      "simpleName": "ProductServiceImpl"
+    },
+    {
+      "fqn": "com.example.shop.service.ReactiveCatalogService",
+      "inDegree": 1,
+      "outDegree": 1,
+      "packageName": "com.example.shop.service",
+      "simpleName": "ReactiveCatalogService"
+    },
+    {
+      "fqn": "com.example.shop.web.BaseController",
+      "inDegree": 4,
+      "outDegree": 0,
+      "packageName": "com.example.shop.web",
+      "simpleName": "BaseController"
+    },
+    {
+      "fqn": "com.example.shop.web.CustomerController",
+      "inDegree": 0,
+      "outDegree": 3,
+      "packageName": "com.example.shop.web",
+      "simpleName": "CustomerController"
+    },
+    {
+      "fqn": "com.example.shop.web.OrderController",
+      "inDegree": 0,
+      "outDegree": 4,
+      "packageName": "com.example.shop.web",
+      "simpleName": "OrderController"
+    },
+    {
+      "fqn": "com.example.shop.web.ProductController",
+      "inDegree": 0,
+      "outDegree": 4,
+      "packageName": "com.example.shop.web",
+      "simpleName": "ProductController"
+    },
+    {
+      "fqn": "com.example.shop.web.ReactiveController",
+      "inDegree": 0,
+      "outDegree": 2,
+      "packageName": "com.example.shop.web",
+      "simpleName": "ReactiveController"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "appliedFilter": {
+    "extendsClass": null,
+    "hasAnnotation": null,
+    "implementsInterface": null,
+    "namePattern": null,
+    "packagePattern": null,
+    "source": "PROJECT"
+  },
+  "classes": [
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.repository.CustomerRepository",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 0,
+      "packageName": "com.example.shop.repository",
+      "simpleName": "CustomerRepository",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.repository.OrderRepository",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 0,
+      "packageName": "com.example.shop.repository",
+      "simpleName": "OrderRepository",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.repository.ProductRepository",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 1,
+      "packageName": "com.example.shop.repository",
+      "simpleName": "ProductRepository",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.service.ProductService",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 3,
+      "packageName": "com.example.shop.service",
+      "simpleName": "ProductService",
+      "source": "PROJECT"
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 4,
+  "totalPages": 1
+}

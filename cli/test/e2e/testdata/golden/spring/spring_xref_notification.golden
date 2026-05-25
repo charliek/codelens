@@ -1,0 +1,131 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "CALL_RECEIVER": 4,
+    "FIELD": 4,
+    "PARAM": 4
+  },
+  "countsByPackage": {
+    "com.example.shop.report": 3,
+    "com.example.shop.service": 9
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.report.ReportGenerator",
+      "fromSimpleName": "ReportGenerator",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "lineNumber": null,
+      "member": "notificationService"
+    },
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.report.ReportGenerator",
+      "fromSimpleName": "ReportGenerator",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "\u003cinit\u003e"
+    },
+    {
+      "detail": "notify",
+      "fromFqn": "com.example.shop.report.ReportGenerator",
+      "fromSimpleName": "ReportGenerator",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 22,
+      "member": "generateSummary"
+    },
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.service.CustomerService",
+      "fromSimpleName": "CustomerService",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "lineNumber": null,
+      "member": "notificationService"
+    },
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.service.CustomerService",
+      "fromSimpleName": "CustomerService",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "\u003cinit\u003e"
+    },
+    {
+      "detail": "notify",
+      "fromFqn": "com.example.shop.service.CustomerService",
+      "fromSimpleName": "CustomerService",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 27,
+      "member": "register"
+    },
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.service.OrderService",
+      "fromSimpleName": "OrderService",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "lineNumber": null,
+      "member": "notificationService"
+    },
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.service.OrderService",
+      "fromSimpleName": "OrderService",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "\u003cinit\u003e"
+    },
+    {
+      "detail": "notify",
+      "fromFqn": "com.example.shop.service.OrderService",
+      "fromSimpleName": "OrderService",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 31,
+      "member": "placeOrder"
+    },
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.service.ProductServiceImpl",
+      "fromSimpleName": "ProductServiceImpl",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "lineNumber": null,
+      "member": "notificationService"
+    },
+    {
+      "detail": "com.example.shop.service.NotificationService",
+      "fromFqn": "com.example.shop.service.ProductServiceImpl",
+      "fromSimpleName": "ProductServiceImpl",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "\u003cinit\u003e"
+    },
+    {
+      "detail": "notify",
+      "fromFqn": "com.example.shop.service.ProductServiceImpl",
+      "fromSimpleName": "ProductServiceImpl",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 35,
+      "member": "create"
+    }
+  ],
+  "totalCount": 12,
+  "totalPages": 1,
+  "typeFqn": "com.example.shop.service.NotificationService"
+}

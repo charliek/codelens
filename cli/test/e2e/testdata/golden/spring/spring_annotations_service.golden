@@ -1,0 +1,90 @@
+{
+  "annotationFqn": "org.springframework.stereotype.Service",
+  "totalCount": 7,
+  "usages": [
+    {
+      "fieldCount": 3,
+      "fqn": "com.example.shop.report.ReportGenerator",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "com.example.shop.report",
+      "simpleName": "ReportGenerator",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "com.example.shop.service.CustomerService",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 4,
+      "packageName": "com.example.shop.service",
+      "simpleName": "CustomerService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "com.example.shop.service.InventoryService",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "com.example.shop.service",
+      "simpleName": "InventoryService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.service.NotificationService",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "com.example.shop.service",
+      "simpleName": "NotificationService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 4,
+      "fqn": "com.example.shop.service.OrderService",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "com.example.shop.service",
+      "simpleName": "OrderService",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "com.example.shop.service.ProductServiceImpl",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 4,
+      "packageName": "com.example.shop.service",
+      "simpleName": "ProductServiceImpl",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "com.example.shop.service.ReactiveCatalogService",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "com.example.shop.service",
+      "simpleName": "ReactiveCatalogService",
+      "source": "PROJECT"
+    }
+  ]
+}

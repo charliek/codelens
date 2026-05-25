@@ -1,0 +1,72 @@
+{
+  "fqn": "com.example.shop.config.DatabaseConfig",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "()V",
+          "isInterface": false,
+          "lineNumber": 18,
+          "methodName": "\u003cinit\u003e",
+          "ownerType": "org.springframework.jdbc.datasource.DriverManagerDataSource"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "org.h2.Driver"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": 19,
+          "methodName": "setDriverClassName",
+          "ownerType": "org.springframework.jdbc.datasource.DriverManagerDataSource"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "jdbc:h2:mem:shop;DB_CLOSE_DELAY=-1"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": 20,
+          "methodName": "setUrl",
+          "ownerType": "org.springframework.jdbc.datasource.DriverManagerDataSource"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "sa"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": 21,
+          "methodName": "setUsername",
+          "ownerType": "org.springframework.jdbc.datasource.DriverManagerDataSource"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": ""
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": 22,
+          "methodName": "setPassword",
+          "ownerType": "org.springframework.jdbc.datasource.DriverManagerDataSource"
+        }
+      ],
+      "descriptor": "()Ljavax/sql/DataSource;",
+      "methodName": "dataSource"
+    }
+  ],
+  "totalCalls": 5
+}

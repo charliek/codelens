@@ -138,3 +138,58 @@ var allCases = []Case{
 		Args: []string{"lint", "format", "{{PROJECT}}/src/main/kotlin/sample/BadFormatting.kt", "--dry-run"},
 	},
 }
+
+// springCases run against the richer sample-spring-boot-app fixture, proving
+// the general primitives produce useful analysis on a second framework (Spring).
+// Goldens live under testdata/golden/spring/.
+//
+//nolint:revive // exhaustiveness over brevity.
+var springCases = []Case{
+	// Project counts are deterministic; library/JDK counts and classpath size
+	// vary with Spring's (pinned but large) transitive tree, so blank them.
+	{Name: "spring_stats", Args: []string{"classes", "stats"}, BlankPaths: []string{
+		"scanDurationMs", "scannedAt", "libraryClassCount", "jdkClassCount", "classpathEntryCount",
+	}},
+
+	// ---------- classes ----------
+	{Name: "spring_classes_list", Args: []string{"classes", "list"}},
+	{Name: "spring_classes_show_controller", Args: []string{"classes", "show", "com.example.shop.web.ProductController"}},
+	{Name: "spring_classes_list_interfaces", Args: []string{"classes", "list", "--interfaces"}},
+
+	// ---------- implementations & hierarchy ----------
+	// Interface + impl pair.
+	{Name: "spring_impl_productservice", Args: []string{"classes", "implementations", "com.example.shop.service.ProductService"}},
+	// Project repositories extending a Spring Data library interface.
+	{Name: "spring_impl_jparepository", Args: []string{"classes", "implementations", "org.springframework.data.jpa.repository.JpaRepository"}},
+	// Controller -> abstract BaseController -> Object.
+	{Name: "spring_hierarchy_controller", Args: []string{"classes", "hierarchy", "com.example.shop.web.ProductController"}},
+
+	// ---------- annotations ----------
+	{Name: "spring_annotations_restcontroller", Args: []string{
+		"annotations", "usages", "org.springframework.web.bind.annotation.RestController",
+	}},
+	{Name: "spring_annotations_service", Args: []string{
+		"annotations", "usages", "org.springframework.stereotype.Service",
+	}},
+
+	// ---------- methods ----------
+	{Name: "spring_methods_get", Args: []string{"methods", "search", "--name", "get*"}},
+
+	// ---------- calls (constant string args in @Bean methods) ----------
+	// Builder setters with constant JDBC connection strings.
+	{Name: "spring_calls_dbconfig", Args: []string{"calls", "com.example.shop.config.DatabaseConfig", "--method", "dataSource"}},
+	// Controller method delegating to a service.
+	{Name: "spring_calls_controller", Args: []string{"calls", "com.example.shop.web.ProductController", "--method", "create"}},
+
+	// ---------- xref: blocking vs reactive contrast ----------
+	// Blocking path: javax.sql.DataSource (InventoryService + DatabaseConfig).
+	{Name: "spring_xref_datasource", Args: []string{"xref", "javax.sql.DataSource"}},
+	// Reactive path: Reactor Mono (ReactiveController + ReactiveCatalogService).
+	{Name: "spring_xref_mono", Args: []string{"xref", "reactor.core.publisher.Mono"}},
+	// A foundation service referenced many ways (FIELD + CALL_RECEIVER).
+	{Name: "spring_xref_notification", Args: []string{"xref", "com.example.shop.service.NotificationService"}},
+
+	// ---------- deps ----------
+	{Name: "spring_deps_foundation", Args: []string{"deps", "foundation"}},
+	{Name: "spring_deps_graph", Args: []string{"deps", "graph", "--format", "json"}},
+}

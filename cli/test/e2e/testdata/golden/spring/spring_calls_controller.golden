@@ -1,0 +1,36 @@
+{
+  "fqn": "com.example.shop.web.ProductController",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljava/lang/String;",
+          "isInterface": false,
+          "lineNumber": 37,
+          "methodName": "getName",
+          "ownerType": "com.example.shop.dto.ProductDto"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()D",
+          "isInterface": false,
+          "lineNumber": 37,
+          "methodName": "getPrice",
+          "ownerType": "com.example.shop.dto.ProductDto"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/String;D)Lcom/example/shop/model/Product;",
+          "isInterface": true,
+          "lineNumber": 37,
+          "methodName": "create",
+          "ownerType": "com.example.shop.service.ProductService"
+        }
+      ],
+      "descriptor": "(Lcom/example/shop/dto/ProductDto;)Lcom/example/shop/model/Product;",
+      "methodName": "create"
+    }
+  ],
+  "totalCalls": 3
+}
