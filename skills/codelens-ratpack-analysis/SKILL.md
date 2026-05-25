@@ -57,12 +57,15 @@ codelens classes implementations ratpack.groovy.handling.GroovyHandler
 ```
 
 Inline/lambda handlers compile to `invokedynamic` and have no class of their own — find
-them inside the chain that registers them (see **Routes**). To classify a handler (see
-`RATPACK-CONCEPTS.md` for the taxonomy) and judge its complexity, read its body:
+them inside the chain that registers them (see **Routes**). Their bodies live in synthetic
+`lambda$…` methods of the enclosing class, which `calls` resolves via `implMethodName`, so
+you can read a lambda handler's body too. To classify a handler (see `RATPACK-CONCEPTS.md`
+for the taxonomy) and judge its complexity, read its body:
 
 ```bash
 codelens source show com.example.UserHandler                  # full source if available
 codelens calls com.example.UserHandler --method handle        # what it invokes, from bytecode
+codelens calls com.example.ApiChain --method 'lambda$execute$0'  # an inline lambda handler's body
 ```
 
 `calls` is the key signal: it returns every invocation `handle` makes with constant
@@ -98,9 +101,26 @@ by running `calls` on that nested `Action<Chain>` and prepend the prefix path. T
 the target shape, map each `METHOD path` to the destination framework's annotation by hand
 (e.g. `GET /users/:id` → Spring `@GetMapping("/users/{id}")`).
 
-> Known limit: lambda/method-reference handlers passed to a route compile to
-> `invokedynamic`, so the handler class is not recoverable — the route (method + path) is
-> still captured. Computed (non-literal) paths show no string constant.
+**Inline lambda handlers** (`chain.post(ctx -> …)`) resolve too: the lambda is created by
+an `"invokeDynamic": true` call site that sits *immediately before* its route call in
+program order, and its `implMethodName` (e.g. `lambda$execute$0`) names the handler body.
+So to read what an inline handler does, take the `implMethodName` of the indy site preceding
+the route and run `calls` on it:
+
+```bash
+# Pair each inline-lambda handler with the route it backs (indy site → next Chain route):
+codelens calls com.example.ApiChain --method execute --json \
+  | jq -r '.methods[].calls as $c | range(0; $c|length) as $i
+           | select($c[$i].invokeDynamic and ($c[$i+1].ownerType?=="ratpack.handling.Chain"))
+           | "\($c[$i+1].methodName | ascii_upcase) -> \($c[$i].implMethodName)"'
+
+# Then read the handler body:
+codelens calls com.example.ApiChain --method 'lambda$execute$0'
+```
+
+> Known limit: computed (non-literal) paths show no string constant. (Lambda and
+> method-reference handlers *are* resolved — via the `invokeDynamic` call site's
+> `implMethodName`, as above.)
 
 ## Promise / async usage
 

@@ -26,6 +26,17 @@
         },
         {
           "constantArgs": [],
+          "descriptor": "(Lsample/handlers/BlockingHandler;Ljava/lang/String;)Lratpack/func/Factory;",
+          "implMethodName": "lambda$handle$0",
+          "implMethodOwner": "sample.handlers.BlockingHandler",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 29,
+          "methodName": "create",
+          "ownerType": "ratpack.func.Factory"
+        },
+        {
+          "constantArgs": [],
           "descriptor": "(Lratpack/func/Factory;)Lratpack/exec/Promise;",
           "isInterface": false,
           "lineNumber": 29,
@@ -34,11 +45,33 @@
         },
         {
           "constantArgs": [],
+          "descriptor": "()Lratpack/func/Function;",
+          "implMethodName": "lambda$handle$1",
+          "implMethodOwner": "sample.handlers.BlockingHandler",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 29,
+          "methodName": "apply",
+          "ownerType": "ratpack.func.Function"
+        },
+        {
+          "constantArgs": [],
           "descriptor": "(Lratpack/func/Function;)Lratpack/exec/Promise;",
           "isInterface": true,
           "lineNumber": 30,
           "methodName": "map",
           "ownerType": "ratpack.exec.Promise"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lratpack/handling/Context;)Lratpack/func/Action;",
+          "implMethodName": "lambda$handle$2",
+          "implMethodOwner": "sample.handlers.BlockingHandler",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 30,
+          "methodName": "execute",
+          "ownerType": "ratpack.func.Action"
         },
         {
           "constantArgs": [],
@@ -53,5 +86,5 @@
       "methodName": "handle"
     }
   ],
-  "totalCalls": 5
+  "totalCalls": 8
 }

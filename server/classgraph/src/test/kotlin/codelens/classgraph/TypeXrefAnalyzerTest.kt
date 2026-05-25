@@ -97,4 +97,32 @@ class TypeXrefAnalyzerTest {
         val refs = provider.getReferencesToType(callSample)
         assertTrue(refs.none { it.fromFqn == callSample }, "self-references should be excluded")
     }
+
+    @Test
+    fun `a type used only inside a lambda body is attributed to the enclosing class`() {
+        // LambdaSample uses java.util.StringJoiner solely inside its lambda body,
+        // which the compiler emits as a synthetic lambda$ method. getCalls scans
+        // those, so the reference is attributed to the enclosing class.
+        val lambdaSample = "codelens.classgraph.fixtures.LambdaSample"
+        val refs = refsFrom(provider.getReferencesToType("java.util.StringJoiner"), lambdaSample)
+        assertTrue(
+            refs.any { it.kind == XrefKind.INSTANTIATION && it.member?.startsWith("lambda\$") == true },
+            "expected an INSTANTIATION attributed to a lambda\$ method of $lambdaSample; got $refs",
+        )
+        assertTrue(
+            refs.any { it.kind == XrefKind.CALL_RECEIVER && it.detail == "add" },
+            "expected a CALL_RECEIVER (add) from inside the lambda body; got $refs",
+        )
+    }
+
+    @Test
+    fun `invokedynamic lambda sites do not register the SAM type as a call receiver`() {
+        // The lambda in LambdaSample.makeLambda implements java.lang.Runnable, but
+        // creating it must not be recorded as a CALL_RECEIVER on Runnable.
+        val refs = refsFrom(provider.getReferencesToType("java.lang.Runnable"), "codelens.classgraph.fixtures.LambdaSample")
+        assertTrue(
+            refs.none { it.kind == XrefKind.CALL_RECEIVER },
+            "an invokedynamic lambda creation must not be a CALL_RECEIVER on the SAM type; got $refs",
+        )
+    }
 }

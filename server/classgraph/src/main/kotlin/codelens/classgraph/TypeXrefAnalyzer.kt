@@ -112,6 +112,13 @@ class TypeXrefAnalyzer(
         val calls = provider.getCalls(info.name.fqn)
         for (methodCalls in calls.methods) {
             for (call in methodCalls.calls) {
+                // Skip invokedynamic (lambda / method-reference) sites: their
+                // ownerType is the functional-interface type, and recording a
+                // CALL_RECEIVER for it would be misleading (the class implements
+                // the SAM via a lambda, it does not invoke a method on it). Types
+                // genuinely used inside a lambda *body* are still attributed via
+                // the synthetic `lambda$…` method, which getCalls also scans.
+                if (call.invokeDynamic) continue
                 if (call.ownerType != typeFqn) continue
                 val isCtor = call.methodName == "<init>"
                 out.add(
