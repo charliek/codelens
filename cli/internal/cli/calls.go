@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/charliek/codelens/cli/internal/client"
 	"github.com/spf13/cobra"
@@ -18,7 +19,17 @@ func newCallsCmd() *cobra.Command {
 		Long: "Extract, from bytecode, every invocation a class's methods make — owner type, " +
 			"method name, descriptor, any constant string/number/class arguments, and source line. " +
 			"Use --method to scope to one method. Returns raw facts; the caller interprets them.",
-		Args: cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+				return err
+			}
+			// --descriptor only disambiguates a named method; reject the
+			// combination instead of silently ignoring it.
+			if descriptor != "" && method == "" {
+				return fmt.Errorf("invalid argument: --descriptor requires --method")
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetCalls(ctx, args[0], method, descriptor)

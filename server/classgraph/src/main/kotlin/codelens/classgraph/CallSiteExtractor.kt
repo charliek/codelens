@@ -42,8 +42,10 @@ class CallSiteExtractor(
      * @param descriptor When non-null (and [methodName] is set), disambiguates
      *   overloads by exact JVM descriptor match.
      * @return Per-method call lists. When [methodName] is null, methods that
-     *   make no calls are omitted; when a specific method is requested it is
-     *   always returned (possibly with an empty call list).
+     *   make no calls are omitted. When a specific method is requested, a
+     *   matching method is included even if it makes no calls (one entry with
+     *   an empty call list), while an unknown method yields no entries — so the
+     *   caller can tell "found but makes no calls" from "not found".
      */
     fun extract(
         fqn: String,

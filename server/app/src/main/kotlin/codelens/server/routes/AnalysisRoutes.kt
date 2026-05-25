@@ -310,15 +310,23 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
          * - descriptor: Exact JVM descriptor to disambiguate overloads
          *   (only honored together with `method`)
          *
-         * Without `method`, methods that make no calls are omitted; with it,
-         * the named method is always returned (possibly with no calls).
+         * Without `method`, methods that make no calls are omitted. With it, a
+         * matching method is returned even when it makes no calls (one entry,
+         * empty `calls`); an unknown method yields no entries.
          */
         get("/calls/{fqn...}") {
             val fqn = getFqnOrRespond() ?: return@get
-            val method = call.request.queryParameters["method"]
+            // Treat blank query values as absent so `?method=` doesn't filter
+            // for a method literally named "".
+            val method = call.request.queryParameters["method"]?.takeUnless { it.isBlank() }
             // descriptor disambiguates a named method; the whole-class view
             // ignores it, so only forward it alongside a method.
-            val descriptor = if (method != null) call.request.queryParameters["descriptor"] else null
+            val descriptor =
+                if (method != null) {
+                    call.request.queryParameters["descriptor"]?.takeUnless { it.isBlank() }
+                } else {
+                    null
+                }
             respondCalls(analysisService.getCalls(fqn, method, descriptor))
         }
     }
