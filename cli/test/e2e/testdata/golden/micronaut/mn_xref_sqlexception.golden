@@ -1,0 +1,29 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "INSTANTIATION": 1
+  },
+  "countsByPackage": {
+    "us.charliek.flyway": 1
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": null,
+      "fromFqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "fromSimpleName": "FlywayR2dbcMigrator",
+      "fromSource": "PROJECT",
+      "kind": "INSTANTIATION",
+      "lineNumber": 54,
+      "member": "validateConnection"
+    }
+  ],
+  "totalCount": 1,
+  "totalPages": 1,
+  "typeFqn": "java.sql.SQLException"
+}

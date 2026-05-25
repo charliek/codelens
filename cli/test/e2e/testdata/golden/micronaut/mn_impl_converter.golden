@@ -1,0 +1,19 @@
+{
+  "directImplementations": [
+    {
+      "fieldCount": 2,
+      "fqn": "us.charliek.flyway.converter.PostgresqlConverter",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "PostgresqlConverter",
+      "source": "PROJECT"
+    }
+  ],
+  "indirectImplementations": [],
+  "targetClass": "us.charliek.flyway.converter.R2dbcToJdbcConverter",
+  "totalCount": 1
+}

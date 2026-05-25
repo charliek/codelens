@@ -1,0 +1,18 @@
+{
+  "annotationFqn": "io.micronaut.context.annotation.Requires",
+  "totalCount": 1,
+  "usages": [
+    {
+      "fieldCount": 4,
+      "fqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 3,
+      "packageName": "us.charliek.flyway",
+      "simpleName": "FlywayR2dbcMigrator",
+      "source": "PROJECT"
+    }
+  ]
+}

@@ -17,12 +17,13 @@ import (
 
 // fixture is filled by TestMain. Paths are absolute.
 var fixture struct {
-	goBin       string // compiled Go binary
-	serverJAR   string // codelens-server-all.jar
-	repoRoot    string // CodeLens repo root
-	tmpHome     string // isolated HOME so the CLI doesn't pollute ~/.cache/codelens
-	ratpackPath string // test-fixtures/sample-ratpack-app
-	springPath  string // test-fixtures/sample-spring-boot-app
+	goBin         string // compiled Go binary
+	serverJAR     string // codelens-server-all.jar
+	repoRoot      string // CodeLens repo root
+	tmpHome       string // isolated HOME so the CLI doesn't pollute ~/.cache/codelens
+	ratpackPath   string // test-fixtures/sample-ratpack-app
+	springPath    string // test-fixtures/sample-spring-boot-app
+	micronautPath string // test-fixtures/sample-micronaut-app
 }
 
 // startedProjects tracks which fixture projects we started a server for, so
@@ -50,7 +51,8 @@ func setup() error {
 
 	fixture.ratpackPath = filepath.Join(repo, "test-fixtures", "sample-ratpack-app")
 	fixture.springPath = filepath.Join(repo, "test-fixtures", "sample-spring-boot-app")
-	for _, p := range []string{fixture.ratpackPath, fixture.springPath} {
+	fixture.micronautPath = filepath.Join(repo, "test-fixtures", "sample-micronaut-app")
+	for _, p := range []string{fixture.ratpackPath, fixture.springPath, fixture.micronautPath} {
 		if _, err := os.Stat(p); err != nil {
 			return fmt.Errorf("test fixture not found at %s", p)
 		}
@@ -88,7 +90,7 @@ func setup() error {
 	// so on a clean checkout there are no .class files. Run only after the JAR
 	// check above so the plain `go test ./...` job — which returns early when
 	// the JAR is absent — never triggers a fixture build. Idempotent.
-	for _, p := range []string{fixture.ratpackPath, fixture.springPath} {
+	for _, p := range []string{fixture.ratpackPath, fixture.springPath, fixture.micronautPath} {
 		if err := compileFixture(p); err != nil {
 			return err
 		}
@@ -243,6 +245,15 @@ func TestE2E(t *testing.T) {
 func TestE2ESpring(t *testing.T) {
 	guardE2E(t)
 	runSuite(t, fixture.springPath, springCases, filepath.Join("testdata", "golden", "spring"))
+}
+
+// TestE2EMicronaut exercises the self-contained sample-micronaut-app fixture
+// (Micronaut + Flyway + Hikari, Kotlin), proving the general primitives work on
+// a third framework with zero framework-specific tool code — entirely in-repo,
+// no external project. Goldens live under testdata/golden/micronaut/.
+func TestE2EMicronaut(t *testing.T) {
+	guardE2E(t)
+	runSuite(t, fixture.micronautPath, micronautCases, filepath.Join("testdata", "golden", "micronaut"))
 }
 
 func guardE2E(t *testing.T) {

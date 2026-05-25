@@ -1,0 +1,20 @@
+{
+  "hierarchy": {
+    "children": [],
+    "classFqn": "us.charliek.flyway.exception.FlywayR2dbcMigrationException",
+    "interfaces": [],
+    "isInterface": false,
+    "parent": {
+      "children": [],
+      "classFqn": "java.lang.RuntimeException",
+      "interfaces": [],
+      "isInterface": false,
+      "parent": null,
+      "simpleName": "RuntimeException",
+      "source": "LIBRARY"
+    },
+    "simpleName": "FlywayR2dbcMigrationException",
+    "source": "PROJECT"
+  },
+  "targetClass": "us.charliek.flyway.exception.FlywayR2dbcMigrationException"
+}

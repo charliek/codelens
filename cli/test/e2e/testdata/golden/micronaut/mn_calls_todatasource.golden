@@ -1,0 +1,81 @@
+{
+  "fqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "()V",
+          "isInterface": false,
+          "lineNumber": 22,
+          "methodName": "\u003cinit\u003e",
+          "ownerType": "com.zaxxer.hikari.HikariConfig"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": 23,
+          "methodName": "setJdbcUrl",
+          "ownerType": "com.zaxxer.hikari.HikariConfig"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": 24,
+          "methodName": "setUsername",
+          "ownerType": "com.zaxxer.hikari.HikariConfig"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": 25,
+          "methodName": "setPassword",
+          "ownerType": "com.zaxxer.hikari.HikariConfig"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(I)V",
+          "isInterface": false,
+          "lineNumber": 26,
+          "methodName": "setMaximumPoolSize",
+          "ownerType": "com.zaxxer.hikari.HikariConfig"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(I)V",
+          "isInterface": false,
+          "lineNumber": 27,
+          "methodName": "setMinimumIdle",
+          "ownerType": "com.zaxxer.hikari.HikariConfig"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "LONG",
+              "value": "30000"
+            }
+          ],
+          "descriptor": "(J)V",
+          "isInterface": false,
+          "lineNumber": 28,
+          "methodName": "setConnectionTimeout",
+          "ownerType": "com.zaxxer.hikari.HikariConfig"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lcom/zaxxer/hikari/HikariConfig;)V",
+          "isInterface": false,
+          "lineNumber": 30,
+          "methodName": "\u003cinit\u003e",
+          "ownerType": "com.zaxxer.hikari.HikariDataSource"
+        }
+      ],
+      "descriptor": "()Ljavax/sql/DataSource;",
+      "methodName": "toDataSource"
+    }
+  ],
+  "totalCalls": 8
+}

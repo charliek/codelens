@@ -193,3 +193,54 @@ var springCases = []Case{
 	{Name: "spring_deps_foundation", Args: []string{"deps", "foundation"}},
 	{Name: "spring_deps_graph", Args: []string{"deps", "graph", "--format", "json"}},
 }
+
+// micronautCases run against the self-contained sample-micronaut-app fixture
+// (Micronaut + Flyway + Hikari, Kotlin). They mirror the structural checks the
+// plan envisioned for a real Micronaut project, but as deterministic golden
+// cases over a committed, version-pinned fixture — no external project.
+// Goldens live under testdata/golden/micronaut/.
+//
+//nolint:revive // exhaustiveness over brevity.
+var micronautCases = []Case{
+	{Name: "mn_stats", Args: []string{"classes", "stats"}, BlankPaths: []string{
+		"scanDurationMs", "scannedAt", "libraryClassCount", "jdkClassCount", "classpathEntryCount",
+	}},
+	{Name: "mn_classes_list", Args: []string{"classes", "list"}},
+
+	// Micronaut / Jakarta annotations.
+	{Name: "mn_annotations_singleton", Args: []string{"annotations", "usages", "jakarta.inject.Singleton"}},
+	{Name: "mn_annotations_requires", Args: []string{
+		"annotations", "usages", "io.micronaut.context.annotation.Requires",
+	}},
+
+	// Implementations: converter interface + Micronaut event-listener.
+	{Name: "mn_impl_converter", Args: []string{
+		"classes", "implementations", "us.charliek.flyway.converter.R2dbcToJdbcConverter",
+	}},
+	{Name: "mn_impl_listener", Args: []string{
+		"classes", "implementations", "io.micronaut.context.event.ApplicationEventListener",
+	}},
+
+	// Exception hierarchy reaches RuntimeException/Exception.
+	{Name: "mn_hierarchy_exception", Args: []string{
+		"classes", "hierarchy", "us.charliek.flyway.exception.FlywayR2dbcMigrationException",
+	}},
+
+	// Xref of the JDBC / pooling / migration library types.
+	{Name: "mn_xref_datasource", Args: []string{"xref", "javax.sql.DataSource"}},
+	{Name: "mn_xref_sqlexception", Args: []string{"xref", "java.sql.SQLException"}},
+	{Name: "mn_xref_hikari_config", Args: []string{"xref", "com.zaxxer.hikari.HikariConfig"}},
+	{Name: "mn_xref_flyway", Args: []string{"xref", "org.flywaydb.core.Flyway"}},
+
+	// Calls: SLF4J + System.currentTimeMillis + log string constants in the
+	// migrator; Hikari config setters + HikariDataSource construction.
+	{Name: "mn_calls_migrator", Args: []string{
+		"calls", "us.charliek.flyway.FlywayR2dbcMigrator", "--method", "onApplicationEvent",
+	}},
+	{Name: "mn_calls_todatasource", Args: []string{
+		"calls", "us.charliek.flyway.converter.JdbcConnectionInfo", "--method", "toDataSource",
+	}},
+
+	// Foundation: shared config / converter types with multiple dependents.
+	{Name: "mn_deps_foundation", Args: []string{"deps", "foundation"}},
+}

@@ -1,0 +1,36 @@
+{
+  "count": 3,
+  "foundationClasses": [
+    {
+      "dependentCount": 3,
+      "dependents": [
+        "us.charliek.flyway.configuration.FlywayR2dbcConnectionResolver",
+        "us.charliek.flyway.converter.PostgresqlConverter",
+        "us.charliek.flyway.converter.R2dbcToJdbcConverter"
+      ],
+      "fqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "JdbcConnectionInfo"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "us.charliek.flyway.FlywayR2dbcMigrator",
+        "us.charliek.flyway.configuration.FlywayR2dbcConnectionResolver"
+      ],
+      "fqn": "us.charliek.flyway.configuration.FlywayR2dbcConfigurationProperties",
+      "packageName": "us.charliek.flyway.configuration",
+      "simpleName": "FlywayR2dbcConfigurationProperties"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "us.charliek.flyway.converter.ConverterRegistry",
+        "us.charliek.flyway.converter.PostgresqlConverter"
+      ],
+      "fqn": "us.charliek.flyway.converter.R2dbcToJdbcConverter",
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "R2dbcToJdbcConverter"
+    }
+  ]
+}
