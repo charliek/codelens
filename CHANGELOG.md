@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.0.3
 
 - **Generalized from a Ratpack-specific tool to a general JVM facts engine.**
   The Ratpack-specific server endpoints, detectors, models, and CLI command
