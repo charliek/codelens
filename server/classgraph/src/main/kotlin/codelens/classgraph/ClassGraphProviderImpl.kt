@@ -347,6 +347,11 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         scopeImplementing: String?,
     ): List<XrefReference> = TypeXrefAnalyzer(this).analyze(typeFqn, includeLibraries, scopeImplementing)
 
+    override fun getProjectGraph(): ProjectGraph = DependencyAnalyzer(classes).buildProjectGraph()
+
+    override fun getFoundationClasses(minDependents: Int): List<FoundationClass> =
+        DependencyAnalyzer(classes).foundationClasses(minDependents)
+
     override fun getClassBytes(fqn: String): ByteArray? {
         val classInfo = classes[fqn] ?: return null
         val jarPath = classInfo.jarPath ?: return null

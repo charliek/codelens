@@ -1,21 +1,29 @@
-digraph Dependencies {
-  rankdir=TB;
+digraph dependencies {
+  rankdir=LR;
   node [shape=box, style=rounded];
 
-  "sample.api.UsersApi" [label="UsersApi", fillcolor=lightgray, style=filled, shape=box];
-  "sample.handlers.AsyncHandler" [label="AsyncHandler", fillcolor=lightgreen, style=filled, shape=box];
-  "sample.handlers.BadHandler" [label="BadHandler", fillcolor=lightgreen, style=filled, shape=box];
-  "sample.handlers.BlockingHandler" [label="BlockingHandler", fillcolor=lightgreen, style=filled, shape=box];
-  "sample.handlers.LoggingBadHandler" [label="LoggingBadHandler", fillcolor=lightgreen, style=filled, shape=box];
-  "sample.handlers.SimpleHandler" [label="SimpleHandler", fillcolor=lightgreen, style=filled, shape=box];
-  "sample.handlers.UserService" [label="UserService", fillcolor=lightblue, style=filled, shape=ellipse];
-  "sample.handlers.NotificationService" [label="NotificationService", fillcolor=lightblue, style=filled, shape=ellipse];
+  "sample.AppKt" [label="AppKt"];
+  "sample.BadClass" [label="BadClass"];
+  "sample.BadFormattingKt" [label="BadFormattingKt"];
+  "sample.api.UsersApi" [label="UsersApi"];
+  "sample.handlers.AsyncHandler" [label="AsyncHandler"];
+  "sample.handlers.BadHandler" [label="BadHandler"];
+  "sample.handlers.BlockingHandler" [label="BlockingHandler"];
+  "sample.handlers.LoggingBadHandler" [label="LoggingBadHandler"];
+  "sample.handlers.NotificationService" [label="NotificationService"];
+  "sample.handlers.SimpleHandler" [label="SimpleHandler"];
+  "sample.handlers.UserService" [label="UserService"];
+  "sample.modules.AppModule" [label="AppModule"];
+  "sample.modules.AppModule$1" [label="1"];
 
-  "sample.api.UsersApi" -> "sample.handlers.SimpleHandler" [style=solid];
   "sample.api.UsersApi" -> "sample.handlers.BlockingHandler" [style=solid];
-  "sample.handlers.AsyncHandler" -> "sample.handlers.UserService" [style=solid];
+  "sample.api.UsersApi" -> "sample.handlers.SimpleHandler" [style=solid];
   "sample.handlers.AsyncHandler" -> "sample.handlers.NotificationService" [style=solid];
+  "sample.handlers.AsyncHandler" -> "sample.handlers.UserService" [style=solid];
   "sample.handlers.BlockingHandler" -> "sample.handlers.UserService" [style=solid];
+  "sample.modules.AppModule" -> "sample.handlers.NotificationService" [style=solid];
+  "sample.modules.AppModule" -> "sample.handlers.UserService" [style=solid];
+  "sample.modules.AppModule$1" -> "sample.handlers.UserService" [style=dashed];
 }
 
 

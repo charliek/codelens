@@ -2,6 +2,7 @@ package codelens.server.services
 
 import codelens.classgraph.ClassGraphProvider
 import codelens.classgraph.ClassGraphProviderImpl
+import codelens.classgraph.projectGraphToDot
 import codelens.classgraph.source.SourceResolver
 import codelens.core.model.*
 import codelens.core.model.MavenCoordinates
@@ -286,6 +287,21 @@ class AnalysisService(
         includeLibraries: Boolean = false,
         scopeImplementing: String? = null,
     ): List<XrefReference> = classGraphProvider.getReferencesToType(typeFqn, includeLibraries, scopeImplementing)
+
+    /**
+     * Build the project-wide dependency graph.
+     */
+    fun getProjectGraph(): ProjectGraph = classGraphProvider.getProjectGraph()
+
+    /**
+     * Render the project-wide dependency graph as Graphviz DOT.
+     */
+    fun getProjectGraphDot(): String = projectGraphToDot(classGraphProvider.getProjectGraph())
+
+    /**
+     * Find foundation classes (most depended-on project classes).
+     */
+    fun getFoundationClasses(minDependents: Int = 2): List<FoundationClass> = classGraphProvider.getFoundationClasses(minDependents)
 
     /**
      * Lazily initialized source resolver for project sources.

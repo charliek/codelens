@@ -107,6 +107,10 @@ internal open class EmptyClassGraphProvider : ClassGraphProvider {
         includeLibraries: Boolean,
         scopeImplementing: String?,
     ): List<XrefReference> = emptyList()
+
+    override fun getProjectGraph(): ProjectGraph = ProjectGraph(emptyList(), emptyList(), 0, 0)
+
+    override fun getFoundationClasses(minDependents: Int): List<FoundationClass> = emptyList()
 }
 
 /** ClassGraphProvider that throws on scan; otherwise behaves like the empty provider. */

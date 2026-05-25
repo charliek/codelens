@@ -116,12 +116,11 @@ var allCases = []Case{
 	{Name: "routes_tree", Args: []string{"routes", "tree"}},
 	{Name: "routes_spring", Args: []string{"routes", "spring"}},
 
-	// ---------- deps ----------
+	// ---------- deps (general project-wide dependency graph) ----------
 	{Name: "deps_foundation", Args: []string{"deps", "foundation"}},
-	{Name: "deps_quickwins", Args: []string{"deps", "quickwins"}},
 	{Name: "deps_graph_json", Args: []string{"deps", "graph", "--format", "json"}},
 	{Name: "deps_graph_dot", Args: []string{"deps", "graph", "--format", "dot"}},
-	// `codelens deps` (no subcommand) — locked default-subcommand behavior.
+	// `codelens deps` (no subcommand) — emits the graph.
 	{Name: "deps_default_json", Args: []string{"deps", "--format", "json"}},
 	{Name: "deps_default_dot", Args: []string{"deps", "--format", "dot"}},
 

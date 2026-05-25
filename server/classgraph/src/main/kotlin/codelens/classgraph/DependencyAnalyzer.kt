@@ -222,4 +222,104 @@ class DependencyAnalyzer(
 
         return cleanType.ifBlank { null }
     }
+
+    /**
+     * Build the project-wide dependency graph: nodes are project classes, edges
+     * are project-to-project dependencies (one edge per (source, target) pair,
+     * labelled with the strongest dependency kind). Library/JDK targets are
+     * excluded so the graph reflects internal structure.
+     */
+    fun buildProjectGraph(): ProjectGraph {
+        val projectClasses = classes.values.filter { it.source == ClassSource.PROJECT }
+
+        // Collapse the per-class dependency facts into one edge per (source, target),
+        // keeping the highest-priority dependency type (EXTENDS < IMPLEMENTS < ...).
+        val edgeType = LinkedHashMap<Pair<String, String>, DependencyType>()
+        for (classInfo in projectClasses) {
+            val (outgoing, _) = analyze(classInfo.name.fqn, includeLibraries = false)
+            for (dep in outgoing) {
+                if (dep.classFqn == classInfo.name.fqn) continue
+                val key = classInfo.name.fqn to dep.classFqn
+                val existing = edgeType[key]
+                if (existing == null || dep.dependencyType.ordinal < existing.ordinal) {
+                    edgeType[key] = dep.dependencyType
+                }
+            }
+        }
+
+        val inDegree = HashMap<String, Int>()
+        val outDegree = HashMap<String, Int>()
+        for ((source, target) in edgeType.keys) {
+            outDegree[source] = (outDegree[source] ?: 0) + 1
+            inDegree[target] = (inDegree[target] ?: 0) + 1
+        }
+
+        val nodes =
+            projectClasses
+                .map { ci ->
+                    GraphNode(
+                        fqn = ci.name.fqn,
+                        simpleName = ci.name.simpleName,
+                        packageName = ci.name.packageName,
+                        inDegree = inDegree[ci.name.fqn] ?: 0,
+                        outDegree = outDegree[ci.name.fqn] ?: 0,
+                    )
+                }.sortedBy { it.fqn }
+
+        val edges =
+            edgeType
+                .map { (key, type) -> GraphEdge(source = key.first, target = key.second, type = type) }
+                .sortedWith(compareBy({ it.source }, { it.target }))
+
+        return ProjectGraph(nodes = nodes, edges = edges, nodeCount = nodes.size, edgeCount = edges.size)
+    }
+
+    /**
+     * Find "foundation" classes — those with at least [minDependents] project
+     * classes depending on them — most depended-on first.
+     */
+    fun foundationClasses(minDependents: Int): List<FoundationClass> {
+        val graph = buildProjectGraph()
+        val dependentsByTarget = graph.edges.groupBy({ it.target }, { it.source })
+
+        return graph.nodes
+            .filter { it.inDegree >= minDependents }
+            .map { node ->
+                FoundationClass(
+                    fqn = node.fqn,
+                    simpleName = node.simpleName,
+                    packageName = node.packageName,
+                    dependentCount = node.inDegree,
+                    dependents = (dependentsByTarget[node.fqn] ?: emptyList()).distinct().sorted(),
+                )
+            }.sortedWith(compareByDescending<FoundationClass> { it.dependentCount }.thenBy { it.fqn })
+    }
 }
+
+/**
+ * Render a [ProjectGraph] as Graphviz DOT. Node/edge order follows the graph's
+ * (already deterministic) ordering so the output is stable.
+ */
+fun projectGraphToDot(graph: ProjectGraph): String =
+    buildString {
+        appendLine("digraph dependencies {")
+        appendLine("  rankdir=LR;")
+        appendLine("  node [shape=box, style=rounded];")
+        appendLine()
+        for (node in graph.nodes) {
+            appendLine("  \"${escapeDot(node.fqn)}\" [label=\"${escapeDot(node.simpleName)}\"];")
+        }
+        appendLine()
+        for (edge in graph.edges) {
+            val style =
+                when (edge.type) {
+                    DependencyType.EXTENDS -> "bold"
+                    DependencyType.IMPLEMENTS -> "dashed"
+                    else -> "solid"
+                }
+            appendLine("  \"${escapeDot(edge.source)}\" -> \"${escapeDot(edge.target)}\" [style=$style];")
+        }
+        appendLine("}")
+    }
+
+private fun escapeDot(s: String): String = s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
