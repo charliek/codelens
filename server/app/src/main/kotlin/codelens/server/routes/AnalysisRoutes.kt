@@ -414,6 +414,34 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 ),
             )
         }
+
+        /**
+         * GET /api/v1/graph
+         * The project-wide dependency graph (project classes + project-to-project
+         * dependencies).
+         *
+         * Query parameters:
+         * - format: json (default) or dot
+         */
+        get("/graph") {
+            when (call.request.queryParameters["format"]?.lowercase() ?: "json") {
+                "dot" -> call.respondText(analysisService.getProjectGraphDot(), ContentType.Text.Plain)
+                else -> call.respond(analysisService.getProjectGraph())
+            }
+        }
+
+        /**
+         * GET /api/v1/graph/foundation
+         * Foundation classes — the most depended-on project classes.
+         *
+         * Query parameters:
+         * - minDependents: Minimum in-degree to qualify (default: 2)
+         */
+        get("/graph/foundation") {
+            val minDependents = call.request.queryParameters["minDependents"]?.toIntOrNull() ?: 2
+            val foundation = analysisService.getFoundationClasses(minDependents)
+            call.respond(FoundationResponse(foundationClasses = foundation, count = foundation.size))
+        }
     }
 }
 

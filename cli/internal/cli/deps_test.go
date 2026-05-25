@@ -10,14 +10,14 @@ import (
 	clierrors "github.com/charliek/codelens/cli/internal/errors"
 )
 
-// `codelens deps` (no subcommand) is a documented Python command that hits
-// /api/v1/ratpack/dependencies. Locked here so the Go port stays in parity.
-func TestDeps_Default_JSONHitsAnalysisEndpoint(t *testing.T) {
+// `codelens deps` (no subcommand) emits the general project-wide dependency
+// graph from /api/v1/graph.
+func TestDeps_Default_JSONHitsGraphEndpoint(t *testing.T) {
 	proj := gradleProjectDir(t)
 	var lastPath string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		lastPath = r.URL.Path
-		_, _ = w.Write([]byte(`{"summary":"OK"}`))
+		_, _ = w.Write([]byte(`{"nodes":[],"edges":[]}`))
 	}))
 	defer srv.Close()
 	withMockClient(t, srv)
@@ -27,11 +27,11 @@ func TestDeps_Default_JSONHitsAnalysisEndpoint(t *testing.T) {
 	if res.exitCode != clierrors.Success {
 		t.Fatalf("exit=%d, stderr=%s", res.exitCode, res.stderr)
 	}
-	if lastPath != "/api/v1/ratpack/dependencies" {
-		t.Errorf("wrong endpoint: %s (expected /api/v1/ratpack/dependencies)", lastPath)
+	if lastPath != "/api/v1/graph" {
+		t.Errorf("wrong endpoint: %s (expected /api/v1/graph)", lastPath)
 	}
-	if !strings.Contains(res.stdout, `"summary"`) {
-		t.Errorf("expected analysis JSON in stdout; got %s", res.stdout)
+	if !strings.Contains(res.stdout, `"nodes"`) {
+		t.Errorf("expected graph JSON in stdout; got %s", res.stdout)
 	}
 }
 
@@ -74,7 +74,7 @@ func TestDeps_FoundationSubcommandStillRoutes(t *testing.T) {
 	if res.exitCode != clierrors.Success {
 		t.Fatalf("exit=%d, stderr=%s", res.exitCode, res.stderr)
 	}
-	if lastPath != "/api/v1/ratpack/dependencies/foundation" {
+	if lastPath != "/api/v1/graph/foundation" {
 		t.Errorf("subcommand routed wrong: %s", lastPath)
 	}
 }

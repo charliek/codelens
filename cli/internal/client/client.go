@@ -347,6 +347,31 @@ func (c *Client) GetCalls(ctx context.Context, fqn, method, descriptor string) (
 }
 
 // =============================================================================
+// Dependency graph (general, project-wide)
+// =============================================================================
+
+// GetGraph returns the project-wide dependency graph. For format == "dot" it
+// returns raw bytes (written verbatim); otherwise json.RawMessage.
+func (c *Client) GetGraph(ctx context.Context, format string) (any, error) {
+	if format == "dot" {
+		p := &params{}
+		p.add("format", "dot")
+		return c.doRaw(ctx, "/api/v1/graph", p)
+	}
+	return c.doGet(ctx, "/api/v1/graph", nil)
+}
+
+// GetFoundation returns the most depended-on project classes. minDependents <= 0
+// omits the parameter (the server default applies).
+func (c *Client) GetFoundation(ctx context.Context, minDependents int) (json.RawMessage, error) {
+	p := &params{}
+	if minDependents > 0 {
+		p.add("minDependents", strconv.Itoa(minDependents))
+	}
+	return c.doGet(ctx, "/api/v1/graph/foundation", p)
+}
+
+// =============================================================================
 // Xref (inverse type cross-reference)
 // =============================================================================
 

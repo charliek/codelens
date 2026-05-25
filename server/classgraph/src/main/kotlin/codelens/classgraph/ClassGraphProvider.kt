@@ -168,4 +168,16 @@ interface ClassGraphProvider {
         includeLibraries: Boolean = false,
         scopeImplementing: String? = null,
     ): List<XrefReference>
+
+    /**
+     * Build the project-wide dependency graph (project classes and the
+     * project-to-project dependencies between them).
+     */
+    fun getProjectGraph(): ProjectGraph
+
+    /**
+     * Find "foundation" classes — those with at least [minDependents] project
+     * classes depending on them.
+     */
+    fun getFoundationClasses(minDependents: Int = 2): List<FoundationClass>
 }

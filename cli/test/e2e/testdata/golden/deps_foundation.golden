@@ -1,4 +1,27 @@
 {
-  "count": 0,
-  "foundationClasses": []
+  "count": 2,
+  "foundationClasses": [
+    {
+      "dependentCount": 4,
+      "dependents": [
+        "sample.handlers.AsyncHandler",
+        "sample.handlers.BlockingHandler",
+        "sample.modules.AppModule",
+        "sample.modules.AppModule$1"
+      ],
+      "fqn": "sample.handlers.UserService",
+      "packageName": "sample.handlers",
+      "simpleName": "UserService"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "sample.handlers.AsyncHandler",
+        "sample.modules.AppModule"
+      ],
+      "fqn": "sample.handlers.NotificationService",
+      "packageName": "sample.handlers",
+      "simpleName": "NotificationService"
+    }
+  ]
 }

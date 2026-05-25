@@ -1,61 +1,139 @@
 {
-  "analysis": {
-    "cycles": [],
-    "foundationClasses": [],
-    "handlerTiers": [
-      {
-        "count": 5,
-        "description": "No handler dependencies",
-        "handlers": [
-          "AsyncHandler",
-          "BadHandler",
-          "BlockingHandler",
-          "LoggingBadHandler",
-          "SimpleHandler"
-        ],
-        "tier": 0
-      },
-      {
-        "count": 1,
-        "description": "Depends only on Tier 0 handlers",
-        "handlers": [
-          "UsersApi"
-        ],
-        "tier": 1
-      }
-    ],
-    "quickWins": [
-      {
-        "complexity": "LOW",
-        "dependencyCount": 0,
-        "fqn": "sample.handlers.BadHandler",
-        "simpleName": "BadHandler"
-      },
-      {
-        "complexity": "LOW",
-        "dependencyCount": 0,
-        "fqn": "sample.handlers.LoggingBadHandler",
-        "simpleName": "LoggingBadHandler"
-      },
-      {
-        "complexity": "LOW",
-        "dependencyCount": 0,
-        "fqn": "sample.handlers.SimpleHandler",
-        "simpleName": "SimpleHandler"
-      },
-      {
-        "complexity": "LOW",
-        "dependencyCount": 1,
-        "fqn": "sample.handlers.BlockingHandler",
-        "simpleName": "BlockingHandler"
-      }
-    ],
-    "stats": {
-      "avgDependenciesPerHandler": 0.83,
-      "cycleCount": 0,
-      "maxDependencies": 2,
-      "totalDependencies": 5,
-      "totalHandlers": 6
+  "edgeCount": 8,
+  "edges": [
+    {
+      "source": "sample.api.UsersApi",
+      "target": "sample.handlers.BlockingHandler",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "sample.api.UsersApi",
+      "target": "sample.handlers.SimpleHandler",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "sample.handlers.AsyncHandler",
+      "target": "sample.handlers.NotificationService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "sample.handlers.AsyncHandler",
+      "target": "sample.handlers.UserService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "sample.handlers.BlockingHandler",
+      "target": "sample.handlers.UserService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "sample.modules.AppModule",
+      "target": "sample.handlers.NotificationService",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "sample.modules.AppModule",
+      "target": "sample.handlers.UserService",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "sample.modules.AppModule$1",
+      "target": "sample.handlers.UserService",
+      "type": "IMPLEMENTS"
     }
-  }
+  ],
+  "nodeCount": 13,
+  "nodes": [
+    {
+      "fqn": "sample.AppKt",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "sample",
+      "simpleName": "AppKt"
+    },
+    {
+      "fqn": "sample.BadClass",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "sample",
+      "simpleName": "BadClass"
+    },
+    {
+      "fqn": "sample.BadFormattingKt",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "sample",
+      "simpleName": "BadFormattingKt"
+    },
+    {
+      "fqn": "sample.api.UsersApi",
+      "inDegree": 0,
+      "outDegree": 2,
+      "packageName": "sample.api",
+      "simpleName": "UsersApi"
+    },
+    {
+      "fqn": "sample.handlers.AsyncHandler",
+      "inDegree": 0,
+      "outDegree": 2,
+      "packageName": "sample.handlers",
+      "simpleName": "AsyncHandler"
+    },
+    {
+      "fqn": "sample.handlers.BadHandler",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "sample.handlers",
+      "simpleName": "BadHandler"
+    },
+    {
+      "fqn": "sample.handlers.BlockingHandler",
+      "inDegree": 1,
+      "outDegree": 1,
+      "packageName": "sample.handlers",
+      "simpleName": "BlockingHandler"
+    },
+    {
+      "fqn": "sample.handlers.LoggingBadHandler",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "sample.handlers",
+      "simpleName": "LoggingBadHandler"
+    },
+    {
+      "fqn": "sample.handlers.NotificationService",
+      "inDegree": 2,
+      "outDegree": 0,
+      "packageName": "sample.handlers",
+      "simpleName": "NotificationService"
+    },
+    {
+      "fqn": "sample.handlers.SimpleHandler",
+      "inDegree": 1,
+      "outDegree": 0,
+      "packageName": "sample.handlers",
+      "simpleName": "SimpleHandler"
+    },
+    {
+      "fqn": "sample.handlers.UserService",
+      "inDegree": 4,
+      "outDegree": 0,
+      "packageName": "sample.handlers",
+      "simpleName": "UserService"
+    },
+    {
+      "fqn": "sample.modules.AppModule",
+      "inDegree": 0,
+      "outDegree": 2,
+      "packageName": "sample.modules",
+      "simpleName": "AppModule"
+    },
+    {
+      "fqn": "sample.modules.AppModule$1",
+      "inDegree": 0,
+      "outDegree": 1,
+      "packageName": "sample.modules",
+      "simpleName": "1"
+    }
+  ]
 }
