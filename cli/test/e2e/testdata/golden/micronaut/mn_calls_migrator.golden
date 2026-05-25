@@ -1,0 +1,235 @@
+{
+  "fqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "event"
+            }
+          ],
+          "descriptor": "(Ljava/lang/Object;Ljava/lang/String;)V",
+          "isInterface": false,
+          "lineNumber": null,
+          "methodName": "checkNotNullParameter",
+          "ownerType": "kotlin.jvm.internal.Intrinsics"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "Starting Flyway R2DBC migrations..."
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;)V",
+          "isInterface": true,
+          "lineNumber": 28,
+          "methodName": "info",
+          "ownerType": "org.slf4j.Logger"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()J",
+          "isInterface": false,
+          "lineNumber": 29,
+          "methodName": "currentTimeMillis",
+          "ownerType": "java.lang.System"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lus/charliek/flyway/converter/JdbcConnectionInfo;",
+          "isInterface": false,
+          "lineNumber": 32,
+          "methodName": "resolveJdbcConnection",
+          "ownerType": "us.charliek.flyway.configuration.FlywayR2dbcConnectionResolver"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljavax/sql/DataSource;",
+          "isInterface": false,
+          "lineNumber": 32,
+          "methodName": "toDataSource",
+          "ownerType": "us.charliek.flyway.converter.JdbcConnectionInfo"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljavax/sql/DataSource;)V",
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "validateConnection",
+          "ownerType": "us.charliek.flyway.FlywayR2dbcMigrator"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/flywaydb/core/api/configuration/FluentConfiguration;",
+          "isInterface": false,
+          "lineNumber": 35,
+          "methodName": "configure",
+          "ownerType": "org.flywaydb.core.Flyway"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljavax/sql/DataSource;)Lorg/flywaydb/core/api/configuration/FluentConfiguration;",
+          "isInterface": false,
+          "lineNumber": 36,
+          "methodName": "dataSource",
+          "ownerType": "org.flywaydb.core.api.configuration.FluentConfiguration"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljava/util/List;",
+          "isInterface": false,
+          "lineNumber": 37,
+          "methodName": "getLocations",
+          "ownerType": "us.charliek.flyway.configuration.FlywayR2dbcConfigurationProperties"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "([Ljava/lang/Object;)[Ljava/lang/Object;",
+          "isInterface": true,
+          "lineNumber": 61,
+          "methodName": "toArray",
+          "ownerType": "java.util.Collection"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "([Ljava/lang/Object;I)[Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 37,
+          "methodName": "copyOf",
+          "ownerType": "java.util.Arrays"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "([Ljava/lang/String;)Lorg/flywaydb/core/api/configuration/FluentConfiguration;",
+          "isInterface": false,
+          "lineNumber": 37,
+          "methodName": "locations",
+          "ownerType": "org.flywaydb.core.api.configuration.FluentConfiguration"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Z",
+          "isInterface": false,
+          "lineNumber": 38,
+          "methodName": "getBaselineOnMigrate",
+          "ownerType": "us.charliek.flyway.configuration.FlywayR2dbcConfigurationProperties"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Z)Lorg/flywaydb/core/api/configuration/FluentConfiguration;",
+          "isInterface": false,
+          "lineNumber": 38,
+          "methodName": "baselineOnMigrate",
+          "ownerType": "org.flywaydb.core.api.configuration.FluentConfiguration"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/flywaydb/core/Flyway;",
+          "isInterface": false,
+          "lineNumber": 39,
+          "methodName": "load",
+          "ownerType": "org.flywaydb.core.api.configuration.FluentConfiguration"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/flywaydb/core/api/output/MigrateResult;",
+          "isInterface": false,
+          "lineNumber": 40,
+          "methodName": "migrate",
+          "ownerType": "org.flywaydb.core.Flyway"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()J",
+          "isInterface": false,
+          "lineNumber": 41,
+          "methodName": "currentTimeMillis",
+          "ownerType": "java.lang.System"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "Flyway R2DBC migrations completed in {}ms"
+            }
+          ],
+          "descriptor": "(J)Ljava/lang/Long;",
+          "isInterface": false,
+          "lineNumber": 42,
+          "methodName": "valueOf",
+          "ownerType": "java.lang.Long"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/String;Ljava/lang/Object;)V",
+          "isInterface": true,
+          "lineNumber": 42,
+          "methodName": "info",
+          "ownerType": "org.slf4j.Logger"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()V",
+          "isInterface": false,
+          "lineNumber": 47,
+          "methodName": "close",
+          "ownerType": "com.zaxxer.hikari.HikariDataSource"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "Flyway R2DBC migration failed"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;Ljava/lang/Throwable;)V",
+          "isInterface": true,
+          "lineNumber": 44,
+          "methodName": "error",
+          "ownerType": "org.slf4j.Logger"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "Database migration failed during application startup"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;Ljava/lang/Throwable;)V",
+          "isInterface": false,
+          "lineNumber": 45,
+          "methodName": "\u003cinit\u003e",
+          "ownerType": "us.charliek.flyway.exception.FlywayR2dbcMigrationException"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()V",
+          "isInterface": false,
+          "lineNumber": 45,
+          "methodName": "close",
+          "ownerType": "com.zaxxer.hikari.HikariDataSource"
+        }
+      ],
+      "descriptor": "(Lio/micronaut/context/event/StartupEvent;)V",
+      "methodName": "onApplicationEvent"
+    },
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "(Lio/micronaut/context/event/StartupEvent;)V",
+          "isInterface": false,
+          "lineNumber": 17,
+          "methodName": "onApplicationEvent",
+          "ownerType": "us.charliek.flyway.FlywayR2dbcMigrator"
+        }
+      ],
+      "descriptor": "(Ljava/lang/Object;)V",
+      "methodName": "onApplicationEvent"
+    }
+  ],
+  "totalCalls": 24
+}

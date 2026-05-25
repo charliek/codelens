@@ -1,0 +1,160 @@
+{
+  "appliedFilter": {
+    "extendsClass": null,
+    "hasAnnotation": null,
+    "implementsInterface": null,
+    "namePattern": null,
+    "packagePattern": null,
+    "source": "PROJECT"
+  },
+  "classes": [
+    {
+      "fieldCount": 4,
+      "fqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 3,
+      "packageName": "us.charliek.flyway",
+      "simpleName": "FlywayR2dbcMigrator",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "us.charliek.flyway.FlywayR2dbcMigrator$Companion",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 0,
+      "packageName": "us.charliek.flyway",
+      "simpleName": "Companion",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 7,
+      "fqn": "us.charliek.flyway.configuration.FlywayR2dbcConfigurationProperties",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 14,
+      "packageName": "us.charliek.flyway.configuration",
+      "simpleName": "FlywayR2dbcConfigurationProperties",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "us.charliek.flyway.configuration.FlywayR2dbcConnectionResolver",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "us.charliek.flyway.configuration",
+      "simpleName": "FlywayR2dbcConnectionResolver",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "us.charliek.flyway.converter.ConverterRegistry",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "ConverterRegistry",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 3,
+      "fqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 12,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "JdbcConnectionInfo",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "us.charliek.flyway.converter.PostgresqlConverter",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "PostgresqlConverter",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "us.charliek.flyway.converter.PostgresqlConverter$Companion",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 0,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "Companion",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "us.charliek.flyway.converter.R2dbcToJdbcConverter",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 2,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "R2dbcToJdbcConverter",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "us.charliek.flyway.exception.FlywayR2dbcConfigurationException",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 0,
+      "packageName": "us.charliek.flyway.exception",
+      "simpleName": "FlywayR2dbcConfigurationException",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "us.charliek.flyway.exception.FlywayR2dbcMigrationException",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 0,
+      "packageName": "us.charliek.flyway.exception",
+      "simpleName": "FlywayR2dbcMigrationException",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "us.charliek.flyway.exception.UnsupportedDatabaseException",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 0,
+      "packageName": "us.charliek.flyway.exception",
+      "simpleName": "UnsupportedDatabaseException",
+      "source": "PROJECT"
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 12,
+  "totalPages": 1
+}

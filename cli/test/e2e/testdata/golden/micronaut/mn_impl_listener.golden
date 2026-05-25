@@ -1,0 +1,19 @@
+{
+  "directImplementations": [
+    {
+      "fieldCount": 4,
+      "fqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 3,
+      "packageName": "us.charliek.flyway",
+      "simpleName": "FlywayR2dbcMigrator",
+      "source": "PROJECT"
+    }
+  ],
+  "indirectImplementations": [],
+  "targetClass": "io.micronaut.context.event.ApplicationEventListener",
+  "totalCount": 1
+}

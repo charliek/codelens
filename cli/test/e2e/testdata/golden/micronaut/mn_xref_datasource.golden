@@ -1,0 +1,50 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "CALL_RECEIVER": 1,
+    "PARAM": 1,
+    "RETURN": 1
+  },
+  "countsByPackage": {
+    "us.charliek.flyway": 2,
+    "us.charliek.flyway.converter": 1
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": "javax.sql.DataSource",
+      "fromFqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "fromSimpleName": "FlywayR2dbcMigrator",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "validateConnection"
+    },
+    {
+      "detail": "getConnection",
+      "fromFqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "fromSimpleName": "FlywayR2dbcMigrator",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 52,
+      "member": "validateConnection"
+    },
+    {
+      "detail": "javax.sql.DataSource",
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "toDataSource"
+    }
+  ],
+  "totalCount": 3,
+  "totalPages": 1,
+  "typeFqn": "javax.sql.DataSource"
+}

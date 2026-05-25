@@ -1,0 +1,84 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "CALL_RECEIVER": 6,
+    "INSTANTIATION": 1
+  },
+  "countsByPackage": {
+    "us.charliek.flyway.converter": 7
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": null,
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "INSTANTIATION",
+      "lineNumber": 22,
+      "member": "toDataSource"
+    },
+    {
+      "detail": "setJdbcUrl",
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 23,
+      "member": "toDataSource"
+    },
+    {
+      "detail": "setUsername",
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 24,
+      "member": "toDataSource"
+    },
+    {
+      "detail": "setPassword",
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 25,
+      "member": "toDataSource"
+    },
+    {
+      "detail": "setMaximumPoolSize",
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 26,
+      "member": "toDataSource"
+    },
+    {
+      "detail": "setMinimumIdle",
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 27,
+      "member": "toDataSource"
+    },
+    {
+      "detail": "setConnectionTimeout",
+      "fromFqn": "us.charliek.flyway.converter.JdbcConnectionInfo",
+      "fromSimpleName": "JdbcConnectionInfo",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 28,
+      "member": "toDataSource"
+    }
+  ],
+  "totalCount": 7,
+  "totalPages": 1,
+  "typeFqn": "com.zaxxer.hikari.HikariConfig"
+}

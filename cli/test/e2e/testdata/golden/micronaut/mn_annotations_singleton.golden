@@ -1,0 +1,66 @@
+{
+  "annotationFqn": "jakarta.inject.Singleton",
+  "totalCount": 5,
+  "usages": [
+    {
+      "fieldCount": 4,
+      "fqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 3,
+      "packageName": "us.charliek.flyway",
+      "simpleName": "FlywayR2dbcMigrator",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 7,
+      "fqn": "us.charliek.flyway.configuration.FlywayR2dbcConfigurationProperties",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 14,
+      "packageName": "us.charliek.flyway.configuration",
+      "simpleName": "FlywayR2dbcConfigurationProperties",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "us.charliek.flyway.configuration.FlywayR2dbcConnectionResolver",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "us.charliek.flyway.configuration",
+      "simpleName": "FlywayR2dbcConnectionResolver",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
+      "fqn": "us.charliek.flyway.converter.ConverterRegistry",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "ConverterRegistry",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "us.charliek.flyway.converter.PostgresqlConverter",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "us.charliek.flyway.converter",
+      "simpleName": "PostgresqlConverter",
+      "source": "PROJECT"
+    }
+  ]
+}
