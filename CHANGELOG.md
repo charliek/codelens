@@ -23,6 +23,21 @@
 - Test fixtures expanded to three frameworks — `sample-ratpack-app`,
   `sample-spring-boot-app`, and `sample-micronaut-app` — each scanned by the
   golden e2e suite to prove the primitives generalize.
+- **`calls` now resolves lambda and method-reference targets.** Invocations made
+  via `invokedynamic` (a `LambdaMetafactory` bootstrap) are captured as call sites
+  flagged `invokeDynamic`, with `implMethodOwner`/`implMethodName` pointing at the
+  implementation — a synthetic `lambda$…` body for a lambda, or the referenced
+  method for a method reference — so inline handlers and lambda bodies are no longer
+  invisible. `StringConcatFactory` (string concatenation) invokedynamics are
+  recognized and skipped.
+- **`xref` and `deps` now count generic type arguments.** Field, parameter, return,
+  and supertype types are read from the generic signature, so a type that appears
+  only as a type argument (`List<Foo>`, `Mono<Foo>`, `Repository<Foo, Id>`,
+  `extends Base<Foo>`) is counted as a reference to that argument, not just its
+  container, and `classes show` renders types in generic form.
+- Claude Code skill triggering descriptions optimized, and the JVM- and
+  Ratpack-analysis skills behavior-tested against the fixtures (the Ratpack
+  inline-lambda route recipe was tightened to follow nested sub-chains).
 
 ## v0.0.2
 
