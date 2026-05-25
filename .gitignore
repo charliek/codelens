@@ -5,6 +5,7 @@ build/
 !gradle/wrapper/gradle-wrapper.properties
 
 # Kotlin
+.kotlin/
 *.class
 *.jar
 !test-fixtures/sample-ratpack-app/gradle/wrapper/gradle-wrapper.jar

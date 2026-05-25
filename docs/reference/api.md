@@ -8,7 +8,7 @@ The CodeLens server exposes a REST API for bytecode analysis. All endpoints retu
 http://127.0.0.1:{port}
 ```
 
-The server binds to localhost by default. Port is automatically assigned from the range 8080-8180.
+The server binds to localhost by default. Port is automatically assigned from the range 61000-65535 (the IANA dynamic/private range, chosen to avoid collisions with other programs). The CLI discovers the actual port from the server's ready-line and state file, so the specific number is rarely relevant.
 
 ## Admin Endpoints
 
