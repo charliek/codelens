@@ -24,10 +24,9 @@ import org.slf4j.LoggerFactory
  * framework-specific filtering.
  *
  * The scan technique (track `LDC` constants, correlate with subsequent
- * `INVOKE`s) is lifted and generalized from the original Ratpack-specific route
- * extractor: where that walked only `execute(Chain)` and recorded only calls on
- * `ratpack/handling/Chain`, this records every invocation in every (or one)
- * method.
+ * `INVOKE`s) is generalized from an earlier framework-specific route extractor:
+ * where that walked a single method and recorded only calls on one interface,
+ * this records every invocation in every (or one) method.
  */
 class CallSiteExtractor(
     private val classGraphProvider: ClassGraphProvider,

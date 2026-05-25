@@ -8,7 +8,6 @@ data class ProjectInfo(
     val path: String,
     val status: ProjectStatus,
     val classCount: Int? = null,
-    val handlerCount: Int? = null,
     val scannedAt: String? = null,
 )
 

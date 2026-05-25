@@ -1,79 +1,53 @@
 {
   "methods": [
     {
-      "classFqn": "sample.handlers.AsyncHandler",
-      "classSimpleName": "AsyncHandler",
+      "classFqn": "sample.BadClass",
+      "classSimpleName": "BadClass",
       "classSource": "PROJECT",
       "method": {
-        "annotations": [],
-        "isAbstract": false,
-        "isFinal": false,
-        "isStatic": false,
-        "isSynthetic": false,
-        "name": "fetchUserData",
-        "parameters": [
+        "annotations": [
           {
-            "annotations": [],
-            "name": "arg0",
-            "type": "java.lang.String"
+            "parameters": {
+              "value": ""
+            },
+            "type": "org.jetbrains.annotations.NotNull"
           }
         ],
-        "returnType": "ratpack.exec.Promise",
-        "visibility": "PRIVATE"
-      }
-    },
-    {
-      "classFqn": "sample.handlers.AsyncHandler",
-      "classSimpleName": "AsyncHandler",
-      "classSource": "PROJECT",
-      "method": {
-        "annotations": [],
         "isAbstract": false,
-        "isFinal": false,
+        "isFinal": true,
         "isStatic": false,
         "isSynthetic": false,
-        "name": "processUserAction",
-        "parameters": [
-          {
-            "annotations": [],
-            "name": "arg0",
-            "type": "java.lang.Object"
-          },
-          {
-            "annotations": [],
-            "name": "arg1",
-            "type": "java.lang.String"
-          }
-        ],
-        "returnType": "ratpack.exec.Promise",
-        "visibility": "PRIVATE"
-      }
-    },
-    {
-      "classFqn": "sample.handlers.BlockingHandler",
-      "classSimpleName": "BlockingHandler",
-      "classSource": "PROJECT",
-      "method": {
-        "annotations": [],
-        "isAbstract": false,
-        "isFinal": false,
-        "isStatic": false,
-        "isSynthetic": false,
-        "name": "getUserName",
-        "parameters": [
-          {
-            "annotations": [],
-            "name": "arg0",
-            "type": "java.lang.String"
-          }
-        ],
-        "returnType": "ratpack.exec.Promise",
+        "name": "getName",
+        "parameters": [],
+        "returnType": "java.lang.String",
         "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "sample.handlers.AsyncHandler",
+      "classSimpleName": "AsyncHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "formatResponse",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.String",
+        "visibility": "PRIVATE"
       }
     }
   ],
   "page": 0,
   "pageSize": 50,
-  "totalCount": 3,
+  "totalCount": 2,
   "totalPages": 1
 }
