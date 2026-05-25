@@ -95,6 +95,12 @@ internal open class EmptyClassGraphProvider : ClassGraphProvider {
     override fun getAllClasses(): Map<String, ClassInfo> = emptyMap()
 
     override fun getClassBytes(fqn: String): ByteArray? = null
+
+    override fun getCalls(
+        fqn: String,
+        methodName: String?,
+        descriptor: String?,
+    ): CallSiteList = CallSiteList(fqn, emptyList())
 }
 
 /** ClassGraphProvider that throws on scan; otherwise behaves like the empty provider. */

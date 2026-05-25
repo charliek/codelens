@@ -1,0 +1,57 @@
+{
+  "fqn": "sample.handlers.BlockingHandler",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "()Lratpack/path/PathTokens;",
+          "isInterface": true,
+          "lineNumber": 27,
+          "methodName": "getPathTokens",
+          "ownerType": "ratpack.handling.Context"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "id"
+            }
+          ],
+          "descriptor": "(Ljava/lang/Object;)Ljava/lang/Object;",
+          "isInterface": true,
+          "lineNumber": 27,
+          "methodName": "get",
+          "ownerType": "ratpack.path.PathTokens"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lratpack/func/Factory;)Lratpack/exec/Promise;",
+          "isInterface": false,
+          "lineNumber": 29,
+          "methodName": "get",
+          "ownerType": "ratpack.exec.Blocking"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lratpack/func/Function;)Lratpack/exec/Promise;",
+          "isInterface": true,
+          "lineNumber": 30,
+          "methodName": "map",
+          "ownerType": "ratpack.exec.Promise"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lratpack/func/Action;)V",
+          "isInterface": true,
+          "lineNumber": 31,
+          "methodName": "then",
+          "ownerType": "ratpack.exec.Promise"
+        }
+      ],
+      "descriptor": "(Lratpack/handling/Context;)V",
+      "methodName": "handle"
+    }
+  ],
+  "totalCalls": 5
+}

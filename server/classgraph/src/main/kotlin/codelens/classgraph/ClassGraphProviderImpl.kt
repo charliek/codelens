@@ -335,6 +335,12 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 
     override fun getAllClasses(): Map<String, ClassInfo> = classes.toMap()
 
+    override fun getCalls(
+        fqn: String,
+        methodName: String?,
+        descriptor: String?,
+    ): CallSiteList = CallSiteExtractor(this).extract(fqn, methodName, descriptor)
+
     override fun getClassBytes(fqn: String): ByteArray? {
         val classInfo = classes[fqn] ?: return null
         val jarPath = classInfo.jarPath ?: return null

@@ -298,5 +298,49 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 ),
             )
         }
+
+        /**
+         * GET /api/v1/calls/{fqn}
+         * Extract the invocations a class's method bodies make (raw bytecode
+         * call-site facts). Uses the same multi-segment FQN capture as the
+         * sibling class endpoints.
+         *
+         * Query parameters:
+         * - method: Only scan this method (others are omitted)
+         * - descriptor: Exact JVM descriptor to disambiguate overloads
+         *   (only honored together with `method`)
+         *
+         * Without `method`, methods that make no calls are omitted. With it, a
+         * matching method is returned even when it makes no calls (one entry,
+         * empty `calls`); an unknown method yields no entries.
+         */
+        get("/calls/{fqn...}") {
+            val fqn = getFqnOrRespond() ?: return@get
+            // Treat blank query values as absent so `?method=` doesn't filter
+            // for a method literally named "".
+            val method = call.request.queryParameters["method"]?.takeUnless { it.isBlank() }
+            // descriptor disambiguates a named method; the whole-class view
+            // ignores it, so only forward it alongside a method.
+            val descriptor =
+                if (method != null) {
+                    call.request.queryParameters["descriptor"]?.takeUnless { it.isBlank() }
+                } else {
+                    null
+                }
+            respondCalls(analysisService.getCalls(fqn, method, descriptor))
+        }
     }
+}
+
+/**
+ * Wraps a [CallSiteList] in the API response shape, computing the total call count.
+ */
+private suspend fun RoutingContext.respondCalls(result: CallSiteList) {
+    call.respond(
+        CallsResponse(
+            fqn = result.fqn,
+            methods = result.methods,
+            totalCalls = result.methods.sumOf { it.calls.size },
+        ),
+    )
 }

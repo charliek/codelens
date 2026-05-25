@@ -270,6 +270,15 @@ class AnalysisService(
     fun searchMethods(filter: MethodFilter): List<MethodSearchResult> = classGraphProvider.searchMethods(filter)
 
     /**
+     * Extract the invocations a class's method bodies make, from bytecode.
+     */
+    fun getCalls(
+        fqn: String,
+        methodName: String? = null,
+        descriptor: String? = null,
+    ): CallSiteList = classGraphProvider.getCalls(fqn, methodName, descriptor)
+
+    /**
      * Lazily initialized source resolver for project sources.
      */
     private val sourceResolver: SourceResolver? by lazy {

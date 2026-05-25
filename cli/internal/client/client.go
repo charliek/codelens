@@ -325,6 +325,28 @@ func (c *Client) SearchMethods(ctx context.Context, f SearchMethodsFilter) (json
 }
 
 // =============================================================================
+// Calls (forward call-site extraction)
+// =============================================================================
+
+// GetCalls returns the invocations a class's method bodies make. When method
+// is non-empty, only that method is scanned and descriptor (when set)
+// disambiguates overloads by exact JVM descriptor. The FQN is a single
+// percent-encoded path segment (matching the sibling class endpoints);
+// method/descriptor are query parameters.
+func (c *Client) GetCalls(ctx context.Context, fqn, method, descriptor string) (json.RawMessage, error) {
+	p := &params{}
+	if method != "" {
+		p.add("method", method)
+		// descriptor only disambiguates a named method; the whole-class view
+		// ignores it, so don't send it without a method.
+		if descriptor != "" {
+			p.add("descriptor", descriptor)
+		}
+	}
+	return c.doGet(ctx, "/api/v1/calls/"+pythonQuote(fqn), p)
+}
+
+// =============================================================================
 // Ktlint (typed responses)
 // =============================================================================
 
