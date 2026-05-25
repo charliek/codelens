@@ -2,99 +2,115 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-codelens analyzes JVM codebases. It loads a project's compiled bytecode and
-resolved classpath, then answers structural questions about it over a small HTTP
-API and a command-line interface — classes, methods, annotations, type
-hierarchies, dependencies, and source (including JDK and library source).
-
-Java and Kotlin are the primary, tested languages. Its primitives are
-framework-agnostic — including `calls` (what a method invokes) and `xref` (what
-references a type). Framework-specific analysis is composed from these
-primitives in agent skills rather than baked into the tool (see below).
+codelens analyzes JVM codebases (Java and Kotlin). It loads a project's compiled
+bytecode and resolved classpath, then answers structural questions over a
+command-line interface (and a small local HTTP API) — classes, methods,
+annotations, type hierarchies, the calls a method makes (`calls`), everything that
+references a type (`xref`), the project dependency graph (`deps`), and source
+(including JDK and library source).
 
 **📖 Full documentation: [charliek.github.io/codelens](https://charliek.github.io/codelens/)**
 
+## Goals
+
+- **Accurate structural facts, straight from bytecode.** Answer "what implements
+  this", "who references this type", and "what does this method actually call" from
+  compiled bytecode and the resolved classpath — relationships that text search and
+  source-only tooling miss.
+- **Framework-agnostic primitives; framework knowledge in skills.** The tool ships
+  general primitives only. Framework-specific analysis (e.g. a Ratpack migration
+  assessment) is composed from them in installable agent skills, not baked into the
+  binary.
+- **Works with the agent you already use.** One CLI any agent can drive, plus skills
+  that install into Claude Code, GitHub Copilot, OpenCode, and others.
+
 ## How it works
 
-codelens has two parts:
+- **Server** (Kotlin/Ktor): runs in the background, scans the target's bytecode with
+  ClassGraph, resolves the classpath via the Gradle Tooling API, and serves analysis
+  over a local REST API. It shuts down when idle.
+- **CLI** (Go): a single static binary that manages the server and formats results.
+  It auto-starts the server on first use.
 
-- **Server** (Kotlin/Ktor): runs in the background, scans the target's bytecode
-  with ClassGraph, resolves the classpath via the Gradle Tooling API, and serves
-  analysis over a local REST API. It shuts down when idle.
-- **CLI** (Go): a single static binary that manages the server and formats
-  results. It auto-starts the server on first use.
+## Quick start (macOS)
 
-## Install
+### 1. Install the CLI
 
 ```bash
 brew tap charliek/tap
 brew install codelens
+codelens version
 ```
 
-codelens runs a **JDK 21+** server under the hood and auto-discovers one from
-SDKMAN or Homebrew. Install one if needed:
+The server runs on a **JDK 21+**, which codelens auto-discovers from SDKMAN or
+Homebrew. Install one if you don't have it:
 
 ```bash
 sdk install java 21.0.9-amzn   # SDKMAN
-# or
-brew install openjdk@21        # Homebrew
+# or: brew install openjdk@21
 ```
 
-See [Installation](https://charliek.github.io/codelens/getting-started/installation/)
-for standalone/manual layouts and the JDK details.
+### 2. Install the skills
 
-## Install the skills
-
-codelens publishes its four skills (JVM analysis, Kotlin linting, source lookup,
-and Ratpack migration) as agent skills. They drive the codelens CLI for you, so
-install the CLI with the steps above first.
-
-**Any agent, with [`skills`](https://skills.sh):** installs into Claude Code,
-Cursor, Codex, Copilot, Windsurf, and dozens of other agents, auto-detecting the
-ones you have.
+The skills teach your agent to drive the codelens CLI, so install the CLI (step 1)
+first. The general route — [`skills`](https://skills.sh) — installs into Claude Code,
+GitHub Copilot, OpenCode, and many other agents, auto-detecting the ones you have:
 
 ```bash
 npx skills add charliek/codelens
 ```
 
-**Claude Code plugin:** a native alternative that namespaces the skills as
-`codelens:<skill-name>`.
+For Claude Code, a native plugin is also available (it namespaces the skills as
+`codelens:<name>`):
 
 ```bash
 /plugin marketplace add charliek/codelens
 /plugin install codelens@codelens
 ```
 
-## Quick start
+### 3. Prepare your project
 
-codelens analyzes compiled bytecode, so build the target project first, then run
-a command from its directory (the server auto-starts):
+codelens runs your project's Gradle on the JDK your project **declares** — it does
+not guess. Declare one (a `.sdkmanrc` is simplest), then build the project so there is
+bytecode to analyze:
 
 ```bash
 cd ~/work/my-service
+echo "java=21.0.9-tem" > .sdkmanrc   # the JDK your project builds with
 ./gradlew build -x test
-
-codelens classes list --package "com.example.*"
-codelens classes show com.example.UserService
-codelens source show java.util.HashMap
-codelens stop
 ```
 
-Every command supports `--json`. See the
-[Quick Start](https://charliek.github.io/codelens/getting-started/quick-start/)
-and [CLI Reference](https://charliek.github.io/codelens/reference/cli/).
+> [!NOTE]
+> This is the **project's** JDK (used for its Gradle daemon), separate from the JDK
+> 21+ the codelens server runs on. Without a declared JDK, codelens stops with a clear
+> error. See [Target Project Setup](https://charliek.github.io/codelens/concepts/target-project/)
+> for the other accepted sources (`.java-version`, `gradle.properties`, mise).
+
+### 4. Boot it up and check
+
+From the project directory — the server auto-starts on the first command:
+
+```bash
+codelens classes stats                          # boots the server, scans, prints class counts
+codelens classes list --package "com.example.*" # your classes
+codelens status                                  # confirm the server is running
+```
+
+If `classes stats` returns counts, you're set. Every command supports `--json`. From
+here, ask your agent a structural question and let the skills drive the CLI, or work
+the [CLI](https://charliek.github.io/codelens/reference/cli/) directly.
 
 ## Documentation
 
 | Topic | |
 |-------|--|
-| Installation & quick start | <https://charliek.github.io/codelens/getting-started/installation/> |
+| Installation (Homebrew, standalone, from source) | <https://charliek.github.io/codelens/getting-started/installation/> |
+| Quick start | <https://charliek.github.io/codelens/getting-started/quick-start/> |
+| Target project setup (declaring the JDK) | <https://charliek.github.io/codelens/concepts/target-project/> |
 | CLI & HTTP API reference | <https://charliek.github.io/codelens/reference/cli/> |
-| Server & JAR discovery | <https://charliek.github.io/codelens/concepts/discovery/> |
-| JDK resolution | <https://charliek.github.io/codelens/concepts/jdk-resolution/> |
+| JDK resolution (server vs. project JVM) | <https://charliek.github.io/codelens/concepts/jdk-resolution/> |
+| Framework analysis with skills | <https://charliek.github.io/codelens/concepts/framework-analysis/> |
 | Development (build from source) | <https://charliek.github.io/codelens/development/setup/> |
-
-The docs site is built with MkDocs; preview it locally with `uv run --group docs mkdocs serve`.
 
 ## License
 
