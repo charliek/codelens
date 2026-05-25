@@ -1,7 +1,8 @@
 # Contributing to CodeLens
 
 Thanks for your interest in contributing! CodeLens is a developer tool for
-analyzing Ratpack-based JVM codebases to assist with migration planning.
+analyzing JVM codebases (Java & Kotlin) — classes, methods, calls,
+cross-references, dependencies, and source.
 
 ## Getting set up
 
@@ -51,7 +52,7 @@ golangci-lint run ./...          # Go (from cli/)
 A quick end-to-end smoke against the bundled sample project:
 
 ```bash
-cd test-fixtures/sample-ratpack-app
+cd test-fixtures/sample-spring-boot-app
 codelens start
 codelens project
 codelens stop

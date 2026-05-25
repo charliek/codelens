@@ -28,7 +28,7 @@ Health check endpoint.
 
 ### GET /admin/ready
 
-Readiness check - indicates if the server has completed scanning.
+Readiness check - indicates if the server has completed scanning. Returns `503` with `"ready": false` while the initial scan is still running.
 
 **Response:**
 ```json
@@ -50,7 +50,7 @@ Server information including version, uptime, and configuration.
   "apiVersion": "v1",
   "projectPath": "/path/to/project",
   "projectName": "my-project",
-  "port": 8080,
+  "port": 61337,
   "host": "127.0.0.1",
   "status": "READY",
   "startedAt": "2026-01-05T12:00:00.000Z",
@@ -74,12 +74,12 @@ Touch activity to reset the idle timer. Used by the CLI to keep the server alive
 
 ### POST /admin/shutdown
 
-Graceful shutdown (localhost only).
+Graceful shutdown (localhost only). Returns `403` for non-localhost callers.
 
 **Response:**
 ```json
 {
-  "message": "Shutting down..."
+  "status": "shutting_down"
 }
 ```
 
@@ -98,14 +98,13 @@ Get project information.
   "path": "/path/to/project",
   "status": "READY",
   "classCount": 150,
-  "handlerCount": 24,
   "scannedAt": "2026-01-05T12:00:05.000Z"
 }
 ```
 
 ### POST /api/v1/project/refresh
 
-Trigger a refresh of the project scan (after code changes).
+Trigger a refresh of the project scan (after code changes). Returns the project info reflecting the new scan state.
 
 **Response:**
 ```json
@@ -165,7 +164,7 @@ List classes with optional filtering and pagination.
 
 **Example:**
 ```
-GET /api/v1/classes?package=com.example.api.*&implements=ratpack.handling.Handler
+GET /api/v1/classes?package=com.example.web.*&annotation=org.springframework.web.bind.annotation.RestController
 ```
 
 **Response:**
@@ -173,29 +172,29 @@ GET /api/v1/classes?package=com.example.api.*&implements=ratpack.handling.Handle
 {
   "classes": [
     {
-      "fqn": "com.example.api.UserHandler",
-      "simpleName": "UserHandler",
-      "packageName": "com.example.api",
+      "fqn": "com.example.web.ProductController",
+      "simpleName": "ProductController",
+      "packageName": "com.example.web",
       "source": "PROJECT",
       "isInterface": false,
       "isAbstract": false,
       "isEnum": false,
       "isAnnotation": false,
       "methodCount": 5,
-      "fieldCount": 3
+      "fieldCount": 2
     }
   ],
-  "totalCount": 24,
+  "totalCount": 3,
   "page": 0,
   "pageSize": 50,
   "totalPages": 1,
   "appliedFilter": {
-    "packagePattern": "com.example.api.*",
+    "packagePattern": "com.example.web.*",
     "namePattern": null,
     "source": "PROJECT",
-    "hasAnnotation": null,
+    "hasAnnotation": "org.springframework.web.bind.annotation.RestController",
     "extendsClass": null,
-    "implementsInterface": "ratpack.handling.Handler"
+    "implementsInterface": null
   }
 }
 ```
@@ -210,11 +209,11 @@ Get full details for a specific class.
 
 | Parameter | Description |
 |-----------|-------------|
-| `fqn` | Fully qualified class name (e.g., `com.example.UserHandler`) |
+| `fqn` | Fully qualified class name (e.g., `com.example.web.ProductController`) |
 
 **Example:**
 ```
-GET /api/v1/classes/com.example.api.UserHandler
+GET /api/v1/classes/com.example.web.ProductController
 ```
 
 **Response:**
@@ -222,9 +221,9 @@ GET /api/v1/classes/com.example.api.UserHandler
 {
   "classInfo": {
     "name": {
-      "fqn": "com.example.api.UserHandler",
-      "simpleName": "UserHandler",
-      "packageName": "com.example.api"
+      "fqn": "com.example.web.ProductController",
+      "simpleName": "ProductController",
+      "packageName": "com.example.web"
     },
     "source": "PROJECT",
     "visibility": "PUBLIC",
@@ -234,23 +233,24 @@ GET /api/v1/classes/com.example.api.UserHandler
     "isEnum": false,
     "isAnnotation": false,
     "isSynthetic": false,
-    "superclass": "java.lang.Object",
-    "interfaces": ["ratpack.handling.Handler"],
+    "superclass": "com.example.web.BaseController",
+    "interfaces": [],
     "annotations": [
       {
-        "type": "javax.inject.Singleton",
+        "type": "org.springframework.web.bind.annotation.RestController",
         "parameters": {}
       }
     ],
+    "constructors": [],
     "methods": [
       {
-        "name": "handle",
+        "name": "create",
         "visibility": "PUBLIC",
-        "returnType": "void",
+        "returnType": "com.example.model.Product",
         "parameters": [
           {
-            "name": "ctx",
-            "type": "ratpack.handling.Context",
+            "name": "dto",
+            "type": "com.example.dto.ProductDto",
             "annotations": []
           }
         ],
@@ -263,15 +263,10 @@ GET /api/v1/classes/com.example.api.UserHandler
     ],
     "fields": [
       {
-        "name": "userService",
+        "name": "productService",
         "visibility": "PRIVATE",
-        "type": "com.example.service.UserService",
-        "annotations": [
-          {
-            "type": "javax.inject.Inject",
-            "parameters": {}
-          }
-        ],
+        "type": "com.example.service.ProductService",
+        "annotations": [],
         "isStatic": false,
         "isFinal": true
       }
@@ -283,6 +278,7 @@ GET /api/v1/classes/com.example.api.UserHandler
 **Error Response (404):**
 ```json
 {
+  "error": true,
   "code": 404,
   "type": "NotFound",
   "message": "Class not found: com.example.Unknown"
@@ -309,29 +305,29 @@ Find all implementations of an interface or subclasses of a class.
 
 **Example:**
 ```
-GET /api/v1/implementations/ratpack.handling.Handler
+GET /api/v1/implementations/com.example.service.ProductService
 ```
 
 **Response:**
 ```json
 {
-  "targetClass": "ratpack.handling.Handler",
+  "targetClass": "com.example.service.ProductService",
   "directImplementations": [
     {
-      "fqn": "com.example.api.UserHandler",
-      "simpleName": "UserHandler",
-      "packageName": "com.example.api",
+      "fqn": "com.example.service.ProductServiceImpl",
+      "simpleName": "ProductServiceImpl",
+      "packageName": "com.example.service",
       "source": "PROJECT",
       "isInterface": false,
       "isAbstract": false,
       "isEnum": false,
       "isAnnotation": false,
-      "methodCount": 5,
-      "fieldCount": 3
+      "methodCount": 4,
+      "fieldCount": 2
     }
   ],
   "indirectImplementations": [],
-  "totalCount": 24
+  "totalCount": 1
 }
 ```
 
@@ -349,38 +345,36 @@ Get the class hierarchy for a class, including parent chain, interfaces, and chi
 
 **Example:**
 ```
-GET /api/v1/hierarchy/com.example.api.UserHandler
+GET /api/v1/hierarchy/com.example.web.ProductController
 ```
 
 **Response:**
 ```json
 {
-  "targetClass": "com.example.api.UserHandler",
+  "targetClass": "com.example.web.ProductController",
   "hierarchy": {
-    "classFqn": "com.example.api.UserHandler",
-    "simpleName": "UserHandler",
+    "classFqn": "com.example.web.ProductController",
+    "simpleName": "ProductController",
     "source": "PROJECT",
     "isInterface": false,
     "parent": {
-      "classFqn": "java.lang.Object",
-      "simpleName": "Object",
-      "source": "JDK",
+      "classFqn": "com.example.web.BaseController",
+      "simpleName": "BaseController",
+      "source": "PROJECT",
       "isInterface": false,
-      "parent": null,
-      "interfaces": [],
-      "children": []
-    },
-    "interfaces": [
-      {
-        "classFqn": "ratpack.handling.Handler",
-        "simpleName": "Handler",
-        "source": "LIBRARY",
-        "isInterface": true,
+      "parent": {
+        "classFqn": "java.lang.Object",
+        "simpleName": "Object",
+        "source": "JDK",
+        "isInterface": false,
         "parent": null,
         "interfaces": [],
         "children": []
-      }
-    ],
+      },
+      "interfaces": [],
+      "children": []
+    },
+    "interfaces": [],
     "children": []
   }
 }
@@ -390,7 +384,7 @@ GET /api/v1/hierarchy/com.example.api.UserHandler
 
 ### GET /api/v1/dependencies/{fqn}
 
-Get dependencies for a class (both incoming and outgoing).
+Get dependencies for a single class (both incoming and outgoing). For the whole-project graph, see [`GET /api/v1/graph`](#get-apiv1graph).
 
 **Path Parameters:**
 
@@ -406,30 +400,30 @@ Get dependencies for a class (both incoming and outgoing).
 
 **Example:**
 ```
-GET /api/v1/dependencies/com.example.api.UserHandler
+GET /api/v1/dependencies/com.example.web.ProductController
 ```
 
 **Response:**
 ```json
 {
-  "targetClass": "com.example.api.UserHandler",
+  "targetClass": "com.example.web.ProductController",
   "outgoing": [
     {
-      "classFqn": "com.example.service.UserService",
+      "classFqn": "com.example.service.ProductService",
       "dependencyType": "FIELD_TYPE",
       "source": "PROJECT",
-      "location": "userService"
+      "location": "productService"
     },
     {
-      "classFqn": "ratpack.handling.Context",
+      "classFqn": "com.example.dto.ProductDto",
       "dependencyType": "METHOD_PARAMETER",
-      "source": "LIBRARY",
-      "location": "handle"
+      "source": "PROJECT",
+      "location": "create"
     }
   ],
   "incoming": [
     {
-      "classFqn": "com.example.config.AppModule",
+      "classFqn": "com.example.config.WebConfig",
       "dependencyType": "TYPE_REFERENCE",
       "source": "PROJECT",
       "location": null
@@ -469,28 +463,28 @@ Find all classes using a specific annotation.
 
 **Example:**
 ```
-GET /api/v1/annotations/usages/javax.inject.Singleton
+GET /api/v1/annotations/usages/org.springframework.stereotype.Service
 ```
 
 **Response:**
 ```json
 {
-  "annotationFqn": "javax.inject.Singleton",
+  "annotationFqn": "org.springframework.stereotype.Service",
   "usages": [
     {
-      "fqn": "com.example.service.UserService",
-      "simpleName": "UserService",
+      "fqn": "com.example.service.ProductServiceImpl",
+      "simpleName": "ProductServiceImpl",
       "packageName": "com.example.service",
       "source": "PROJECT",
       "isInterface": false,
       "isAbstract": false,
       "isEnum": false,
       "isAnnotation": false,
-      "methodCount": 10,
-      "fieldCount": 5
+      "methodCount": 4,
+      "fieldCount": 2
     }
   ],
-  "totalCount": 15
+  "totalCount": 6
 }
 ```
 
@@ -515,7 +509,7 @@ Search methods across all classes.
 
 **Example:**
 ```
-GET /api/v1/methods?returnType=ratpack.exec.Promise&inPackage=com.example.*
+GET /api/v1/methods?returnType=java.util.List&inPackage=com.example.*
 ```
 
 **Response:**
@@ -523,20 +517,14 @@ GET /api/v1/methods?returnType=ratpack.exec.Promise&inPackage=com.example.*
 {
   "methods": [
     {
-      "classFqn": "com.example.service.UserService",
-      "classSimpleName": "UserService",
+      "classFqn": "com.example.service.ProductServiceImpl",
+      "classSimpleName": "ProductServiceImpl",
       "classSource": "PROJECT",
       "method": {
-        "name": "getUser",
+        "name": "findAll",
         "visibility": "PUBLIC",
-        "returnType": "ratpack.exec.Promise",
-        "parameters": [
-          {
-            "name": "userId",
-            "type": "java.lang.String",
-            "annotations": []
-          }
-        ],
+        "returnType": "java.util.List",
+        "parameters": [],
         "annotations": [],
         "isStatic": false,
         "isAbstract": false,
@@ -554,13 +542,9 @@ GET /api/v1/methods?returnType=ratpack.exec.Promise&inPackage=com.example.*
 
 ---
 
-## Source Endpoints
+### GET /api/v1/calls/{fqn}
 
-These endpoints provide source code retrieval for classes.
-
-### GET /api/v1/source/{fqn}
-
-Get source code for a class.
+Extract the invocations a class's method bodies make — raw bytecode call-site facts. For each call: the owner type of the invoked method, the method name, its JVM descriptor, any constant arguments observed near the call, and the source line (when debug info is present).
 
 **Path Parameters:**
 
@@ -572,11 +556,261 @@ Get source code for a class.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `method` | string | - | Only scan this method (others are omitted) |
+| `descriptor` | string | - | Exact JVM descriptor to disambiguate overloads (only honored together with `method`) |
+
+Without `method`, methods that make no calls are omitted. With `method`, a matching method is returned even when it makes no calls (one entry with an empty `calls` list); an unknown method name yields no entries.
+
+**Example:**
+```
+GET /api/v1/calls/com.example.web.ProductController?method=create
+```
+
+**Response:**
+```json
+{
+  "fqn": "com.example.web.ProductController",
+  "methods": [
+    {
+      "methodName": "create",
+      "descriptor": "(Lcom/example/dto/ProductDto;)Lcom/example/model/Product;",
+      "calls": [
+        {
+          "ownerType": "com.example.service.ProductService",
+          "methodName": "create",
+          "descriptor": "(Ljava/lang/String;D)Lcom/example/model/Product;",
+          "isInterface": true,
+          "constantArgs": [],
+          "lineNumber": 37
+        }
+      ]
+    }
+  ],
+  "totalCalls": 1
+}
+```
+
+Each entry in `constantArgs` is `{"kind": ..., "value": ...}`, where `kind` is one of `STRING`, `INT`, `LONG`, `FLOAT`, `DOUBLE`, or `CLASS`. For `CLASS`, `value` is the dotted FQN.
+
+---
+
+### GET /api/v1/xref/{typeFqn}
+
+Find everything across the project that references a type — the inverse of `calls`. References are grouped by kind, with `countsByKind` and `countsByPackage` aggregates over the full result.
+
+**Path Parameters:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `typeFqn` | Fully qualified type name to cross-reference |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `includeLibraries` | boolean | `false` | Include references from library classes |
+| `kind` | string | - | Restrict to one reference kind (see below) |
+| `scopeImplementing` | string | - | Only count references from classes that implement (or extend) this type |
+| `page` | int | `0` | Page number (0-based) |
+| `size` | int | `50` | Page size |
+
+**Reference Kinds (`kind`):**
+
+| Kind | Description |
+|------|-------------|
+| `EXTENDS` | Referencing class extends the target type |
+| `IMPLEMENTS` | Referencing class implements the target interface |
+| `FIELD` | Referencing class has a field of the target type |
+| `PARAM` | A method/constructor takes the target type as a parameter |
+| `RETURN` | A method returns the target type |
+| `ANNOTATION` | The referencing class/member is annotated with the target type |
+| `INSTANTIATION` | The referencing class instantiates the target type (`new`) |
+| `CALL_RECEIVER` | The referencing class invokes a method on the target type |
+
+The signature-level kinds (`EXTENDS`, `IMPLEMENTS`, `FIELD`, `PARAM`, `RETURN`, `ANNOTATION`) honor `includeLibraries`. The bytecode-level kinds (`INSTANTIATION`, `CALL_RECEIVER`) always scan project classes only. An invalid `kind` returns `400`.
+
+**Example:**
+```
+GET /api/v1/xref/javax.sql.DataSource
+```
+
+**Response:**
+```json
+{
+  "typeFqn": "javax.sql.DataSource",
+  "references": [
+    {
+      "fromFqn": "com.example.config.DatabaseConfig",
+      "fromSimpleName": "DatabaseConfig",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "member": "dataSource",
+      "detail": "javax.sql.DataSource",
+      "lineNumber": null
+    },
+    {
+      "fromFqn": "com.example.service.InventoryService",
+      "fromSimpleName": "InventoryService",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "member": "dataSource",
+      "detail": "javax.sql.DataSource",
+      "lineNumber": null
+    },
+    {
+      "fromFqn": "com.example.service.InventoryService",
+      "fromSimpleName": "InventoryService",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "member": "<init>",
+      "detail": "javax.sql.DataSource",
+      "lineNumber": null
+    },
+    {
+      "fromFqn": "com.example.service.InventoryService",
+      "fromSimpleName": "InventoryService",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "member": "stockLevel",
+      "detail": "getConnection",
+      "lineNumber": 25
+    }
+  ],
+  "totalCount": 4,
+  "page": 0,
+  "pageSize": 50,
+  "totalPages": 1,
+  "countsByKind": { "RETURN": 1, "FIELD": 1, "PARAM": 1, "CALL_RECEIVER": 1 },
+  "countsByPackage": { "com.example.config": 1, "com.example.service": 3 },
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  }
+}
+```
+
+Passing `?kind=FIELD` narrows `references`, `totalCount`, and `countsByPackage` to the FIELD entries; `countsByKind` is always computed over the full result (before the `kind` filter) so the breakdown stays visible.
+
+---
+
+### GET /api/v1/graph
+
+The project-wide dependency graph: every project class as a node, and every project-to-project dependency as a directed edge (derived from class signatures).
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `format` | string | `json` | Output format: `json` or `dot` |
+
+With `format=dot`, the response is `text/plain` Graphviz DOT rather than JSON.
+
+**Example:**
+```
+GET /api/v1/graph
+```
+
+**Response (JSON):**
+```json
+{
+  "nodes": [
+    {
+      "fqn": "com.example.service.ProductService",
+      "simpleName": "ProductService",
+      "packageName": "com.example.service",
+      "inDegree": 5,
+      "outDegree": 0
+    }
+  ],
+  "edges": [
+    {
+      "source": "com.example.web.ProductController",
+      "target": "com.example.service.ProductService",
+      "type": "FIELD_TYPE"
+    }
+  ],
+  "nodeCount": 18,
+  "edgeCount": 31
+}
+```
+
+**Response (`format=dot`):**
+```dot
+digraph dependencies {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  "com.example.web.ProductController" [label="ProductController"];
+  "com.example.service.ProductService" [label="ProductService"];
+
+  "com.example.web.ProductController" -> "com.example.service.ProductService" [style=solid];
+}
+```
+
+---
+
+### GET /api/v1/graph/foundation
+
+The "foundation" classes — the project classes the most other project classes depend on, ranked by in-degree.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `minDependents` | int | `2` | Minimum in-degree to qualify |
+
+**Example:**
+```
+GET /api/v1/graph/foundation?minDependents=3
+```
+
+**Response:**
+```json
+{
+  "foundationClasses": [
+    {
+      "fqn": "com.example.service.ProductService",
+      "simpleName": "ProductService",
+      "packageName": "com.example.service",
+      "dependentCount": 5,
+      "dependents": [
+        "com.example.report.ReportGenerator",
+        "com.example.service.OrderService",
+        "com.example.service.ProductServiceImpl",
+        "com.example.web.ProductController"
+      ]
+    }
+  ],
+  "count": 8
+}
+```
+
+---
+
+## Source Endpoints
+
+These endpoints provide source code retrieval for classes.
+
+### GET /api/v1/source/{fqn}
+
+Get source code for a class. Supports project classes, library classes (from source JARs or decompilation), and JDK classes (from `src.zip`).
+
+**Path Parameters:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `fqn` | Fully qualified class name |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `allowDecompilation` | boolean | `true` | Allow decompilation fallback when source is unavailable |
+| `forceRefresh` | boolean | `false` | Force re-download of the source JAR |
 | `format` | string | `full` | Output format: `full`, `stub`, `signatures`, `javadoc` |
 | `visibility` | string | `all` | Filter by visibility: `all`, `public`, `protected` |
-| `lang` | string | - | Stub language: `java`, `kotlin` (only applies to stub format) |
-| `allowDecompilation` | boolean | `true` | Allow decompilation fallback when source unavailable |
-| `forceRefresh` | boolean | `false` | Force re-download of source JAR |
+| `lang` | string | `java` | Stub language: `java`, `kotlin` (only applies to stub/signatures format) |
 
 **Format Options:**
 
@@ -589,22 +823,24 @@ Get source code for a class.
 
 **Example:**
 ```
-GET /api/v1/source/com.google.common.collect.ImmutableList?format=stub&lang=kotlin
+GET /api/v1/source/com.example.web.ProductController
 ```
 
 **Response:**
 ```json
 {
-  "fqn": "com.google.common.collect.ImmutableList",
-  "source": "package com.google.common.collect\n\nabstract class ImmutableList<E> : ...",
-  "sourceFile": null,
-  "language": "KOTLIN",
-  "startLine": null,
-  "endLine": null,
-  "sourceOrigin": "SOURCE_JAR",
-  "mavenCoordinates": "com.google.guava:guava:32.1.3-jre",
-  "isDecompiled": false,
-  "format": "STUB"
+  "source": {
+    "fqn": "com.example.web.ProductController",
+    "filePath": "/path/to/ProductController.java",
+    "language": "JAVA",
+    "content": "package com.example.web;\n\n@RestController\npublic class ProductController ...",
+    "lineCount": 42,
+    "module": null,
+    "sourceOrigin": "PROJECT_SOURCE",
+    "mavenCoordinates": null,
+    "isDecompiled": false,
+    "format": "FULL"
+  }
 }
 ```
 
@@ -613,15 +849,15 @@ GET /api/v1/source/com.google.common.collect.ImmutableList?format=stub&lang=kotl
 | Origin | Description |
 |--------|-------------|
 | `PROJECT_SOURCE` | From project source roots |
-| `SOURCE_JAR` | From library -sources.jar |
+| `SOURCE_JAR` | From a library `-sources.jar` |
 | `DECOMPILED` | From bytecode decompilation |
-| `JDK_SOURCE` | From JDK src.zip |
+| `JDK_SOURCE` | From the JDK `src.zip` |
 
 **Error Response (404):**
 ```json
 {
-  "code": 404,
-  "type": "NotFound",
+  "fqn": "com.example.Unknown",
+  "reason": "CLASS_NOT_FOUND",
   "message": "Class not found: com.example.Unknown"
 }
 ```
@@ -644,23 +880,26 @@ Get source code for a specific method.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `paramTypes` | string | - | Comma-separated parameter types to disambiguate overloads |
-| `context` | int | `0` | Number of context lines before/after method |
+| `context` | int | `0` | Number of context lines before/after the method |
 
 **Example:**
 ```
-GET /api/v1/source/com.example.UserHandler/method/handle
+GET /api/v1/source/com.example.web.ProductController/method/create
 ```
 
 **Response:**
 ```json
 {
-  "fqn": "com.example.UserHandler",
-  "methodName": "handle",
-  "source": "public void handle(Context ctx) {\n    ...\n}",
-  "sourceFile": "/path/to/UserHandler.java",
-  "language": "JAVA",
-  "startLine": 25,
-  "endLine": 35
+  "methodSource": {
+    "classFqn": "com.example.web.ProductController",
+    "methodName": "create",
+    "signature": "public Product create(ProductDto dto)",
+    "content": "public Product create(ProductDto dto) {\n    ...\n}",
+    "startLine": 35,
+    "endLine": 39,
+    "contextBefore": null,
+    "contextAfter": null
+  }
 }
 ```
 
@@ -722,13 +961,21 @@ All fields are optional.
   "fileResults": [
     {
       "filePath": "/path/to/project/src/Bad.kt",
-      "errors": [...],
-      "errorCount": 3
+      "errors": [
+        {
+          "line": 1,
+          "col": 1,
+          "ruleId": "standard:no-wildcard-imports",
+          "detail": "Wildcard import",
+          "canBeAutoCorrected": false
+        }
+      ],
+      "errorCount": 1
     }
   ],
   "filesScanned": 50,
-  "filesWithErrors": 3,
-  "totalErrorCount": 12,
+  "filesWithErrors": 1,
+  "totalErrorCount": 1,
   "durationMs": 250
 }
 ```
@@ -806,13 +1053,24 @@ All fields are optional.
 
 ## Error Responses
 
-All endpoints return consistent error responses:
+Most endpoints return a consistent error envelope:
 
 ```json
 {
+  "error": true,
   "code": 400,
   "type": "BadRequest",
   "message": "Class FQN is required"
+}
+```
+
+The source endpoints instead return a source-specific error shape with a `reason` (one of `LIBRARY_CLASS`, `JDK_CLASS`, `FILE_NOT_FOUND`, `CLASS_NOT_FOUND`, `METHOD_NOT_FOUND`):
+
+```json
+{
+  "fqn": "com.example.Unknown",
+  "reason": "CLASS_NOT_FOUND",
+  "message": "Class not found: com.example.Unknown"
 }
 ```
 
@@ -822,529 +1080,7 @@ All endpoints return consistent error responses:
 |------|------|-------------|
 | 400 | BadRequest | Invalid request parameters |
 | 404 | NotFound | Resource not found |
-| 503 | ServiceUnavailable | Scan not completed yet |
-
----
-
-## Ratpack Analysis Endpoints
-
-These endpoints provide Ratpack-specific analysis for migration planning.
-
-### GET /api/v1/ratpack/handlers
-
-List all Ratpack handlers.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `type` | string | - | Filter by handler type (HANDLER, CHAIN_ACTION, INLINE_HANDLER, GROOVY_HANDLER) |
-| `tier` | string | - | Filter by complexity tier (LOW, MEDIUM, HIGH, CRITICAL) |
-| `includeLibraries` | boolean | `false` | Include library handlers |
-
-**Response:**
-```json
-{
-  "handlers": [
-    {
-      "fqn": "com.example.UserHandler",
-      "simpleName": "UserHandler",
-      "packageName": "com.example",
-      "handlerType": "HANDLER",
-      "source": "PROJECT",
-      "complexityScore": 35,
-      "complexityTier": "MEDIUM",
-      "promiseOperationCount": 5,
-      "usesBlocking": true
-    }
-  ],
-  "totalCount": 24,
-  "appliedFilters": {
-    "handlerType": null,
-    "tier": null
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/handlers/{fqn}
-
-Get detailed information about a handler.
-
-**Response:**
-```json
-{
-  "handler": {
-    "fqn": "com.example.UserHandler",
-    "simpleName": "UserHandler",
-    "packageName": "com.example",
-    "handlerType": "HANDLER",
-    "source": "PROJECT",
-    "superclass": "java.lang.Object",
-    "interfaces": ["ratpack.handling.Handler"],
-    "handlerMethods": [...],
-    "allMethods": [...],
-    "promiseAnalysis": {
-      "classFqn": "com.example.UserHandler",
-      "totalOperationCount": 5,
-      "usesBlocking": true,
-      "usesAsync": false,
-      "usesFork": false,
-      "usesParallelBatch": false,
-      "maxChainDepth": 3,
-      "promiseReturningMethods": ["getUser"]
-    },
-    "complexity": {
-      "classFqn": "com.example.UserHandler",
-      "score": 35,
-      "tier": "MEDIUM",
-      "estimatedHours": 4.0,
-      "factors": [...],
-      "migrationNotes": ["Contains Blocking.get()"]
-    },
-    "injectedDependencies": [
-      {
-        "name": "userService",
-        "typeFqn": "com.example.UserService",
-        "injectionType": "CONSTRUCTOR"
-      }
-    ]
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/promises
-
-Get project-wide Promise usage summary.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `includeLibraries` | boolean | `false` | Include library classes |
-
-**Response:**
-```json
-{
-  "summary": {
-    "classesUsingPromises": 15,
-    "blockingGetCount": 23,
-    "promiseAsyncCount": 8,
-    "executionForkCount": 3,
-    "parallelBatchCount": 1,
-    "operatorCount": 45,
-    "operationBreakdown": {
-      "BLOCKING_GET": 23,
-      "PROMISE_MAP": 15,
-      "PROMISE_FLAT_MAP": 10
-    },
-    "topComplexClasses": [...]
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/promises/search
-
-Search for classes with specific Promise usage patterns.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `usesBlocking` | boolean | - | Filter by Blocking usage |
-| `usesAsync` | boolean | - | Filter by async usage |
-| `usesFork` | boolean | - | Filter by fork usage |
-| `minOperations` | int | `0` | Minimum operation count |
-
-**Response:**
-```json
-{
-  "results": [
-    {
-      "classFqn": "com.example.UserService",
-      "totalOperationCount": 8,
-      "usesBlocking": true,
-      "usesAsync": false,
-      "usesFork": false,
-      "usesParallelBatch": false,
-      "maxChainDepth": 3
-    }
-  ],
-  "totalCount": 5
-}
-```
-
----
-
-### GET /api/v1/ratpack/promises/{fqn}
-
-Get Promise usage for a specific class.
-
----
-
-### GET /api/v1/ratpack/complexity
-
-Get project-wide complexity summary.
-
-**Response:**
-```json
-{
-  "summary": {
-    "totalHandlers": 24,
-    "tierBreakdown": {
-      "LOW": 10,
-      "MEDIUM": 8,
-      "HIGH": 4,
-      "CRITICAL": 2
-    },
-    "totalEstimatedHours": 120.5,
-    "averageScore": 42.3,
-    "migrationOrder": [...]
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/complexity/{fqn}
-
-Get complexity score for a specific class.
-
-**Response:**
-```json
-{
-  "complexity": {
-    "classFqn": "com.example.UserHandler",
-    "score": 35,
-    "tier": "MEDIUM",
-    "estimatedHours": 4.0,
-    "factors": [
-      {
-        "name": "Blocking Usage",
-        "description": "Uses Blocking.get() which needs careful migration",
-        "points": 15,
-        "maxPoints": 15,
-        "details": "Blocking operations need conversion to coroutines"
-      }
-    ],
-    "migrationNotes": [
-      "Contains Blocking.get() - requires conversion to non-blocking pattern"
-    ],
-    "migrationPriority": 2,
-    "blockedBy": []
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/migration-order
-
-Get suggested migration order.
-
-**Response:**
-```json
-{
-  "order": [
-    {
-      "classFqn": "com.example.SimpleHandler",
-      "simpleName": "SimpleHandler",
-      "tier": "LOW",
-      "estimatedHours": 1.0,
-      "order": 1,
-      "reason": "Quick win - simple migration"
-    }
-  ],
-  "totalCount": 24,
-  "totalEstimatedHours": 120.5
-}
-```
-
----
-
-### GET /api/v1/ratpack/modules
-
-List all Guice modules.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `includeLibraries` | boolean | `false` | Include library modules |
-
-**Response:**
-```json
-{
-  "modules": [
-    {
-      "fqn": "com.example.AppModule",
-      "simpleName": "AppModule",
-      "packageName": "com.example",
-      "moduleType": "ABSTRACT_MODULE",
-      "bindingCount": 5,
-      "providesMethodCount": 3
-    }
-  ],
-  "totalCount": 4
-}
-```
-
----
-
-### GET /api/v1/ratpack/modules/{fqn}
-
-Get detailed information about a Guice module.
-
-**Response:**
-```json
-{
-  "module": {
-    "fqn": "com.example.AppModule",
-    "simpleName": "AppModule",
-    "packageName": "com.example",
-    "moduleType": "ABSTRACT_MODULE",
-    "configType": null,
-    "bindings": [...],
-    "providesMethods": [
-      {
-        "methodName": "provideUserService",
-        "providesType": "com.example.UserService",
-        "scope": "com.google.inject.Singleton",
-        "intoSet": false,
-        "intoMap": false,
-        "dependencies": []
-      }
-    ],
-    "installedModules": []
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/bindings/{fqn}
-
-Find all bindings for a specific type.
-
-**Response:**
-```json
-{
-  "typeFqn": "com.example.UserService",
-  "bindings": [
-    {
-      "moduleFqn": "com.example.AppModule",
-      "binding": {
-        "boundType": "com.example.UserService",
-        "toType": null,
-        "scope": "com.google.inject.Singleton",
-        "isMultibinding": false,
-        "bindingSource": "PROVIDES"
-      }
-    }
-  ],
-  "totalCount": 1
-}
-```
-
----
-
-### GET /api/v1/ratpack/antipatterns
-
-Get project-wide anti-pattern summary.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `severity` | string | - | Filter by severity (INFO, WARNING, ERROR, CRITICAL) |
-| `type` | string | - | Filter by anti-pattern type |
-| `includeLibraries` | boolean | `false` | Include library classes |
-
-**Anti-Pattern Types:**
-- `BLOCKING_JDBC` - JDBC calls without Blocking.get() wrapper
-- `THREAD_SLEEP` - Thread.sleep() calls blocking the event loop
-- `SYNCHRONOUS_FILE_IO` - Blocking file I/O operations
-- `BLOCKING_HTTP_CLIENT` - Using Apache HttpClient or java.net.URL
-- `CONSOLE_LOGGING` - Direct System.out/err usage
-- `SWALLOWED_EXCEPTION` - Catching and swallowing exceptions
-
-**Response:**
-```json
-{
-  "summary": {
-    "instances": [
-      {
-        "type": "BLOCKING_JDBC",
-        "severity": "CRITICAL",
-        "classFqn": "com.example.UserHandler",
-        "methodName": null,
-        "confidence": 0.8,
-        "reason": "JDBC types are used without visible Blocking.get() usage.",
-        "recommendation": "Wrap JDBC calls in Blocking.get { ... }",
-        "fixExample": "..."
-      }
-    ],
-    "countByType": {"BLOCKING_JDBC": 2, "BLOCKING_HTTP_CLIENT": 1},
-    "countBySeverity": {"CRITICAL": 2, "ERROR": 1},
-    "worstOffenders": [
-      {"classFqn": "com.example.UserHandler", "count": 2, "criticalCount": 1, "errorCount": 1}
-    ],
-    "totalCount": 3
-  },
-  "appliedFilters": {
-    "severity": null,
-    "type": null,
-    "includeLibraries": false
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/antipatterns/{fqn}
-
-Get anti-patterns for a specific class.
-
-**Response:**
-```json
-{
-  "classFqn": "com.example.UserHandler",
-  "antiPatterns": [
-    {
-      "type": "BLOCKING_JDBC",
-      "severity": "CRITICAL",
-      "classFqn": "com.example.UserHandler",
-      "methodName": null,
-      "confidence": 0.8,
-      "reason": "JDBC types are used without visible Blocking.get() usage.",
-      "recommendation": "Wrap JDBC calls in Blocking.get { ... }",
-      "fixExample": "..."
-    }
-  ],
-  "totalCount": 1
-}
-```
-
----
-
-### GET /api/v1/ratpack/routes
-
-Get all routes in the application.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `includeLibraries` | boolean | `false` | Include library classes |
-
-**Response:**
-```json
-{
-  "summary": {
-    "totalRoutes": 5,
-    "routesByMethod": {"GET": 3, "POST": 1, "DELETE": 1},
-    "routes": [
-      {
-        "method": "GET",
-        "pathPattern": "/users",
-        "handlerFqn": "com.example.ListUsersHandler",
-        "handlerSimpleName": "ListUsersHandler",
-        "chainFqn": "com.example.UsersChain",
-        "pathParameters": [],
-        "isPrefix": false,
-        "nestedRoutes": []
-      }
-    ],
-    "chainClasses": [
-      {
-        "fqn": "com.example.UsersChain",
-        "simpleName": "UsersChain",
-        "routeCount": 4,
-        "pathPrefix": "/users"
-      }
-    ],
-    "uniquePaths": 4
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/routes/tree
-
-Get routes as a tree structure.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `includeLibraries` | boolean | `false` | Include library classes |
-
-**Response:**
-```json
-{
-  "tree": {
-    "segment": "",
-    "fullPath": "/",
-    "routes": [],
-    "children": [
-      {
-        "segment": "users",
-        "fullPath": "/users",
-        "routes": [
-          {"method": "GET", "pathPattern": "/users", "handlerSimpleName": "ListHandler"}
-        ],
-        "children": [
-          {
-            "segment": ":id",
-            "fullPath": "/users/:id",
-            "routes": [
-              {"method": "GET", "pathPattern": "/users/:id", "handlerSimpleName": "GetHandler"}
-            ],
-            "children": []
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
----
-
-### GET /api/v1/ratpack/routes/spring
-
-Get Spring @RequestMapping equivalents for all routes.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `includeLibraries` | boolean | `false` | Include library classes |
-
-**Response:**
-```json
-{
-  "mappings": [
-    {
-      "ratpackRoute": {
-        "method": "GET",
-        "pathPattern": "/users/:id",
-        "handlerSimpleName": "GetUserHandler"
-      },
-      "springAnnotation": "@GetMapping(\"/users/{id}\")",
-      "methodSignature": "fun getUser(@PathVariable id: String): ResponseEntity<*>",
-      "notes": ["Contains 1 path parameter(s)"]
-    }
-  ],
-  "totalCount": 5
-}
-```
+| 503 | ScanNotReady | Scan not completed yet |
 
 ---
 
@@ -1358,4 +1094,4 @@ Classes are classified by source:
 | `LIBRARY` | Classes from third-party dependencies |
 | `JDK` | Classes from the Java standard library |
 
-By default, only `PROJECT` classes are returned. Use `includeLibraries=true` to include `LIBRARY` and `JDK` classes.
+By default, only `PROJECT` classes are returned. Use `includeLibraries=true` to include `LIBRARY` and `JDK` classes (where the endpoint supports it).

@@ -75,4 +75,5 @@ timeout (default 30m).
 - [CLI Reference](../reference/cli.md)
 - [JDK Resolution](../concepts/jdk-resolution.md) — how the server and project
   JDKs are chosen
-- [Ratpack Migration](../ratpack/overview.md) — the secondary migration helpers
+- [Framework Analysis](../concepts/framework-analysis.md) — composing the
+  primitives for framework-specific questions

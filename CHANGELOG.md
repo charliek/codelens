@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+- **Generalized from a Ratpack-specific tool to a general JVM facts engine.**
+  The Ratpack-specific server endpoints, detectors, models, and CLI command
+  groups (`handlers`, `promises`, `migration`, `modules`, `integrations`,
+  `antipatterns`, `routes`) have been removed and replaced by framework-agnostic
+  primitives:
+  - **`calls <fqn> [--method]`** — forward call-site extraction: the invocations
+    a method makes, with constant arguments and line numbers, from bytecode.
+  - **`xref <typeFqn>`** — inverse type cross-reference: everything that
+    references a type (extends/implements/field/param/return/annotation/
+    instantiation/call-receiver), with server-side narrowing and aggregates.
+  - **`deps`** — the project-wide dependency graph (JSON/DOT) and `deps
+    foundation` (most depended-on classes), promoted out of the old
+    `/api/v1/ratpack/dependencies*` namespace.
+- **Breaking wire-contract change:** all `/api/v1/ratpack/*` endpoints are gone;
+  the dependency-graph endpoints moved to `/api/v1/graph` and
+  `/api/v1/graph/foundation`. `ProjectInfo.handlerCount` was removed.
+- Framework-specific analysis (e.g. a Ratpack migration assessment) now lives in
+  Claude Code skills as recipes over the general primitives, not in the binary.
+- Test fixtures expanded to three frameworks — `sample-ratpack-app`,
+  `sample-spring-boot-app`, and `sample-micronaut-app` — each scanned by the
+  golden e2e suite to prove the primitives generalize.
+
 ## v0.0.2
 
 - The target project's JDK must now be **declared**; codelens resolves it and
