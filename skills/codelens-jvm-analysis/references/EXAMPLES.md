@@ -1,129 +1,148 @@
 # JVM Analysis Examples
 
-## Scenario: Understanding Service Layer
+All commands accept `--json` (auto-enabled when stdout is not a TTY); examples below pipe
+it through `jq`. `classes dependencies` returns both directions in one response — pick a
+side with `jq '.incoming'` / `jq '.outgoing'` (there is no `--direction` flag).
+
+## Scenario: Understanding the service layer
 
 **Goal:** Map all services and their dependencies
 
 ```bash
-# Find all service classes (by naming convention)
+# Find service classes — by naming convention or by annotation
 codelens classes list --name "*Service"
+codelens classes list --annotation org.springframework.stereotype.Service
 
-# Or by annotation
-codelens classes list --annotation javax.inject.Singleton
-
-# For each service, check dependencies
+# For each, inspect dependencies (both directions in one call)
 codelens classes dependencies com.example.UserService
-codelens classes dependencies com.example.OrderService
+codelens classes dependencies com.example.OrderService | jq '.outgoing'
 ```
 
-## Scenario: Finding Interface Implementations
+## Scenario: Finding interface implementations
 
 **Goal:** Find all implementations of a repository interface
 
 ```bash
-# Find implementations
 codelens classes implementations com.example.repository.UserRepository
-
-# Check hierarchy of a specific implementation
-codelens classes hierarchy com.example.repository.DynamoUserRepository
+codelens classes hierarchy com.example.repository.JdbcUserRepository
 ```
 
 **Output:**
 ```
-com.example.repository.DynamoUserRepository
+com.example.repository.JdbcUserRepository
   └── implements: com.example.repository.UserRepository
   └── extends: com.example.repository.AbstractRepository
       └── extends: java.lang.Object
 ```
 
-## Scenario: Annotation-Driven Discovery
+## Scenario: Annotation-driven discovery
 
 **Goal:** Find all REST endpoints
 
 ```bash
-# Find all classes with JAX-RS @Path
+# Classes with JAX-RS @Path (or your framework's controller annotation)
 codelens annotations usages javax.ws.rs.Path
 
-# Find all methods with @GET
+# Methods carrying @GET
 codelens methods search --annotation javax.ws.rs.GET
 ```
 
-## Scenario: Dependency Impact Analysis
+## Scenario: What does this method actually do? (`calls`)
 
-**Goal:** Understand impact of changing a core class
+**Goal:** See a method's real behavior from bytecode, not its name
 
 ```bash
-# What depends on the class?
-codelens classes dependencies com.example.core.BaseEntity --direction incoming
+# Every invocation the method makes, with constant args + line numbers
+codelens calls com.example.UserService --method createUser
 
-# What does the class depend on?
-codelens classes dependencies com.example.core.BaseEntity --direction outgoing
+# Just the database calls
+codelens calls com.example.UserService --method createUser --json \
+  | jq '.methods[].calls[] | select(.ownerType | startswith("java.sql"))'
+
+# Constant string/number/class args a @Bean/factory method passes to a builder
+codelens calls com.example.config.DbConfig --method dataSource --json \
+  | jq '.methods[].calls[] | {ownerType, methodName, constantArgs}'
 ```
 
-## Scenario: Finding Dead Code
+## Scenario: Who references this type? (`xref`)
 
-**Goal:** Find classes with no incoming dependencies
+**Goal:** Impact analysis — find every caller/holder/subtype of a type
 
 ```bash
-# Check a suspect class
-codelens classes dependencies com.example.LegacyHelper --direction incoming
+# All references, grouped; check the aggregates first
+codelens xref com.example.core.BaseEntity --json | jq '{countsByKind, countsByPackage, totalCount}'
 
-# If empty, likely unused (verify with grep for reflection usage)
+# Only the classes that hold it as a field
+codelens xref com.example.UserService --kind FIELD
+
+# Find the blocking surface vs the reactive surface of a codebase
+codelens xref javax.sql.DataSource          # JDBC / blocking
+codelens xref reactor.core.publisher.Mono   # Reactor / reactive
+
+# Classes that implement an interface AND reference a type
+codelens xref com.example.AuditLog --scope-implementing com.example.api.RequestHandler
 ```
 
-## Scenario: Module Mapping
+## Scenario: Dependency impact & dead code
 
-**Goal:** Understand Guice module structure
+**Goal:** Gauge blast radius / spot unused classes
 
 ```bash
-# Find all modules
-codelens classes list --extends com.google.inject.AbstractModule
+# How many project classes depend on this one?
+codelens classes dependencies com.example.core.BaseEntity --json | jq '.incoming | length'
 
-# Check what each module depends on
-codelens classes dependencies com.example.MainModule
+# A class with no incoming dependencies is likely unused
+# (verify reflection/string-based wiring separately)
+codelens classes dependencies com.example.LegacyHelper --json | jq '.incoming'
 ```
 
-## Complex Queries
+## Scenario: Project structure & foundation classes (`deps`)
 
-### Find All Handler Methods
+**Goal:** Find the core/shared classes and a sensible order to tackle work
 
 ```bash
-# Methods named "handle" in Handler implementations
-codelens methods search --name handle --annotation Override
+# Most depended-on classes (high in-degree)
+codelens deps foundation
+
+# Only classes with many dependents
+codelens deps foundation --min-dependents 5
+
+# Whole-project graph for visualization
+codelens deps --format dot -o deps.dot && dot -Tpng deps.dot -o deps.png
 ```
 
-### Find Async Methods
+## Complex queries
+
+### Async methods
 
 ```bash
-# Methods returning Promise
-codelens methods search --return-type ratpack.exec.Promise
-
 # Methods returning CompletableFuture
 codelens methods search --return-type java.util.concurrent.CompletableFuture
+
+# Methods returning a project type
+codelens methods search --return-type com.example.Result
 ```
 
-### Find Factory Methods
+### Factory methods
 
 ```bash
-# Static methods returning specific type
-codelens methods search --name "create*" --return-type com.example.Config
+# Methods whose name starts with create, in a package
+codelens methods search --name "create*" --package "com.example.*"
 ```
 
-## Output Formats
-
-### Default (Table)
-
-```
-CLASS                                    PACKAGE                  TYPE
-com.example.UserService                  com.example              class
-com.example.UserServiceImpl              com.example              class
-com.example.UserRepository               com.example              interface
-```
-
-### JSON (for scripting)
+### Instantiations of a type
 
 ```bash
-codelens classes list --package com.example --format json
+# Who constructs this class? (INSTANTIATION references)
+codelens xref com.example.HttpClient --kind INSTANTIATION
+```
+
+## JSON output
+
+Add `--json` to any command (or just redirect/pipe — it auto-enables off a TTY):
+
+```bash
+codelens classes list --package com.example --json
 ```
 
 ```json
@@ -131,11 +150,13 @@ codelens classes list --package com.example --format json
   "classes": [
     {
       "fqn": "com.example.UserService",
-      "package": "com.example",
       "simpleName": "UserService",
-      "type": "class",
-      "modifiers": ["public", "abstract"]
+      "packageName": "com.example",
+      "source": "PROJECT",
+      "isInterface": false
     }
-  ]
+  ],
+  "totalCount": 1,
+  "page": 0
 }
 ```

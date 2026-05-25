@@ -41,7 +41,7 @@ codelens source show <fully-qualified-class-name>
 codelens source show com.example.MyHandler
 
 # Library class (auto-downloads source JAR if available)
-codelens source show ratpack.handling.Context
+codelens source show com.google.common.collect.ImmutableList
 
 # JDK class
 codelens source show java.util.concurrent.CompletableFuture

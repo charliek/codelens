@@ -1,8 +1,16 @@
 # Ratpack Concepts Reference
 
+This is the Ratpack knowledge the skill's recipes rely on — the handler shapes, the
+Promise/exec API, Chain routing, and Guice patterns. CodeLens has no notion of these
+concepts; it returns bytecode facts and you classify them by reading the source against
+this catalog.
+
 ## Handler Types
 
-CodeLens identifies four handler types:
+Ratpack handlers take these four shapes. Find the class-backed ones with
+`codelens classes implementations ratpack.handling.Handler` (and the chain/Groovy
+interfaces below), then read the body with `codelens source show <fqn>` to classify which
+shape each is:
 
 ### HANDLER
 
@@ -19,7 +27,10 @@ public class MyHandler implements Handler {
 
 ### CHAIN_ACTION
 
-Handler that configures a chain of sub-handlers:
+Handler that configures a chain of sub-handlers (implements `ratpack.func.Action<Chain>`).
+Find these with `codelens classes implementations ratpack.func.Action`, then read the route
+registrations from bytecode with `codelens calls <fqn> --method execute` (see the Routes
+recipe in `SKILL.md`):
 
 ```java
 public class ApiChain implements Action<Chain> {
@@ -33,7 +44,9 @@ public class ApiChain implements Action<Chain> {
 
 ### INLINE_HANDLER
 
-Lambda or anonymous class handler defined inline:
+Lambda or anonymous class handler defined inline. These compile to `invokedynamic` and have
+no class of their own, so `implementations` won't list them — find them inside the chain
+that registers them (`codelens calls <chain-fqn> --method execute`):
 
 ```java
 chain.path("hello", ctx -> ctx.render("Hello"));
@@ -41,9 +54,17 @@ chain.path("hello", ctx -> ctx.render("Hello"));
 
 ### GROOVY_HANDLER
 
-Handlers written in Groovy with Ratpack's Groovy DSL.
+Handlers written in Groovy with Ratpack's Groovy DSL; find class-backed ones with
+`codelens classes implementations ratpack.groovy.handling.GroovyHandler`.
 
 ## Promise Patterns
+
+This is the Promise/exec vocabulary you map bytecode facts onto. Surface usage with
+`codelens xref ratpack.exec.Blocking` / `xref ratpack.exec.Promise` /
+`xref ratpack.exec.Execution` and `codelens methods search --return-type ratpack.exec.Promise`;
+see exactly which operators a method calls with `codelens calls <fqn> --method <m>` filtered
+to `ratpack.exec`. The tables below are how you read those calls, not categories CodeLens
+emits.
 
 ### Blocking Operations
 
@@ -100,6 +121,11 @@ ParallelBatch.of(promise1, promise2, promise3)
 ```
 
 ## Guice Integration
+
+Find modules with `codelens classes implementations com.google.inject.AbstractModule` (and
+`com.google.inject.Module`), read their bindings with `codelens calls <module-fqn> --method configure`,
+and list `@Provides` methods with `codelens methods search --annotation com.google.inject.Provides`.
+The module/injection shapes below tell you what those `bind`/`to`/`toInstance` calls mean.
 
 ### Module Types
 
@@ -182,6 +208,10 @@ Ratpack uses an event-driven, non-blocking model:
 **Key principle:** Never block compute threads. Use `Blocking.get()` for any blocking operation.
 
 ## Common Integrations
+
+There is no integration detector — `codelens xref <library-type>` lists every project class
+that touches a given client/driver, and you classify it against the patterns below (e.g.
+`xref ratpack.http.client.HttpClient`, `xref javax.sql.DataSource`).
 
 ### HTTP Clients
 

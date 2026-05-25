@@ -1,423 +1,216 @@
 ---
 name: codelens-ratpack-analysis
 description: |
-  Analyze Ratpack applications for migration planning. Use this skill when working with
-  Ratpack-based JVM projects to understand handlers, Promise usage patterns, Guice modules,
-  external integrations, anti-patterns, and migration complexity. Provides tools to assess
-  migration effort, identify dependencies, and plan migration order.
+  Assess a Ratpack application for migration (to Spring, Micronaut, Helidon, etc.) using
+  CodeLens's general JVM primitives. Use this skill whenever the user is analyzing,
+  scoping, or planning a migration OFF Ratpack — "how big is this Ratpack migration",
+  "find the handlers / routes / Promise usage", "what blocks the compute thread", "what
+  order should we migrate in" — or otherwise wants to understand a Ratpack codebase's
+  shape. This is a worked example of doing framework-specific analysis with general
+  tools: CodeLens has NO Ratpack-specific commands; every answer here is a recipe over
+  `classes`, `calls`, `xref`, `deps`, `methods`, `annotations`, and `source`, with the
+  Ratpack knowledge supplied by this skill's reference docs.
 ---
 
 # Ratpack Migration Analysis
 
-This skill enables comprehensive analysis of Ratpack applications to support migration planning.
+CodeLens deliberately ships no Ratpack-specific features. Instead it exposes a small set
+of **framework-agnostic primitives** that return exhaustive bytecode facts. This skill is
+the worked example of turning those facts into a Ratpack migration assessment: you supply
+the **Ratpack knowledge** (which FQNs are handlers, what the Promise API looks like — see
+the reference docs), CodeLens supplies the **data**, and you supply the **judgment**
+(complexity, ordering, severity). Nothing here is a tool verdict; you read raw facts and
+explain your reasoning.
 
-## When to Use
+## When to use
 
-- Analyze a Ratpack codebase for migration readiness
-- Understand handler complexity and dependencies
-- Identify Promise usage patterns that need attention
-- Find anti-patterns that should be fixed before/during migration
-- Map Guice module structure and bindings
-- Identify external integrations (databases, HTTP clients, queues)
-- Plan migration order based on dependencies
-- Estimate migration effort
+- Scope or plan a migration off Ratpack (to Spring MVC/WebFlux, Micronaut, etc.).
+- Inventory handlers, routes, Promise/async usage, Guice DI, external integrations.
+- Find constructs that complicate a migration (blocking on the compute thread, etc.).
+- Propose a migration order grounded in the dependency graph.
 
 ## Prerequisites
-
-Ensure the CodeLens server is running for your Ratpack project:
 
 ```bash
 codelens start --project /path/to/ratpack-project
 ```
 
-**Note:** The first start for a project may take several minutes (3-7 min for
-large projects) while the server resolves the Gradle classpath and downloads
-dependencies. Subsequent starts are much faster due to Gradle's dependency
-cache. Use `codelens status --project /path/to/project` to monitor progress —
-the status transitions from `READY` (HTTP server up) through `LOADING`
-(scanning bytecode) and back to `READY` (scan complete, API fully available).
+The first start may take a few minutes while CodeLens resolves the Gradle classpath and
+scans bytecode; `codelens status` reports `LOADING` → `READY`. All commands below accept
+`--json` (auto-enabled when stdout is not a TTY) for piping through `jq`.
 
-## Quick Start: Migration Assessment
+Read these reference docs for the Ratpack knowledge the recipes rely on — they hold the
+FQNs, handler shapes, anti-pattern catalog, and the complexity factors you weigh by hand:
 
-Run these commands for an initial assessment:
+- `references/RATPACK-CONCEPTS.md` — handler types, the Promise/exec API, Chain routing, Guice.
+- `references/ANTIPATTERNS.md` — what complicates a migration, how to spot it, how to fix it.
+- `references/COMPLEXITY-FACTORS.md` — factors to weigh when judging effort and ordering.
+
+## Handlers
+
+Ratpack request handlers implement known interfaces. Find them with `implementations`:
 
 ```bash
-# 1. Overall project stats
-codelens classes stats
-
-# 2. Handler overview with complexity
-codelens handlers list
-
-# 3. Complexity summary
-codelens migration complexity
-
-# 4. Anti-pattern scan
-codelens antipatterns scan
-
-# 5. Suggested migration order
-codelens migration order
+codelens classes implementations ratpack.handling.Handler
+codelens classes implementations ratpack.func.Action          # Action<Chain> route configurers
+codelens classes implementations ratpack.groovy.handling.GroovyHandler
 ```
 
-## Handler Analysis
-
-### List Handlers
+Inline/lambda handlers compile to `invokedynamic` and have no class of their own — find
+them inside the chain that registers them (see **Routes**). To classify a handler (see
+`RATPACK-CONCEPTS.md` for the taxonomy) and judge its complexity, read its body:
 
 ```bash
-codelens handlers list [options]
+codelens source show com.example.UserHandler                  # full source if available
+codelens calls com.example.UserHandler --method handle        # what it invokes, from bytecode
 ```
 
-**Options:**
-- `--type <type>` - Filter by handler type (HANDLER, CHAIN_ACTION, INLINE_HANDLER, GROOVY_HANDLER)
-- `--tier <tier>` - Filter by complexity tier (LOW, MEDIUM, HIGH, CRITICAL)
-- `--missing-inject`, `-I` - Show only handlers **without** an `@Inject` annotation (candidates for DI refactoring)
+`calls` is the key signal: it returns every invocation `handle` makes with constant
+arguments and line numbers, so you see real `Blocking.get` / `Promise` / repository calls
+rather than guessing from names.
 
-**Examples:**
+## Routes
+
+An `Action<Chain>` builds the route table in its `execute(Chain)` method. `calls` extracts
+those route registrations directly from bytecode:
+
 ```bash
-# All handlers
-codelens handlers list
-
-# High complexity handlers only
-codelens handlers list --tier HIGH
-
-# Handlers that still need @Inject wired up
-codelens handlers list --missing-inject
+codelens calls com.example.ApiChain --method execute --json
 ```
 
-### Handler Details
+In the result, each route is a call whose `ownerType` is `ratpack.handling.Chain` and
+whose `methodName` is a routing method (`get`, `post`, `put`, `patch`, `delete`, `options`,
+`head`, `all`, `prefix`, `path`). The **path** is the `STRING` entry in that call's
+`constantArgs`; a class-literal (`CLASS`) constant arg, when present, is the handler. For
+example:
 
 ```bash
-codelens handlers show <fully-qualified-name>
+# Path + method for every route the chain registers:
+codelens calls com.example.ApiChain --method execute --json \
+  | jq -r '.methods[].calls[]
+           | select(.ownerType=="ratpack.handling.Chain")
+           | "\(.methodName | ascii_upcase) " +
+             ((.constantArgs[]? | select(.kind=="STRING") | .value) // "(no literal path)")'
 ```
 
-Shows:
-- Handler type and methods
-- Injected dependencies
-- Complexity score and factors
-- Promise usage within the handler
+`prefix(path, SomeChain.class)` nests a sub-chain: follow the class-literal constant arg
+by running `calls` on that nested `Action<Chain>` and prepend the prefix path. To preview
+the target shape, map each `METHOD path` to the destination framework's annotation by hand
+(e.g. `GET /users/:id` → Spring `@GetMapping("/users/{id}")`).
 
-## Promise Analysis
+> Known limit: lambda/method-reference handlers passed to a route compile to
+> `invokedynamic`, so the handler class is not recoverable — the route (method + path) is
+> still captured. Computed (non-literal) paths show no string constant.
 
-### Project-Wide Summary
+## Promise / async usage
+
+Promise-heavy code is usually the hardest to migrate. Three complementary lenses:
 
 ```bash
-codelens promises summary
+# Methods whose signature returns a Promise:
+codelens methods search --return-type ratpack.exec.Promise
+
+# Every project class that touches the blocking/exec API (who, and where):
+codelens xref ratpack.exec.Blocking
+codelens xref ratpack.exec.Execution
+codelens xref ratpack.exec.Promise
+
+# Exactly what a class's method does with promises (operators, Blocking.get, fork):
+codelens calls com.example.UserHandler --method handle --json \
+  | jq '.methods[].calls[] | select(.ownerType | test("ratpack.exec"))'
 ```
 
-Shows counts of Promise operations across the project:
-- Blocking.get/on usage
-- Promise.async/sync patterns
-- Fork and ParallelBatch usage
-- Operator usage (map, flatMap, then, etc.)
+`xref` of `ratpack.exec.Blocking` returns each reference as a `CALL_RECEIVER` with the
+method (`get`/`on`) and line number — the real blocking call sites. Judge intensity by
+counting these and reading the chains in `source`. See `RATPACK-CONCEPTS.md` for the
+operator/blocking taxonomy.
 
-### Class-Level Promise Usage
+## Guice modules and bindings
 
 ```bash
-codelens promises show <fully-qualified-name>
+# Modules:
+codelens classes implementations com.google.inject.AbstractModule
+codelens classes implementations com.google.inject.Module
+
+# Provider methods and their constant-arg construction:
+codelens methods search --annotation com.google.inject.Provides
+codelens calls com.example.AppModule --method configure         # bind(...).to(...) calls
+
+# Where a given type is bound / who depends on it:
+codelens xref com.example.UserRepository
 ```
 
-### Search by Promise Pattern
+`calls … --method configure` surfaces the `bind`/`to`/`toInstance` invocations (with any
+class-literal/string constants); `xref <type>` shows everywhere a bound type is used.
+
+## External integrations
+
+There is no integration detector — `xref` a library type and classify it yourself using
+the catalog in `ANTIPATTERNS.md` / `RATPACK-CONCEPTS.md`. Examples:
 
 ```bash
-codelens promises search [options]
+codelens xref ratpack.http.client.HttpClient        # Ratpack HTTP client
+codelens xref software.amazon.awssdk.services.dynamodb.DynamoDbClient
+codelens xref org.apache.kafka.clients.producer.KafkaProducer
+codelens xref javax.sql.DataSource                  # JDBC
 ```
 
-**Options:**
-- `--blocking` - Classes using Blocking.get/on
-- `--async` - Classes using Promise.async
-- `--fork` - Classes using fork operations
-- `--min-ops <n>` - Minimum Promise operations
+Each result lists the project classes (and members/line numbers) that reference the type —
+your integration inventory, grouped by `countsByKind` and `countsByPackage`.
 
-**Example:**
+## Anti-patterns (migration risks)
+
+`ANTIPATTERNS.md` is the catalog (what each is, how to confirm, how to fix). Surface
+candidates with `xref` / `calls`, then read context with `source` and judge:
+
 ```bash
-# Find handlers heavily using blocking operations
-codelens promises search --blocking --min-ops 5
+# Blocking I/O that may sit on the compute thread:
+codelens xref java.sql.Connection
+codelens xref java.net.HttpURLConnection
+codelens xref java.io.FileInputStream
+
+# Thread.sleep and console logging in a class body:
+codelens calls com.example.SlowHandler --json \
+  | jq '.methods[].calls[]
+        | select((.ownerType=="java.lang.Thread" and .methodName=="sleep")
+              or (.ownerType=="java.io.PrintStream" and (.methodName=="println" or .methodName=="print")))'
 ```
 
-## Complexity Analysis
+Whether a `java.sql.*` call is an anti-pattern depends on whether it runs inside
+`Blocking.get` — confirm by reading the method body (`source`) or its `calls` ordering.
+The tool finds candidates; you make the call.
 
-### Project Summary
+## Complexity and migration order
 
-```bash
-codelens migration complexity
-```
-
-Shows:
-- Tier breakdown (how many handlers at each complexity level)
-- Total estimated migration effort
-- Highest complexity handlers
-
-### Class-Level Complexity
+Derive the inputs from the recipes above plus the dependency graph; then rank and explain
+using `COMPLEXITY-FACTORS.md` as guidance (these are factors to weigh, not a formula):
 
 ```bash
-codelens migration complexity <fully-qualified-name>
-```
-
-Shows:
-- Complexity score (0-100)
-- Complexity tier (LOW/MEDIUM/HIGH/CRITICAL)
-- Estimated migration hours
-- Contributing factors breakdown
-- Migration notes and warnings
-
-### Migration Order
-
-```bash
-codelens migration order
-```
-
-Suggests migration sequence based on:
-- Dependency relationships (migrate dependencies first)
-- Complexity tiers (start with simpler handlers)
-- Foundation classes identification
-
-## Route Analysis
-
-### List Routes
-
-```bash
-codelens routes list
-```
-
-Shows all HTTP routes with methods and handlers.
-
-### Route Tree
-
-```bash
-codelens routes tree
-```
-
-Hierarchical view of route structure.
-
-### Spring Equivalents
-
-```bash
-codelens routes spring
-```
-
-Shows equivalent Spring `@RequestMapping` annotations for each route (useful for migration planning).
-
-## Guice Module Analysis
-
-### List Modules
-
-```bash
-codelens modules list [options]
-```
-
-**Options:**
-- `--include-libraries` - Include library modules
-
-### Module Details
-
-```bash
-codelens modules show <fully-qualified-name>
-```
-
-Shows:
-- Module type (ABSTRACT_MODULE, CONFIGURABLE_MODULE, PROVIDER_CLASS)
-- Bindings defined
-- @Provides methods
-- Installed sub-modules
-
-### Find Bindings
-
-```bash
-codelens modules bindings <type-fqn>
-```
-
-Find where a specific type is bound.
-
-**Example:**
-```bash
-codelens modules bindings com.example.UserRepository
-```
-
-## Integration Detection
-
-### List All Integrations
-
-```bash
-codelens integrations list
-```
-
-Shows external integrations detected:
-- HTTP clients (Ratpack, OkHttp, Apache, etc.)
-- Databases (JDBC, DynamoDB, MongoDB, etc.)
-- Message queues (SQS, Kafka, RabbitMQ, etc.)
-- Caches (Caffeine, Redis, etc.)
-- gRPC services
-
-### Filter by Type
-
-```bash
-codelens integrations list --type HTTP_CLIENT
-codelens integrations list --type DATABASE
-codelens integrations list --type MESSAGE_QUEUE
-```
-
-### Class-Level Integrations
-
-```bash
-codelens integrations show <fully-qualified-name>
-```
-
-### Find Classes Using Integration
-
-```bash
-codelens integrations find <type>
-```
-
-**Example:**
-```bash
-codelens integrations find DYNAMODB
-```
-
-## Anti-Pattern Detection
-
-### Scan Project
-
-```bash
-codelens antipatterns scan [options]
-```
-
-**Options:**
-- `--severity <level>` - Filter by severity (INFO, WARNING, ERROR, CRITICAL)
-- `--type <type>` - Filter by anti-pattern type
-
-**Anti-pattern types detected:**
-- `BLOCKING_JDBC` - JDBC calls outside Blocking.get
-- `THREAD_SLEEP` - Thread.sleep in handlers
-- `SYNCHRONOUS_FILE_IO` - Blocking file operations
-- `BLOCKING_HTTP_CLIENT` - Synchronous HTTP calls
-- `CONSOLE_LOGGING` - System.out/err usage
-- `SWALLOWED_EXCEPTION` - Empty catch blocks
-
-### Class-Level Anti-Patterns
-
-```bash
-codelens antipatterns show <fully-qualified-name>
-```
-
-## Dependency Analysis
-
-### Summary
-
-```bash
-codelens deps
-```
-
-Shows:
-- Foundation classes (most depended-on, migrate first)
-- Quick wins (low complexity, few dependencies)
-- Dependency tiers
-- Circular dependencies (if any)
-
-### Foundation Classes
-
-```bash
+# Foundation classes — most depended-on; usually migrate first:
 codelens deps foundation
+
+# Full project dependency graph (json or dot for visualization):
+codelens deps --format dot -o deps.dot
+
+# Per-class blast radius:
+codelens classes dependencies com.example.UserService --json | jq '.incoming | length'
 ```
 
-Classes that many others depend on - migrate these first.
+A reasonable ordering: migrate high-in-degree foundation classes first, then handlers in
+increasing complexity (size from `source`, async intensity from the Promise lenses,
+integration count from `xref`, anti-pattern count). Show the factors behind each ranking
+rather than a single opaque score.
 
-### Quick Wins
+## Suggested workflow
 
-```bash
-codelens deps quickwins
-```
+1. **Inventory** — `classes stats`; handlers via `implementations`; routes via `calls`.
+2. **Async & risk** — Promise lenses (`methods search` / `xref` / `calls`); anti-pattern
+   `xref`/`calls` + `source`.
+3. **Structure** — `deps foundation` and `deps` for the graph; Guice modules.
+4. **Plan** — rank by the factors in `COMPLEXITY-FACTORS.md`, foundation-first, and
+   justify the order from the collected facts.
 
-Handlers with low complexity and few dependencies - good starting points.
+## Related skills
 
-### Dependency Graph
-
-```bash
-codelens deps graph [options]
-```
-
-**Options:**
-- `--format dot` - Graphviz DOT format
-- `--format json` - JSON format
-
-**Example:**
-```bash
-# Generate visualization
-codelens deps graph --format dot > deps.dot
-dot -Tpng deps.dot -o deps.png
-```
-
-## Migration Workflow
-
-### Phase 1: Assessment
-
-```bash
-# Get overview
-codelens classes stats
-codelens handlers list
-codelens migration complexity
-
-# Identify problem areas
-codelens antipatterns scan --severity ERROR
-codelens promises search --blocking
-```
-
-### Phase 2: Dependency Mapping
-
-```bash
-# Understand structure
-codelens deps
-codelens deps foundation
-codelens modules list
-```
-
-### Phase 3: Plan Migration Order
-
-```bash
-# Get suggested order
-codelens migration order
-
-# Check specific handler readiness
-codelens handlers show com.example.CriticalHandler
-codelens migration complexity com.example.CriticalHandler
-```
-
-### Phase 4: Pre-Migration Fixes
-
-Address anti-patterns and simplify complex handlers before migration:
-
-```bash
-# Focus on critical issues
-codelens antipatterns scan --severity CRITICAL
-
-# Review highest complexity handlers
-codelens handlers list --tier CRITICAL
-```
-
-## Complexity Tiers
-
-| Tier | Score | Estimated Hours | Characteristics |
-|------|-------|-----------------|-----------------|
-| LOW | 0-25 | 1-4 | Simple handlers, few dependencies |
-| MEDIUM | 26-50 | 4-12 | Moderate Promise usage, some integrations |
-| HIGH | 51-75 | 12-24 | Complex Promise chains, multiple integrations |
-| CRITICAL | 76-100 | 24+ | Heavy blocking, deep Promise nesting, many anti-patterns |
-
-## Tips
-
-- Start with `codelens deps quickwins` to identify easy migrations
-- Address anti-patterns before migration - they indicate potential issues
-- Use `codelens routes spring` to preview target API structure
-- Foundation classes often contain shared logic worth refactoring
-- High Promise chain depth suggests candidates for async/await patterns
-- Use `--json` to get structured output for piping through `jq` or other tools
-  (the CLI auto-enables JSON output when stdout is not a TTY)
-
-## External References
-
-- [Ratpack Manual](https://ratpack.io/manual/current/)
-- [Ratpack Promise API](https://ratpack.io/manual/current/api/ratpack/exec/Promise.html)
-- [Guice Documentation](https://github.com/google/guice/wiki)
-
-## Related Skills
-
-- `codelens-source-lookup` - View handler implementations
-- `codelens-jvm-analysis` - General class/method analysis
+- `codelens-jvm-analysis` — the general primitives this skill builds on (`calls`, `xref`, `deps`, …).
+- `codelens-source-lookup` — read handler/service bodies and library/JDK source.
