@@ -1,10 +1,18 @@
 ---
 name: codelens-source-lookup
 description: |
-  Retrieve and display JVM source code (Java/Kotlin) from projects, libraries, or JDK.
-  Use this skill when you need to view class implementations, method signatures, javadoc,
-  or generate stubs for any JVM class - whether from the current project, third-party
-  libraries, or the JDK itself. Supports decompilation when source is unavailable.
+  Use this skill to fetch and display the real source code of a named JVM type — a Java or
+  Kotlin class, interface, or method referenced by name or fully-qualified name. Crucially,
+  it works even when no source file exists in the project: it is the way to read the actual
+  implementation of compiled third-party dependencies, library internals, and JDK classes
+  by auto-downloading source JARs or decompiling bytecode. Reach for it whenever the goal is
+  to SEE actual code: read a method's implementation body, view an entire class, inspect
+  library or JDK internals, extract signatures or javadoc, or generate an interface
+  stub/skeleton. Fits asks like "show me the source of X," "what does the body of X.foo do,"
+  "how does library Y implement Z," "I don't have the sources jar — pull up class W," or
+  "stub out interface V." Do NOT use it to grep/search the repo, find callers or
+  implementers of an interface, locate documentation pages, format or restyle code, or
+  explain language concepts in the abstract.
 ---
 
 # Source Lookup

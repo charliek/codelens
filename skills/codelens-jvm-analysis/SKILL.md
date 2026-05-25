@@ -1,14 +1,18 @@
 ---
 name: codelens-jvm-analysis
 description: |
-  Explore and analyze JVM codebases (Java/Kotlin) from compiled bytecode — discover
-  classes, search methods, trace inheritance hierarchies, map dependencies, extract the
-  calls a method makes (`calls`), find everything that references a type (`xref`), and
-  view the project dependency graph plus its most-depended-on "foundation" classes
-  (`deps`). Use this skill whenever you need to understand JVM codebase structure: find
-  implementations of an interface, locate classes by annotation, see what a method
-  invokes, find every caller/reference of a type, or analyze dependency relationships —
-  across your code, library dependencies, and the JDK.
+  Use this skill to answer structural questions about Java/Kotlin (JVM) code — the "where
+  is this used, what connects to what" questions that come up when refactoring, deleting
+  code, or learning a codebase. Trigger it whenever someone asks: where is class X
+  instantiated or referenced (the blast radius before deleting/refactoring it)? which
+  classes implement this interface or extend this base class? what's a type's inheritance
+  hierarchy? which classes carry an annotation like @RestController or @Component? what
+  does this method call and how are things wired together? which types are most
+  depended-on (the core/foundation classes)? Prefer this skill over grep or opening files
+  one-by-one for such questions — it analyzes compiled JVM bytecode and catches
+  relationships that plain-text search misses. Not for editing or reading source,
+  debugging runtime errors/stack traces, git history/blame, formatting/linting, or
+  explaining JVM concepts.
 ---
 
 # JVM Analysis
