@@ -2,6 +2,20 @@
   "count": 8,
   "foundationClasses": [
     {
+      "dependentCount": 6,
+      "dependents": [
+        "com.example.shop.repository.ProductRepository",
+        "com.example.shop.service.ProductService",
+        "com.example.shop.service.ProductServiceImpl",
+        "com.example.shop.service.ReactiveCatalogService",
+        "com.example.shop.web.ProductController",
+        "com.example.shop.web.ReactiveController"
+      ],
+      "fqn": "com.example.shop.model.Product",
+      "packageName": "com.example.shop.model",
+      "simpleName": "Product"
+    },
+    {
       "dependentCount": 5,
       "dependents": [
         "com.example.shop.report.ReportGenerator",
@@ -13,6 +27,18 @@
       "fqn": "com.example.shop.service.ProductService",
       "packageName": "com.example.shop.service",
       "simpleName": "ProductService"
+    },
+    {
+      "dependentCount": 4,
+      "dependents": [
+        "com.example.shop.model.Order",
+        "com.example.shop.repository.CustomerRepository",
+        "com.example.shop.service.CustomerService",
+        "com.example.shop.web.CustomerController"
+      ],
+      "fqn": "com.example.shop.model.Customer",
+      "packageName": "com.example.shop.model",
+      "simpleName": "Customer"
     },
     {
       "dependentCount": 4,
@@ -41,28 +67,7 @@
     {
       "dependentCount": 3,
       "dependents": [
-        "com.example.shop.model.Order",
-        "com.example.shop.service.CustomerService",
-        "com.example.shop.web.CustomerController"
-      ],
-      "fqn": "com.example.shop.model.Customer",
-      "packageName": "com.example.shop.model",
-      "simpleName": "Customer"
-    },
-    {
-      "dependentCount": 3,
-      "dependents": [
-        "com.example.shop.service.ProductService",
-        "com.example.shop.service.ProductServiceImpl",
-        "com.example.shop.web.ProductController"
-      ],
-      "fqn": "com.example.shop.model.Product",
-      "packageName": "com.example.shop.model",
-      "simpleName": "Product"
-    },
-    {
-      "dependentCount": 2,
-      "dependents": [
+        "com.example.shop.repository.OrderRepository",
         "com.example.shop.service.OrderService",
         "com.example.shop.web.OrderController"
       ],

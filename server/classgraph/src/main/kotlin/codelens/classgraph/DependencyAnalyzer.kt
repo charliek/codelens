@@ -46,87 +46,67 @@ class DependencyAnalyzer(
         includeLibraries: Boolean,
         outgoing: MutableList<DependencyInfo>,
     ) {
-        // 1. Superclass
+        // 1. Superclass (base + any generic type arguments, e.g. Foo in `extends Base<Foo>`)
         targetClass.superclass?.let { superclass ->
             if (superclass != "java.lang.Object") {
-                val superclassInfo = classes[superclass]
-                if (includeLibraries || superclassInfo?.source == ClassSource.PROJECT) {
-                    outgoing.add(
-                        DependencyInfo(
-                            classFqn = superclass,
-                            dependencyType = DependencyType.EXTENDS,
-                            source = superclassInfo?.source ?: ClassSource.LIBRARY,
-                        ),
-                    )
-                }
+                addOutgoing(outgoing, superclass, DependencyType.EXTENDS, fqn, includeLibraries)
             }
         }
+        targetClass.superclassTypeArgs.forEach { argFqn ->
+            addOutgoing(outgoing, argFqn, DependencyType.EXTENDS, fqn, includeLibraries)
+        }
 
-        // 2. Implemented interfaces
+        // 2. Implemented interfaces (base + generic type arguments)
         targetClass.interfaces.forEach { iface ->
-            val ifaceInfo = classes[iface]
-            if (includeLibraries || ifaceInfo?.source == ClassSource.PROJECT) {
-                outgoing.add(
-                    DependencyInfo(
-                        classFqn = iface,
-                        dependencyType = DependencyType.IMPLEMENTS,
-                        source = ifaceInfo?.source ?: ClassSource.LIBRARY,
-                    ),
-                )
-            }
+            addOutgoing(outgoing, iface, DependencyType.IMPLEMENTS, fqn, includeLibraries)
+        }
+        targetClass.interfaceTypeArgs.forEach { argFqn ->
+            addOutgoing(outgoing, argFqn, DependencyType.IMPLEMENTS, fqn, includeLibraries)
         }
 
-        // 3. Field types
+        // 3. Field types (container + type arguments)
         targetClass.fields.forEach { field ->
-            val fieldType = extractTypeFqn(field.type)
-            if (fieldType != null && fieldType != fqn) {
-                val fieldTypeInfo = classes[fieldType]
-                if (includeLibraries || fieldTypeInfo?.source == ClassSource.PROJECT) {
-                    outgoing.add(
-                        DependencyInfo(
-                            classFqn = fieldType,
-                            dependencyType = DependencyType.FIELD_TYPE,
-                            source = fieldTypeInfo?.source ?: ClassSource.LIBRARY,
-                            location = field.name,
-                        ),
-                    )
-                }
+            referencedTypes(field.type, field.typeRefs).forEach { fieldType ->
+                addOutgoing(outgoing, fieldType, DependencyType.FIELD_TYPE, fqn, includeLibraries, field.name)
             }
         }
 
-        // 4. Method return types and parameters
+        // 4. Method return types and parameters (container + type arguments)
         targetClass.methods.filter { !it.isSynthetic }.forEach { method ->
-            val returnType = extractTypeFqn(method.returnType)
-            if (returnType != null && returnType != fqn && returnType != "void") {
-                val returnTypeInfo = classes[returnType]
-                if (includeLibraries || returnTypeInfo?.source == ClassSource.PROJECT) {
-                    outgoing.add(
-                        DependencyInfo(
-                            classFqn = returnType,
-                            dependencyType = DependencyType.METHOD_RETURN_TYPE,
-                            source = returnTypeInfo?.source ?: ClassSource.LIBRARY,
-                            location = "${method.name}()",
-                        ),
-                    )
-                }
+            referencedTypes(method.returnType, method.returnTypeRefs).forEach { returnType ->
+                addOutgoing(outgoing, returnType, DependencyType.METHOD_RETURN_TYPE, fqn, includeLibraries, "${method.name}()")
             }
-
             method.parameters.forEach { param ->
-                val paramType = extractTypeFqn(param.type)
-                if (paramType != null && paramType != fqn) {
-                    val paramTypeInfo = classes[paramType]
-                    if (includeLibraries || paramTypeInfo?.source == ClassSource.PROJECT) {
-                        outgoing.add(
-                            DependencyInfo(
-                                classFqn = paramType,
-                                dependencyType = DependencyType.METHOD_PARAMETER,
-                                source = paramTypeInfo?.source ?: ClassSource.LIBRARY,
-                                location = "${method.name}()",
-                            ),
-                        )
-                    }
+                referencedTypes(param.type, param.typeRefs).forEach { paramType ->
+                    addOutgoing(outgoing, paramType, DependencyType.METHOD_PARAMETER, fqn, includeLibraries, "${method.name}()")
                 }
             }
+        }
+    }
+
+    /**
+     * Adds an outgoing dependency on [classFqn] unless it is the analyzed class
+     * itself or (when [includeLibraries] is false) a non-project class.
+     */
+    private fun addOutgoing(
+        outgoing: MutableList<DependencyInfo>,
+        classFqn: String,
+        dependencyType: DependencyType,
+        selfFqn: String,
+        includeLibraries: Boolean,
+        location: String? = null,
+    ) {
+        if (classFqn == selfFqn) return
+        val info = classes[classFqn]
+        if (includeLibraries || info?.source == ClassSource.PROJECT) {
+            outgoing.add(
+                DependencyInfo(
+                    classFqn = classFqn,
+                    dependencyType = dependencyType,
+                    source = info?.source ?: ClassSource.LIBRARY,
+                    location = location,
+                ),
+            )
         }
     }
 
@@ -139,8 +119,8 @@ class DependencyAnalyzer(
             if (classInfo.name.fqn == fqn) continue
             if (!includeLibraries && classInfo.source != ClassSource.PROJECT) continue
 
-            // Check superclass
-            if (classInfo.superclass == fqn) {
+            // Check superclass (base + generic type arguments)
+            if (classInfo.superclass == fqn || fqn in classInfo.superclassTypeArgs) {
                 incoming.add(
                     DependencyInfo(
                         classFqn = classInfo.name.fqn,
@@ -150,8 +130,8 @@ class DependencyAnalyzer(
                 )
             }
 
-            // Check interfaces
-            if (classInfo.interfaces.contains(fqn)) {
+            // Check interfaces (base + generic type arguments)
+            if (classInfo.interfaces.contains(fqn) || fqn in classInfo.interfaceTypeArgs) {
                 incoming.add(
                     DependencyInfo(
                         classFqn = classInfo.name.fqn,
@@ -161,9 +141,9 @@ class DependencyAnalyzer(
                 )
             }
 
-            // Check fields
+            // Check fields (container + type arguments)
             classInfo.fields.forEach { field ->
-                if (extractTypeFqn(field.type) == fqn) {
+                if (fqn in referencedTypes(field.type, field.typeRefs)) {
                     incoming.add(
                         DependencyInfo(
                             classFqn = classInfo.name.fqn,
@@ -175,9 +155,9 @@ class DependencyAnalyzer(
                 }
             }
 
-            // Check methods
+            // Check methods (return + parameter containers and their type arguments)
             classInfo.methods.filter { !it.isSynthetic }.forEach { method ->
-                if (extractTypeFqn(method.returnType) == fqn) {
+                if (fqn in referencedTypes(method.returnType, method.returnTypeRefs)) {
                     incoming.add(
                         DependencyInfo(
                             classFqn = classInfo.name.fqn,
@@ -188,7 +168,7 @@ class DependencyAnalyzer(
                     )
                 }
                 method.parameters.forEach { param ->
-                    if (extractTypeFqn(param.type) == fqn) {
+                    if (fqn in referencedTypes(param.type, param.typeRefs)) {
                         incoming.add(
                             DependencyInfo(
                                 classFqn = classInfo.name.fqn,
@@ -201,6 +181,23 @@ class DependencyAnalyzer(
                 }
             }
         }
+    }
+
+    /**
+     * The class FQNs a (possibly generic) type references. [typeRefs] holds the
+     * FQNs captured from the bytecode signature (container + type arguments);
+     * for hand-built [ClassInfo] that list is empty, so the erased base type is
+     * also parsed from the [type] display string. The union keeps results
+     * correct whether or not a generic signature was captured. Type variables
+     * and primitives contribute nothing.
+     */
+    private fun referencedTypes(
+        type: String,
+        typeRefs: List<String>,
+    ): Set<String> {
+        val refs = LinkedHashSet(typeRefs)
+        extractTypeFqn(type)?.let { refs.add(it) }
+        return refs
     }
 
     /**

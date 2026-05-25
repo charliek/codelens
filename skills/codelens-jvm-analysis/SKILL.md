@@ -257,6 +257,12 @@ References are grouped by `kind` — `EXTENDS`, `IMPLEMENTS`, `FIELD`, `PARAM`, 
 aggregates so large fan-outs stay summarized. `--scope-implementing` intersects ("classes
 that implement X **and** reference Y").
 
+References span **generic type arguments**, not just the container: a field/return/param of
+type `List<Foo>`, `Mono<Foo>`, or `Repository<Foo, Long>` is counted as a reference to `Foo`
+(under `FIELD`/`RETURN`/`PARAM`), and `extends Base<Foo>` / `implements Marker<Foo>` count as
+references to `Foo` (under `EXTENDS`/`IMPLEMENTS`). So `xref com.example.Foo` finds the type
+even where it only ever appears wrapped in a `Promise<…>` / `Mono<…>` / collection.
+
 **Examples:**
 ```bash
 # Who references this service, and how?

@@ -79,6 +79,10 @@ codelens xref com.example.UserService --kind FIELD
 codelens xref javax.sql.DataSource          # JDBC / blocking
 codelens xref reactor.core.publisher.Mono   # Reactor / reactive
 
+# Type arguments count, not just containers: this finds Product even where it
+# only ever appears wrapped — Mono<Product>, List<Product>, Repository<Product, Long>
+codelens xref com.example.model.Product --json | jq '{countsByKind, totalCount}'
+
 # Classes that implement an interface AND reference a type
 codelens xref com.example.AuditLog --scope-implementing com.example.api.RequestHandler
 ```

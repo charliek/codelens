@@ -12,7 +12,7 @@
         "isSynthetic": false,
         "name": "get",
         "parameters": [],
-        "returnType": "java.lang.Object",
+        "returnType": "T",
         "visibility": "PUBLIC"
       }
     }
