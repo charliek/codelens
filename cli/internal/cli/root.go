@@ -19,7 +19,7 @@ var (
 func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "codelens",
-		Short:         "Analyze Ratpack-based JVM codebases for migration planning.",
+		Short:         "Analyze JVM codebases: classes, methods, calls, cross-references, and dependencies.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -42,13 +42,6 @@ func newRootCmd() *cobra.Command {
 		newXrefCmd(),
 		newAnnotationsCmd(),
 		newSourceCmd(),
-		newHandlersCmd(),
-		newPromisesCmd(),
-		newMigrationCmd(),
-		newModulesCmd(),
-		newIntegrationsCmd(),
-		newAntipatternsCmd(),
-		newRoutesCmd(),
 		newDepsCmd(),
 		newLintCmd(),
 		newProjectCmd(),

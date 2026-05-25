@@ -1,0 +1,106 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "CALL_RECEIVER": 3,
+    "FIELD": 2,
+    "IMPLEMENTS": 1,
+    "PARAM": 2,
+    "RETURN": 1
+  },
+  "countsByPackage": {
+    "sample.handlers": 7,
+    "sample.modules": 2
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": "sample.handlers.UserService",
+      "fromFqn": "sample.handlers.AsyncHandler",
+      "fromSimpleName": "AsyncHandler",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "lineNumber": null,
+      "member": "userService"
+    },
+    {
+      "detail": "sample.handlers.UserService",
+      "fromFqn": "sample.handlers.AsyncHandler",
+      "fromSimpleName": "AsyncHandler",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "\u003cinit\u003e"
+    },
+    {
+      "detail": "findUser",
+      "fromFqn": "sample.handlers.AsyncHandler",
+      "fromSimpleName": "AsyncHandler",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 50,
+      "member": "lambda$fetchUserData$4"
+    },
+    {
+      "detail": "sample.handlers.UserService",
+      "fromFqn": "sample.handlers.BlockingHandler",
+      "fromSimpleName": "BlockingHandler",
+      "fromSource": "PROJECT",
+      "kind": "FIELD",
+      "lineNumber": null,
+      "member": "userService"
+    },
+    {
+      "detail": "sample.handlers.UserService",
+      "fromFqn": "sample.handlers.BlockingHandler",
+      "fromSimpleName": "BlockingHandler",
+      "fromSource": "PROJECT",
+      "kind": "PARAM",
+      "lineNumber": null,
+      "member": "\u003cinit\u003e"
+    },
+    {
+      "detail": "findUser",
+      "fromFqn": "sample.handlers.BlockingHandler",
+      "fromSimpleName": "BlockingHandler",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 38,
+      "member": "lambda$getUserName$3"
+    },
+    {
+      "detail": "findUser",
+      "fromFqn": "sample.handlers.BlockingHandler",
+      "fromSimpleName": "BlockingHandler",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 29,
+      "member": "lambda$handle$0"
+    },
+    {
+      "detail": "sample.handlers.UserService",
+      "fromFqn": "sample.modules.AppModule",
+      "fromSimpleName": "AppModule",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "provideUserService"
+    },
+    {
+      "detail": null,
+      "fromFqn": "sample.modules.AppModule$1",
+      "fromSimpleName": "1",
+      "fromSource": "PROJECT",
+      "kind": "IMPLEMENTS",
+      "lineNumber": null,
+      "member": null
+    }
+  ],
+  "totalCount": 9,
+  "totalPages": 1,
+  "typeFqn": "sample.handlers.UserService"
+}

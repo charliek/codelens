@@ -43,10 +43,11 @@ var allCases = []Case{
 
 	// ---------- classes ----------
 	{Name: "classes_list_no_filter", Args: []string{"classes", "list"}},
+	// Package + name filter against a small, version-stable library package,
+	// with --include-libraries (javax.inject:1 is frozen: 6 types).
 	{Name: "classes_list_with_filters", Args: []string{
 		"classes", "list",
-		"--package", "ratpack.*",
-		"--name", "*Handler",
+		"--package", "javax.inject",
 		"--include-libraries",
 	}},
 	{Name: "classes_list_paginated", Args: []string{"classes", "list", "--page", "1", "--size", "10"}},
@@ -56,7 +57,7 @@ var allCases = []Case{
 	{Name: "methods_search_filtered", Args: []string{
 		"methods", "search",
 		"--name", "get*",
-		"--package", "ratpack.*",
+		"--package", "javax.inject",
 		"--include-libraries",
 	}},
 
@@ -69,52 +70,13 @@ var allCases = []Case{
 	{Name: "calls_blocking_handler_handle", Args: []string{"calls", "sample.handlers.BlockingHandler", "--method", "handle"}},
 
 	// ---------- xref (inverse type cross-reference) ----------
-	// Signature-level: who implements the Handler interface (+ kind/package aggregates).
-	{Name: "xref_handler_interface", Args: []string{"xref", "ratpack.handling.Handler"}},
-	// Bytecode-level: who calls ratpack.exec.Blocking (CALL_RECEIVER with line numbers).
-	{Name: "xref_blocking", Args: []string{"xref", "ratpack.exec.Blocking"}},
+	// A project service: signature refs (FIELD/PARAM) plus bytecode CALL_RECEIVER
+	// (handlers call userService.findUser) — exercises both passes + aggregates.
+	{Name: "xref_userservice", Args: []string{"xref", "sample.handlers.UserService"}},
 	// Kind filter narrows the references while aggregates still describe the set.
 	{Name: "xref_userservice_field", Args: []string{"xref", "sample.handlers.UserService", "--kind", "FIELD"}},
-
-	// ---------- handlers ----------
-	{Name: "handlers_list", Args: []string{"handlers", "list"}},
-	{Name: "handlers_list_filtered", Args: []string{"handlers", "list", "--include-libraries"}},
-
-	// ---------- promises ----------
-	{Name: "promises_summary", Args: []string{"promises", "summary"}},
-	{Name: "promises_search_omit_filters", Args: []string{"promises", "search"}},
-	{Name: "promises_search_true_filters", Args: []string{
-		"promises", "search",
-		"--blocking", "--async", "--fork",
-	}},
-	{Name: "promises_search_false_filters", Args: []string{
-		"promises", "search",
-		"--no-blocking", "--no-async", "--no-fork",
-	}},
-
-	// ---------- migration ----------
-	{Name: "migration_order", Args: []string{"migration", "order"}},
-	{Name: "migration_complexity_summary", Args: []string{"migration", "complexity"}},
-
-	// ---------- modules ----------
-	{Name: "modules_list", Args: []string{"modules", "list"}},
-
-	// ---------- integrations ----------
-	{Name: "integrations_list", Args: []string{"integrations", "list"}},
-	{Name: "integrations_list_filtered", Args: []string{
-		"integrations", "list",
-		"--type", "HTTP_CLIENT",
-		"--sub-type", "RATPACK_HTTP_CLIENT",
-	}},
-
-	// ---------- antipatterns ----------
-	{Name: "antipatterns_scan", Args: []string{"antipatterns", "scan"}},
-	{Name: "antipatterns_scan_filtered", Args: []string{"antipatterns", "scan", "--severity", "WARNING"}},
-
-	// ---------- routes ----------
-	{Name: "routes_list", Args: []string{"routes", "list"}},
-	{Name: "routes_tree", Args: []string{"routes", "tree"}},
-	{Name: "routes_spring", Args: []string{"routes", "spring"}},
+	// Annotation usages across the project (every @Singleton class).
+	{Name: "xref_singleton", Args: []string{"xref", "javax.inject.Singleton"}},
 
 	// ---------- deps (general project-wide dependency graph) ----------
 	{Name: "deps_foundation", Args: []string{"deps", "foundation"}},
@@ -124,22 +86,16 @@ var allCases = []Case{
 	{Name: "deps_default_json", Args: []string{"deps", "--format", "json"}},
 	{Name: "deps_default_dot", Args: []string{"deps", "--format", "dot"}},
 
-	// ---------- handlers (continued) ----------
-	// Client-side --missing-inject filter.
-	{Name: "handlers_list_missing_inject", Args: []string{"handlers", "list", "--missing-inject"}},
-	// Tier filter — exercises the query-param pass-through.
-	{Name: "handlers_list_tier_low", Args: []string{"handlers", "list", "--tier", "LOW"}},
-	// Show a handler that doesn't exist — exits 1 with a 404 body.
-	// Locks the error-path contract.
-	{Name: "handlers_show_not_found", Args: []string{"handlers", "show", "sample.handlers.NonExistent"}, ExpectExitCode: 1},
-
 	// ---------- classes (continued) ----------
+	// Show a class that doesn't exist — exits 1 with a 404 body. Locks the
+	// error-path contract (previously covered by handlers_show_not_found).
+	{Name: "classes_show_not_found", Args: []string{"classes", "show", "sample.handlers.NonExistent"}, ExpectExitCode: 1},
 	// Show a specific class by FQN (BlockingHandler has @Inject, deps, etc.)
 	{Name: "classes_show", Args: []string{"classes", "show", "sample.handlers.BlockingHandler"}},
 	// Interfaces-only filter.
 	{Name: "classes_list_interfaces", Args: []string{"classes", "list", "--interfaces"}},
-	// Implementations of Handler interface.
-	{Name: "classes_implementations", Args: []string{"classes", "implementations", "ratpack.handling.Handler"}},
+	// Subclasses of a (Guice) library base class — AppModule extends AbstractModule.
+	{Name: "classes_implementations", Args: []string{"classes", "implementations", "com.google.inject.AbstractModule"}},
 	// Class dependencies (both incoming and outgoing).
 	{Name: "classes_dependencies", Args: []string{"classes", "dependencies", "sample.handlers.BlockingHandler"}},
 
@@ -147,10 +103,10 @@ var allCases = []Case{
 	{Name: "annotations_usages_singleton", Args: []string{"annotations", "usages", "javax.inject.Singleton"}},
 
 	// ---------- methods (continued) ----------
-	// Search by return type.
+	// Search by return type (project methods returning String).
 	{Name: "methods_search_return_type", Args: []string{
 		"methods", "search",
-		"--return-type", "ratpack.exec.Promise",
+		"--return-type", "java.lang.String",
 	}},
 
 	// ---------- source ----------

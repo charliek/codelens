@@ -50,11 +50,6 @@ class AnalysisService(
     private val classGraphProvider: ClassGraphProvider =
         classGraphProviderOverride ?: ClassGraphProviderImpl()
 
-    /**
-     * Gets the ClassGraphProvider for use by other services (e.g., RatpackAnalysisService).
-     */
-    fun getClassGraphProvider(): ClassGraphProvider = classGraphProvider
-
     private val scanExecutor: ExecutorService =
         Executors.newSingleThreadExecutor { r ->
             Thread(r, "codelens-scan-${projectDir.name}").apply { isDaemon = true }
@@ -142,7 +137,6 @@ class AnalysisService(
                 current.copy(
                     status = ProjectStatus.READY,
                     classCount = stats.projectClassCount,
-                    handlerCount = countHandlers(), // Count Ratpack handlers
                     scannedAt = now.toString(),
                 )
             }
@@ -184,17 +178,6 @@ class AnalysisService(
      * initial scan succeeded or has not finished yet.
      */
     fun getInitialScanError(): Throwable? = initialScanError.get()
-
-    /**
-     * Counts Ratpack Handler implementations in the project.
-     */
-    private fun countHandlers(): Int =
-        listClasses(
-            ClassFilter(
-                implementsInterface = "ratpack.handling.Handler",
-                includeLibraries = false,
-            ),
-        ).size
 
     /**
      * Gets the current project info.

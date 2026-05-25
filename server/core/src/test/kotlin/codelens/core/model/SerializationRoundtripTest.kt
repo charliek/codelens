@@ -29,7 +29,6 @@ class SerializationRoundtripTest {
                 path = "/work/user-service",
                 status = ProjectStatus.READY,
                 classCount = 42,
-                handlerCount = 3,
                 scannedAt = "2026-05-21T00:00:00Z",
             )
 
@@ -40,7 +39,6 @@ class SerializationRoundtripTest {
             "\"path\"",
             "\"status\"",
             "\"classCount\"",
-            "\"handlerCount\"",
             "\"scannedAt\"",
         )
 
@@ -131,24 +129,24 @@ class SerializationRoundtripTest {
     fun `ClassInfo round-trips with nested types`() {
         val original =
             ClassInfo(
-                name = ClassName(fqn = "com.example.UserHandler", simpleName = "UserHandler", packageName = "com.example"),
+                name = ClassName(fqn = "com.example.UserService", simpleName = "UserService", packageName = "com.example"),
                 source = ClassSource.PROJECT,
                 visibility = Visibility.PUBLIC,
                 isInterface = false,
                 superclass = "java.lang.Object",
-                interfaces = listOf("ratpack.handling.Handler"),
+                interfaces = listOf("java.lang.Runnable"),
                 annotations = listOf(AnnotationInfo(type = "javax.inject.Singleton")),
                 methods =
                     listOf(
                         MethodInfo(
-                            name = "handle",
+                            name = "run",
                             visibility = Visibility.PUBLIC,
                             returnType = "void",
                             parameters =
                                 listOf(
                                     ParameterInfo(
-                                        name = "ctx",
-                                        type = "ratpack.handling.Context",
+                                        name = "input",
+                                        type = "java.lang.String",
                                     ),
                                 ),
                         ),

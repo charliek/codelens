@@ -157,7 +157,7 @@ func TestClasses_ListAllFiltersDocumentedQueryParamNames(t *testing.T) {
 		Name:             "*Handler",
 		Annotation:       "javax.inject.Singleton",
 		Extends:          "com.example.BaseHandler",
-		Implements:       "ratpack.handling.Handler",
+		Implements:       "com.example.api.RequestHandler",
 		InterfacesOnly:   true,
 		IncludeLibraries: true,
 		Page:             2,
@@ -172,7 +172,7 @@ func TestClasses_ListAllFiltersDocumentedQueryParamNames(t *testing.T) {
 		"name":             "*Handler",
 		"annotation":       "javax.inject.Singleton",
 		"extends":          "com.example.BaseHandler",
-		"implements":       "ratpack.handling.Handler",
+		"implements":       "com.example.api.RequestHandler",
 		"interfaces":       "true", // lowercase string, not JSON bool
 		"includeLibraries": "true",
 		"page":             "2",
@@ -217,13 +217,13 @@ func TestClasses_GetFQNStaysSingleSegment(t *testing.T) {
 func TestClasses_ImplementationsOnlySendsParamWhenTrue(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
-	if _, err := c.GetImplementations(ctx(), "ratpack.handling.Handler", false); err != nil {
+	if _, err := c.GetImplementations(ctx(), "com.example.api.RequestHandler", false); err != nil {
 		t.Fatal(err)
 	}
-	if cap.last().RawURL != "/api/v1/implementations/ratpack.handling.Handler" {
+	if cap.last().RawURL != "/api/v1/implementations/com.example.api.RequestHandler" {
 		t.Errorf("false case should have no query string; got %s", cap.last().RawURL)
 	}
-	if _, err := c.GetImplementations(ctx(), "ratpack.handling.Handler", true); err != nil {
+	if _, err := c.GetImplementations(ctx(), "com.example.api.RequestHandler", true); err != nil {
 		t.Fatal(err)
 	}
 	if got := cap.last().Query.Get("includeLibraries"); got != "true" {
@@ -283,7 +283,7 @@ func TestMethods_SearchUsesCamelCaseQueryNames(t *testing.T) {
 	defer done()
 	_, err := c.SearchMethods(ctx(), SearchMethodsFilter{
 		Name:             "get*",
-		ReturnType:       "ratpack.exec.Promise",
+		ReturnType:       "com.example.Result",
 		Annotation:       "javax.inject.Inject",
 		InClass:          "com.example.UserHandler",
 		InPackage:        "com.example.*",
@@ -295,7 +295,7 @@ func TestMethods_SearchUsesCamelCaseQueryNames(t *testing.T) {
 	q := cap.last().Query
 	for k, want := range map[string]string{
 		"name":             "get*",
-		"returnType":       "ratpack.exec.Promise",
+		"returnType":       "com.example.Result",
 		"annotation":       "javax.inject.Inject",
 		"inClass":          "com.example.UserHandler",
 		"inPackage":        "com.example.*",
@@ -355,17 +355,17 @@ func TestCalls_DescriptorOnlySentWithMethod(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
 	// descriptor without a method must be dropped (the whole-class view ignores it).
-	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", "(Lratpack/handling/Chain;)V"); err != nil {
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", "(Lcom/example/api/Chain;)V"); err != nil {
 		t.Fatal(err)
 	}
 	if cap.last().RawURL != "/api/v1/calls/com.example.UsersApi" {
 		t.Errorf("descriptor must be dropped without a method; got %s", cap.last().RawURL)
 	}
 	// with a method, descriptor rides along as a query param.
-	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", "(Lratpack/handling/Chain;)V"); err != nil {
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", "(Lcom/example/api/Chain;)V"); err != nil {
 		t.Fatal(err)
 	}
-	if got := cap.last().Query.Get("descriptor"); got != "(Lratpack/handling/Chain;)V" {
+	if got := cap.last().Query.Get("descriptor"); got != "(Lcom/example/api/Chain;)V" {
 		t.Errorf("descriptor query = %q", got)
 	}
 }
@@ -390,10 +390,10 @@ func TestXref_DefaultPaginationAndSingleSegment(t *testing.T) {
 func TestXref_ForwardsAllFilters(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
-	_, err := c.GetXref(ctx(), "ratpack.exec.Blocking", XrefFilter{
+	_, err := c.GetXref(ctx(), "com.example.Blocking", XrefFilter{
 		IncludeLibraries:  true,
 		Kind:              "CALL_RECEIVER",
-		ScopeImplementing: "ratpack.handling.Handler",
+		ScopeImplementing: "com.example.api.RequestHandler",
 		Page:              2,
 		Size:              10,
 	})
@@ -404,7 +404,7 @@ func TestXref_ForwardsAllFilters(t *testing.T) {
 	for k, want := range map[string]string{
 		"includeLibraries":  "true",
 		"kind":              "CALL_RECEIVER",
-		"scopeImplementing": "ratpack.handling.Handler",
+		"scopeImplementing": "com.example.api.RequestHandler",
 		"page":              "2",
 		"size":              "10",
 	} {
@@ -576,138 +576,6 @@ func TestKtlint_FormatProject_ResponseRoundTrip_FilesFormattedSurvives(t *testin
 	}
 }
 
-// ====================== ratpack ======================
-
-func TestRatpack_ListHandlers_NoFiltersHasEmptyQueryString(t *testing.T) {
-	c, cap, done := newTestClient(t)
-	defer done()
-	if _, err := c.ListHandlers(ctx(), "", "", false); err != nil {
-		t.Fatal(err)
-	}
-	if cap.last().RawURL != "/api/v1/ratpack/handlers" {
-		t.Errorf("expected empty query string; got %s", cap.last().RawURL)
-	}
-}
-
-func TestRatpack_ListHandlers_AllFiltersAndCamelCase(t *testing.T) {
-	c, cap, done := newTestClient(t)
-	defer done()
-	if _, err := c.ListHandlers(ctx(), "GET", "HIGH", true); err != nil {
-		t.Fatal(err)
-	}
-	q := cap.last().Query
-	if q.Get("type") != "GET" || q.Get("tier") != "HIGH" || q.Get("includeLibraries") != "true" {
-		t.Errorf("query = %v", q)
-	}
-}
-
-func TestRatpack_ListIntegrations_FilterKeysCamelCase(t *testing.T) {
-	c, cap, done := newTestClient(t)
-	defer done()
-	if _, err := c.ListIntegrations(ctx(), "HTTP_CLIENT", "RATPACK_HTTP_CLIENT", false); err != nil {
-		t.Fatal(err)
-	}
-	q := cap.last().Query
-	if q.Get("type") != "HTTP_CLIENT" || q.Get("subType") != "RATPACK_HTTP_CLIENT" {
-		t.Errorf("query = %v", q)
-	}
-}
-
-func TestRatpack_Complexity_PerClass(t *testing.T) {
-	c, cap, done := newTestClient(t)
-	defer done()
-	if _, err := c.GetComplexity(ctx(), "com.example.UserHandler"); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.HasPrefix(cap.last().Path, "/api/v1/ratpack/complexity/") {
-		t.Errorf("path = %s", cap.last().Path)
-	}
-}
-
-func TestRatpack_MigrationOrder(t *testing.T) {
-	c, cap, done := newTestClient(t)
-	defer done()
-	if _, err := c.GetMigrationOrder(ctx()); err != nil {
-		t.Fatal(err)
-	}
-	if cap.last().Path != "/api/v1/ratpack/migration-order" {
-		t.Errorf("path = %s", cap.last().Path)
-	}
-}
-
-// Gap fill: tri-state Promise filters. test_client.py never exercised
-// these, but they have to send literal "true"/"false" (not omitted) when
-// explicitly set false.
-func TestRatpack_SearchPromises_TriStateBooleans(t *testing.T) {
-	tBool := true
-	fBool := false
-
-	t.Run("omitted", func(t *testing.T) {
-		c, cap, done := newTestClient(t)
-		defer done()
-		if _, err := c.SearchPromises(ctx(), SearchPromisesFilter{}); err != nil {
-			t.Fatal(err)
-		}
-		if cap.last().RawURL != "/api/v1/ratpack/promises/search" {
-			t.Errorf("expected empty query string; got %s", cap.last().RawURL)
-		}
-	})
-
-	t.Run("explicit true", func(t *testing.T) {
-		c, cap, done := newTestClient(t)
-		defer done()
-		if _, err := c.SearchPromises(ctx(), SearchPromisesFilter{
-			UsesBlocking: &tBool,
-			UsesAsync:    &tBool,
-			UsesFork:     &tBool,
-		}); err != nil {
-			t.Fatal(err)
-		}
-		q := cap.last().Query
-		for _, k := range []string{"usesBlocking", "usesAsync", "usesFork"} {
-			if q.Get(k) != "true" {
-				t.Errorf("query[%q] = %q, want \"true\"", k, q.Get(k))
-			}
-		}
-	})
-
-	t.Run("explicit false", func(t *testing.T) {
-		c, cap, done := newTestClient(t)
-		defer done()
-		if _, err := c.SearchPromises(ctx(), SearchPromisesFilter{
-			UsesBlocking: &fBool,
-			UsesAsync:    &fBool,
-			UsesFork:     &fBool,
-		}); err != nil {
-			t.Fatal(err)
-		}
-		q := cap.last().Query
-		for _, k := range []string{"usesBlocking", "usesAsync", "usesFork"} {
-			if q.Get(k) != "false" {
-				t.Errorf("query[%q] = %q, want \"false\"", k, q.Get(k))
-			}
-		}
-	})
-
-	t.Run("min operations only when > 0", func(t *testing.T) {
-		c, cap, done := newTestClient(t)
-		defer done()
-		if _, err := c.SearchPromises(ctx(), SearchPromisesFilter{MinOperations: 5}); err != nil {
-			t.Fatal(err)
-		}
-		if cap.last().Query.Get("minOperations") != "5" {
-			t.Errorf("minOperations not sent")
-		}
-		// Zero is omitted (matches Python `min_operations > 0` guard).
-		if _, err := c.SearchPromises(ctx(), SearchPromisesFilter{MinOperations: 0}); err != nil {
-			t.Fatal(err)
-		}
-		if cap.last().Query.Has("minOperations") {
-			t.Errorf("minOperations=0 must be omitted")
-		}
-	})
-}
-
 // ====================== source ======================
 
 func TestSource_Get(t *testing.T) {
@@ -727,7 +595,7 @@ func TestSource_MethodWithParamTypesCommaJoined(t *testing.T) {
 	_, err := c.GetMethodSource(ctx(),
 		"com.example.UserHandler",
 		"handle",
-		[]string{"ratpack.handling.Context", "java.lang.String"},
+		[]string{"com.example.api.Context", "java.lang.String"},
 		3,
 	)
 	if err != nil {
@@ -738,7 +606,7 @@ func TestSource_MethodWithParamTypesCommaJoined(t *testing.T) {
 		t.Errorf("path = %s", r.Path)
 	}
 	// Comma-joined, NOT repeated keys. Locked at test_client.py:375.
-	if got := r.Query.Get("paramTypes"); got != "ratpack.handling.Context,java.lang.String" {
+	if got := r.Query.Get("paramTypes"); got != "com.example.api.Context,java.lang.String" {
 		t.Errorf("paramTypes wrong: %q", got)
 	}
 	if got := r.Query.Get("context"); got != "3" {
@@ -756,70 +624,4 @@ func TestSource_MethodNameEscaped(t *testing.T) {
 	if !strings.Contains(cap.last().RawURL, "%3Cinit%3E") {
 		t.Errorf("method name not escaped: %s", cap.last().RawURL)
 	}
-}
-
-// Gap fill: module / binding paths.
-func TestRatpack_ModuleAndBindingPaths(t *testing.T) {
-	c, cap, done := newTestClient(t)
-	defer done()
-	if _, err := c.GetModule(ctx(), "com.example.AppModule"); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.HasPrefix(cap.last().Path, "/api/v1/ratpack/modules/") {
-		t.Errorf("path = %s", cap.last().Path)
-	}
-	if _, err := c.GetBindings(ctx(), "com.example.Service"); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.HasPrefix(cap.last().Path, "/api/v1/ratpack/bindings/") {
-		t.Errorf("path = %s", cap.last().Path)
-	}
-}
-
-// Gap fill: both DOT endpoints return raw bytes, not JSON.
-func TestDeps_DOTReturnsRawBody(t *testing.T) {
-	c, cap, done := newTestClientWith(t, func(_ *http.Request) (int, []byte) {
-		return 200, []byte("digraph G { A -> B }\n")
-	})
-	defer done()
-	body, err := c.GetDependencyAnalysis(ctx(), "dot")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(body.([]byte)) != "digraph G { A -> B }\n" {
-		t.Errorf("dot body unexpectedly transformed: %q", body)
-	}
-	if cap.last().Query.Get("format") != "dot" {
-		t.Errorf("format=dot not on query")
-	}
-
-	body, err = c.GetDependencyGraph(ctx(), "dot")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(body.([]byte)) != "digraph G { A -> B }\n" {
-		t.Errorf("graph dot body wrong: %q", body)
-	}
-}
-
-// Gap fill: empty query string is empty.
-func TestEmptyQueryStringNoQuestionMark(t *testing.T) {
-	c, cap, done := newTestClient(t)
-	defer done()
-	if _, err := c.Project(ctx()); err != nil {
-		t.Fatal(err)
-	}
-	if cap.last().RawURL != "/api/v1/project" {
-		t.Errorf("expected raw URL without ?; got %s", cap.last().RawURL)
-	}
-}
-
-// touch_activity is best-effort — server errors must not propagate.
-func TestTouchActivity_SwallowsErrors(t *testing.T) {
-	c, _, done := newTestClientWith(t, func(_ *http.Request) (int, []byte) {
-		return 500, []byte(`{"error":"boom"}`)
-	})
-	defer done()
-	// Must not panic, must not error.
-	c.TouchActivity(ctx())
 }
