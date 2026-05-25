@@ -49,7 +49,7 @@ the sibling `libexec/` directory, so the packaged install is self-contained.
 The server can run either from the fat JAR (`jar` mode) or via the repo's Gradle
 wrapper (`gradle` mode). With the default `--mode auto`, the CLI uses `jar` mode
 when a JAR resolves and falls back to `gradle` mode otherwise. Set the mode
-explicitly with `--mode` or `CODELENS_SERVER_MODE`.
+explicitly with `--mode` or `CODELENS_SERVER__MODE`.
 
 ```bash
 codelens start --mode jar     # force the fat JAR
