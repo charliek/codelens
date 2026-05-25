@@ -130,4 +130,23 @@ interface ClassGraphProvider {
      * @return Raw class bytes, or null if not found
      */
     fun getClassBytes(fqn: String): ByteArray?
+
+    /**
+     * Extract the invocations a class's method bodies make, from bytecode.
+     *
+     * Returns raw call-site facts: every `INVOKE*` instruction with the
+     * constant arguments (`LDC` strings/numbers/class literals) observed
+     * immediately before it. No framework-specific filtering is applied.
+     *
+     * @param fqn Fully qualified class name
+     * @param methodName When non-null, only this method is scanned
+     * @param descriptor When non-null, disambiguates overloads by exact JVM
+     *   descriptor match (only meaningful together with [methodName])
+     * @return Per-method call lists, empty if the class bytes are unavailable
+     */
+    fun getCalls(
+        fqn: String,
+        methodName: String? = null,
+        descriptor: String? = null,
+    ): CallSiteList
 }

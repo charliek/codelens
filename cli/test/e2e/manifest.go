@@ -60,6 +60,14 @@ var allCases = []Case{
 		"--include-libraries",
 	}},
 
+	// ---------- calls (forward call-site extraction) ----------
+	// Route-defining Chain calls in an Action<Chain>: get/post/delete/prefix
+	// with their path string constants, plus the synthetic execute(Object)
+	// bridge — locks constant-arg capture and overload disambiguation.
+	{Name: "calls_users_api_execute", Args: []string{"calls", "sample.api.UsersApi", "--method", "execute"}},
+	// Real Blocking.get / Promise.map / Promise.then calls in a handler body.
+	{Name: "calls_blocking_handler_handle", Args: []string{"calls", "sample.handlers.BlockingHandler", "--method", "handle"}},
+
 	// ---------- handlers ----------
 	{Name: "handlers_list", Args: []string{"handlers", "list"}},
 	{Name: "handlers_list_filtered", Args: []string{"handlers", "list", "--include-libraries"}},

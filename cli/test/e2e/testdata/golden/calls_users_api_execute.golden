@@ -1,0 +1,81 @@
+{
+  "fqn": "sample.api.UsersApi",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "(Lratpack/handling/Handler;)Lratpack/handling/Chain;",
+          "isInterface": true,
+          "lineNumber": 28,
+          "methodName": "get",
+          "ownerType": "ratpack.handling.Chain"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": ":id"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;Lratpack/handling/Handler;)Lratpack/handling/Chain;",
+          "isInterface": true,
+          "lineNumber": 29,
+          "methodName": "get",
+          "ownerType": "ratpack.handling.Chain"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lratpack/handling/Handler;)Lratpack/handling/Chain;",
+          "isInterface": true,
+          "lineNumber": 30,
+          "methodName": "post",
+          "ownerType": "ratpack.handling.Chain"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": ":id"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;Lratpack/handling/Handler;)Lratpack/handling/Chain;",
+          "isInterface": true,
+          "lineNumber": 31,
+          "methodName": "delete",
+          "ownerType": "ratpack.handling.Chain"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "admin"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;Lratpack/func/Action;)Lratpack/handling/Chain;",
+          "isInterface": true,
+          "lineNumber": 33,
+          "methodName": "prefix",
+          "ownerType": "ratpack.handling.Chain"
+        }
+      ],
+      "descriptor": "(Lratpack/handling/Chain;)V",
+      "methodName": "execute"
+    },
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "(Lratpack/handling/Chain;)V",
+          "isInterface": false,
+          "lineNumber": 14,
+          "methodName": "execute",
+          "ownerType": "sample.api.UsersApi"
+        }
+      ],
+      "descriptor": "(Ljava/lang/Object;)V",
+      "methodName": "execute"
+    }
+  ],
+  "totalCalls": 6
+}

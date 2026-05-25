@@ -307,6 +307,69 @@ func TestMethods_SearchUsesCamelCaseQueryNames(t *testing.T) {
 	}
 }
 
+// ====================== calls ======================
+
+func TestCalls_NoMethodHitsClassEndpoint(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", ""); err != nil {
+		t.Fatal(err)
+	}
+	// FQN is a single path segment (like the sibling class endpoints); no query.
+	if cap.last().RawURL != "/api/v1/calls/com.example.UsersApi" {
+		t.Errorf("unexpected URL: %s", cap.last().RawURL)
+	}
+}
+
+func TestCalls_FQNStaysSingleSegment(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	if _, err := c.GetCalls(ctx(), "com.example.Outer$Inner", "", ""); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(cap.last().RawURL, "%24") {
+		t.Errorf("URL must percent-encode $ as %%24; got %s", cap.last().RawURL)
+	}
+	const prefix = "/api/v1/calls/"
+	suffix := cap.last().Path[len(prefix):]
+	if strings.Contains(suffix, "/") {
+		t.Errorf("FQN must be a single path segment; got %q", cap.last().Path)
+	}
+}
+
+func TestCalls_MethodIsQueryParam(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", ""); err != nil {
+		t.Fatal(err)
+	}
+	if cap.last().Path != "/api/v1/calls/com.example.UsersApi" {
+		t.Errorf("unexpected path: %s", cap.last().Path)
+	}
+	if got := cap.last().Query.Get("method"); got != "execute" {
+		t.Errorf("method query = %q", got)
+	}
+}
+
+func TestCalls_DescriptorOnlySentWithMethod(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	// descriptor without a method must be dropped (the whole-class view ignores it).
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", "(Lratpack/handling/Chain;)V"); err != nil {
+		t.Fatal(err)
+	}
+	if cap.last().RawURL != "/api/v1/calls/com.example.UsersApi" {
+		t.Errorf("descriptor must be dropped without a method; got %s", cap.last().RawURL)
+	}
+	// with a method, descriptor rides along as a query param.
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", "(Lratpack/handling/Chain;)V"); err != nil {
+		t.Fatal(err)
+	}
+	if got := cap.last().Query.Get("descriptor"); got != "(Lratpack/handling/Chain;)V" {
+		t.Errorf("descriptor query = %q", got)
+	}
+}
+
 // ====================== ktlint (POST + typed) ======================
 
 func TestKtlint_LintFile_BodyHasFilePath(t *testing.T) {
