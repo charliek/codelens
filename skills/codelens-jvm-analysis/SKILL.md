@@ -1,15 +1,21 @@
 ---
 name: codelens-jvm-analysis
 description: |
-  Explore and analyze JVM codebases (Java/Kotlin) - discover classes, search methods,
-  trace inheritance hierarchies, and map dependencies. Use this skill when you need
-  to understand codebase structure, find implementations of interfaces, locate classes
-  by annotation, or analyze dependency relationships between classes.
+  Explore and analyze JVM codebases (Java/Kotlin) from compiled bytecode — discover
+  classes, search methods, trace inheritance hierarchies, map dependencies, extract the
+  calls a method makes (`calls`), find everything that references a type (`xref`), and
+  view the project dependency graph plus its most-depended-on "foundation" classes
+  (`deps`). Use this skill whenever you need to understand JVM codebase structure: find
+  implementations of an interface, locate classes by annotation, see what a method
+  invokes, find every caller/reference of a type, or analyze dependency relationships —
+  across your code, library dependencies, and the JDK.
 ---
 
 # JVM Analysis
 
 This skill enables exploration and analysis of JVM codebases through bytecode scanning.
+Its primitives are framework-agnostic — they work the same on a Spring, Micronaut,
+Ratpack, Android, or plain-Java/Kotlin project.
 
 ## When to Use
 
@@ -17,7 +23,9 @@ This skill enables exploration and analysis of JVM codebases through bytecode sc
 - Search for methods by name, return type, or annotation
 - Find all implementations of an interface
 - Trace class inheritance hierarchies
-- Analyze dependencies between classes
+- See what invocations a method makes (`calls`), with constant arguments and line numbers
+- Find everything that references a type (`xref`) — callers, fields, params, subtypes, …
+- Analyze dependencies between classes, or the whole project's dependency graph
 - Find usages of a specific annotation
 
 ## Prerequisites
@@ -62,11 +70,11 @@ codelens classes list --package com.example.handlers
 # Find all @Singleton classes
 codelens classes list --annotation javax.inject.Singleton
 
-# Find all Handler implementations
-codelens classes list --implements ratpack.handling.Handler
+# Find classes implementing an interface
+codelens classes list --implements com.example.api.RequestHandler
 
-# Classes extending AbstractModule
-codelens classes list --extends com.google.inject.AbstractModule
+# Classes extending a base class
+codelens classes list --extends com.example.AbstractService
 ```
 
 ### View Class Details
@@ -109,11 +117,11 @@ codelens methods search [options]
 # Find all methods named "handle"
 codelens methods search --name handle
 
-# Find methods returning Promise
-codelens methods search --return-type ratpack.exec.Promise
+# Find methods returning a specific type
+codelens methods search --return-type java.util.concurrent.CompletableFuture
 
-# Find all @Provides methods
-codelens methods search --annotation com.google.inject.Provides
+# Find methods carrying an annotation
+codelens methods search --annotation org.springframework.web.bind.annotation.GetMapping
 
 # Methods in a specific class
 codelens methods search --class com.example.UserService
@@ -131,11 +139,11 @@ codelens classes implementations <fully-qualified-name>
 
 **Examples:**
 ```bash
-# All Handler implementations
-codelens classes implementations ratpack.handling.Handler
+# Project classes implementing an interface (incl. transitive)
+codelens classes implementations com.example.api.RequestHandler
 
-# All AbstractModule subclasses
-codelens classes implementations com.google.inject.AbstractModule
+# Project repositories extending a library interface
+codelens classes implementations org.springframework.data.jpa.repository.JpaRepository
 ```
 
 ### View Hierarchy
@@ -156,7 +164,7 @@ codelens classes hierarchy com.example.MyHandler
 Output:
 ```
 com.example.MyHandler
-  └── implements: ratpack.handling.Handler
+  └── implements: com.example.api.RequestHandler
   └── extends: java.lang.Object
 ```
 
@@ -200,6 +208,83 @@ codelens annotations usages javax.inject.Singleton
 codelens annotations usages javax.ws.rs.Path
 ```
 
+## Call Sites (forward)
+
+Extract, straight from bytecode, every invocation a class's methods make — the *forward*
+view of "what does this code call":
+
+```bash
+codelens calls <fully-qualified-name> [--method <name>] [--descriptor <jvm-descriptor>]
+```
+
+Each call reports its `ownerType` (the callee's declaring type), `methodName`,
+`descriptor`, the `constantArgs` (LDC string/number/class literals passed near the call),
+and `lineNumber`. `--method` scopes to one method; `--descriptor` disambiguates overloads.
+
+**Examples:**
+```bash
+# Everything UserService's methods invoke
+codelens calls com.example.UserService
+
+# Just one method, e.g. to see the constant args it passes to a builder
+codelens calls com.example.config.DbConfig --method dataSource
+
+# Pull out the calls to a particular API
+codelens calls com.example.UserService --method handle --json \
+  | jq '.methods[].calls[] | select(.ownerType | startswith("java.sql"))'
+```
+
+Known limits (Tier-1 scan): lambda/method-reference targets compile to `invokedynamic`
+(no callee class); computed (non-constant) arguments don't appear in `constantArgs`.
+
+## Cross-Reference (inverse)
+
+Find everything across the project that references a type — the *inverse* of `calls`:
+
+```bash
+codelens xref <type-fqn> [--kind <KIND>] [--scope-implementing <fqn>] [--include-libraries]
+```
+
+References are grouped by `kind` — `EXTENDS`, `IMPLEMENTS`, `FIELD`, `PARAM`, `RETURN`,
+`ANNOTATION`, `INSTANTIATION`, `CALL_RECEIVER` — with `countsByKind` and `countsByPackage`
+aggregates so large fan-outs stay summarized. `--scope-implementing` intersects ("classes
+that implement X **and** reference Y").
+
+**Examples:**
+```bash
+# Who references this service, and how?
+codelens xref com.example.UserService
+
+# Only the classes that hold it as a field
+codelens xref com.example.UserService --kind FIELD
+
+# Who calls into the JDBC DataSource API (the blocking surface)?
+codelens xref javax.sql.DataSource
+
+# Who returns/holds a Reactor Mono (the reactive surface)?
+codelens xref reactor.core.publisher.Mono
+```
+
+`calls` + `xref` are duals: use `calls` to see what a method does; use `xref` to see who
+depends on a type.
+
+## Project Dependency Graph
+
+Beyond per-class dependencies, view the whole project's structure and its most
+depended-on classes:
+
+```bash
+# Most depended-on classes (high in-degree) — the project's "foundation"
+codelens deps foundation [--min-dependents N]
+
+# The full project dependency graph
+codelens deps --format json
+codelens deps --format dot -o deps.dot   # then: dot -Tpng deps.dot -o deps.png
+```
+
+`deps foundation` ranks classes by how many project classes depend on them — useful for
+finding shared/core types, refactoring targets, or a sensible order to tackle work.
+
 ## Common Workflows
 
 ### Understanding a New Codebase
@@ -211,8 +296,8 @@ codelens classes stats
 # 2. List top-level packages
 codelens classes list --package "com.example.*" | head -20
 
-# 3. Find entry points (handlers, controllers)
-codelens classes list --implements ratpack.handling.Handler
+# 3. Find entry points (controllers, handlers) by their framework interface/annotation
+codelens classes list --annotation org.springframework.web.bind.annotation.RestController
 ```
 
 ### Finding Where Something is Used
@@ -248,4 +333,5 @@ codelens annotations usages javax.inject.Singleton
 ## Related Skills
 
 - `codelens-source-lookup` - View source for discovered classes
-- `codelens-ratpack-analysis` - Ratpack-specific analysis (handlers, promises)
+- `codelens-ratpack-analysis` - A worked example of framework-migration analysis built
+  entirely on these primitives (`calls`/`xref`/`deps`)

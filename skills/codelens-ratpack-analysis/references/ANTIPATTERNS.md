@@ -1,14 +1,22 @@
 # Anti-Patterns Reference
 
-CodeLens detects these anti-patterns that complicate migration and indicate code quality issues.
+These anti-patterns complicate a migration and indicate code-quality issues. CodeLens does
+not detect or classify them — surface candidate call sites with `xref` / `calls`, confirm by
+reading the method body with `codelens source show <fqn>` (does the call actually sit on the
+compute thread, outside `Blocking.get`?), and judge severity yourself. The severity labels
+below are this author's guidance for that judgment, not a tool output.
 
 ## BLOCKING_JDBC
 
-**Severity:** ERROR
+**Severity (guidance):** ERROR
 
 **Description:** JDBC calls made outside `Blocking.get()`, blocking the compute thread.
 
-**Detection:**
+**How to find it:** `codelens xref java.sql.Connection` / `codelens xref javax.sql.DataSource`
+lists the classes that touch JDBC; read the body with `codelens source show <fqn>` to confirm
+the call is not wrapped in `Blocking.get`.
+
+**Bad:**
 ```java
 // Bad - blocks compute thread
 public void handle(Context ctx) {
@@ -32,11 +40,14 @@ public void handle(Context ctx) {
 
 ## THREAD_SLEEP
 
-**Severity:** ERROR
+**Severity (guidance):** ERROR
 
 **Description:** `Thread.sleep()` calls block the compute thread.
 
-**Detection:**
+**How to find it:** `codelens calls <fqn> --json` filtered to
+`java.lang.Thread.sleep` (`select(.ownerType=="java.lang.Thread" and .methodName=="sleep")`).
+
+**Bad:**
 ```java
 // Bad
 public void handle(Context ctx) {
@@ -60,11 +71,15 @@ public void handle(Context ctx) {
 
 ## SYNCHRONOUS_FILE_IO
 
-**Severity:** WARNING
+**Severity (guidance):** WARNING
 
 **Description:** File I/O operations blocking compute threads.
 
-**Detection:**
+**How to find it:** `codelens xref java.io.FileInputStream` /
+`codelens xref java.nio.file.Files`, then read the body with `codelens source show <fqn>` to
+confirm it is not wrapped in `Blocking.get`.
+
+**Bad:**
 ```java
 // Bad
 String content = Files.readString(path);
@@ -83,11 +98,15 @@ Blocking.get(() -> Files.readString(path))
 
 ## BLOCKING_HTTP_CLIENT
 
-**Severity:** WARNING
+**Severity (guidance):** WARNING
 
 **Description:** Synchronous HTTP clients (OkHttp sync, Apache HttpClient) blocking compute threads.
 
-**Detection:**
+**How to find it:** `xref` the client type in use, e.g. `codelens xref okhttp3.OkHttpClient`
+or `codelens xref org.apache.http.client.HttpClient`; confirm the `.execute()` call is on the
+compute thread by reading `codelens source show <fqn>`.
+
+**Bad:**
 ```java
 // Bad - synchronous call
 Response response = okHttpClient.newCall(request).execute();
@@ -109,11 +128,14 @@ Blocking.get(() -> okHttpClient.newCall(request).execute())
 
 ## CONSOLE_LOGGING
 
-**Severity:** INFO
+**Severity (guidance):** INFO
 
 **Description:** `System.out` or `System.err` usage instead of proper logging.
 
-**Detection:**
+**How to find it:** `codelens calls <fqn> --json` filtered to `java.io.PrintStream`
+`println`/`print` (`System.out`/`System.err` resolve to `PrintStream` in bytecode).
+
+**Bad:**
 ```java
 System.out.println("Processing user: " + userId);
 System.err.println("Error occurred");
@@ -133,11 +155,15 @@ log.error("Error occurred", exception);
 
 ## SWALLOWED_EXCEPTION
 
-**Severity:** WARNING
+**Severity (guidance):** WARNING
 
 **Description:** Empty catch blocks that hide errors.
 
-**Detection:**
+**How to find it:** Empty catch blocks aren't reliably visible from call/reference facts —
+read the method body with `codelens source show <fqn>` (prioritize handlers/services you've
+already surfaced) and look for catch clauses with no logging or rethrow.
+
+**Bad:**
 ```java
 try {
     riskyOperation();
@@ -162,6 +188,9 @@ try {
 
 ## Severity Levels
 
+A suggested scale for the severity you assign after reading the confirmed call site — not a
+classification CodeLens emits:
+
 | Level | Meaning | Action |
 |-------|---------|--------|
 | INFO | Code smell, low impact | Fix when convenient |
@@ -175,18 +204,24 @@ try {
 2. **Address WARNING** during migration
 3. **Clean up INFO** as time permits
 
-## Viewing Anti-Patterns
+## Surfacing candidates
+
+There is no anti-pattern scanner; build the inventory yourself from the general primitives,
+then confirm and rate each by reading the body:
 
 ```bash
-# All anti-patterns
-codelens antipatterns scan
+# Blocking I/O candidates (then read the body to confirm it's on the compute thread):
+codelens xref java.sql.Connection
+codelens xref javax.sql.DataSource
+codelens xref java.net.HttpURLConnection
+codelens xref java.io.FileInputStream
 
-# Only errors and critical
-codelens antipatterns scan --severity ERROR
+# Thread.sleep and console logging in a class body:
+codelens calls com.example.ProblematicHandler --json \
+  | jq '.methods[].calls[]
+        | select((.ownerType=="java.lang.Thread" and .methodName=="sleep")
+              or (.ownerType=="java.io.PrintStream" and (.methodName=="println" or .methodName=="print")))'
 
-# Specific type
-codelens antipatterns scan --type BLOCKING_JDBC
-
-# For specific class
-codelens antipatterns show com.example.ProblematicHandler
+# Read the full body to confirm wrapping, swallowed catches, etc.:
+codelens source show com.example.ProblematicHandler
 ```
