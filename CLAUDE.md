@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CodeLens is a developer tool for analyzing JVM codebases (Java and Kotlin are the primary, tested languages). It loads a project's compiled bytecode and resolved classpath and answers structural questions over an HTTP API and CLI. It also includes Ratpack-migration helpers, which are a secondary capability that may be phased out over time (do not treat Ratpack as the headline framing in user-facing copy). It consists of two components:
+CodeLens is a developer tool for analyzing JVM codebases (Java and Kotlin are the primary, tested languages). It loads a project's compiled bytecode and resolved classpath and answers structural questions over an HTTP API and CLI. Its primitives are deliberately framework-agnostic — `classes`, `methods`, `calls` (forward call-site extraction), `xref` (inverse type cross-reference), `deps` (project dependency graph + foundation), `annotations`, `hierarchy`, `source`. Framework-specific analysis (e.g. a migration assessment) is **not** baked into the tool; it is composed from these primitives, with framework knowledge living in Claude Code skills — the `codelens-ratpack-analysis` skill is the worked example of that approach. It consists of two components:
 
 1. **Server** (Kotlin/Ktor): Background service that analyzes target project bytecode using ClassGraph and serves results via HTTP REST API
 2. **CLI** (Go/Cobra, in `cli/`): User-facing interface that manages server lifecycle and presents analysis results
@@ -137,6 +137,6 @@ The ClassGraph version (`gradle/libs.versions.toml`) must support the ceiling JD
 
 ## Testing
 
-Test fixtures are in `test-fixtures/sample-ratpack-app/` - a minimal Ratpack project for integration testing.
+Three self-contained sample projects live under `test-fixtures/`, each exercising the general primitives against a different framework's bytecode: `sample-ratpack-app` (the original Ratpack app, also the route-reproduction proof surface), `sample-spring-boot-app` (a rich Spring Boot app — controllers/services/repositories, blocking-vs-reactive), and `sample-micronaut-app` (Micronaut + Flyway + Hikari). Dependency versions are pinned so golden output is reproducible.
 
-The Go e2e golden suite (`cli/test/e2e/`) is the most rigorous proof of correctness: it spawns the JVM server once, then exec's the CLI for every documented endpoint and diffs the `--json` output against committed golden fixtures (after blanking mutable fields like pid/port/timestamps and templating machine-specific paths). Regenerate the fixtures after an intentional output change with `UPDATE_GOLDEN=1 go test -run TestE2E ./test/e2e/...`. The suite is gated behind `-run TestE2E` and skips when the server JAR is absent.
+The Go e2e golden suite (`cli/test/e2e/`) is the most rigorous proof of correctness: for each fixture it spawns a JVM server, exec's the CLI for every documented endpoint, and diffs the `--json` output against committed golden fixtures (after blanking mutable fields like pid/port/timestamps and templating machine-specific paths). `TestE2E`/`TestE2ESpring`/`TestE2EMicronaut` cover the three fixtures with goldens under `testdata/golden/` (and `…/spring/`, `…/micronaut/`). Regenerate after an intentional output change with `UPDATE_GOLDEN=1 go test -run TestE2E ./test/e2e/...`. The suite is gated behind `-run TestE2E` and skips when the server JAR is absent.

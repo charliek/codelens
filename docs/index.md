@@ -7,9 +7,10 @@ hierarchies, dependencies, and source (including JDK and library source).
 
 Java and Kotlin are the primary, tested languages.
 
-codelens also includes a set of Ratpack-migration helpers (handler inventory,
-Promise usage, complexity scoring, route discovery). These are secondary and may
-be phased out over time; see [Ratpack Migration](ratpack/overview.md).
+codelens deliberately stops at general primitives. Framework-specific analysis —
+"find the request handlers", "assess a migration" — is composed from those
+primitives rather than built into the tool; see
+[Framework Analysis](concepts/framework-analysis.md).
 
 ## How it works
 

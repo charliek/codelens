@@ -11,7 +11,7 @@
 # =============================================================================
 
 site_name: codelens
-site_description: 'Analyze JVM codebases (Java & Kotlin) — classes, methods, handlers, and source'
+site_description: 'Analyze JVM codebases (Java & Kotlin) — classes, methods, calls, cross-references, dependencies, and source'
 site_author: 'codelens Contributors'
 site_url: 'https://charliek.github.io/codelens/'
 
@@ -95,10 +95,10 @@ nav:
       - Server & JAR Discovery: concepts/discovery.md
       - JDK Resolution: concepts/jdk-resolution.md
       - Target Project Setup: concepts/target-project.md
+      - Framework Analysis: concepts/framework-analysis.md
   - Reference:
       - CLI: reference/cli.md
       - HTTP API: reference/api.md
-  - Ratpack Migration: ratpack/overview.md
   - Development:
       - Setup: development/setup.md
       - Architecture: development/architecture.md

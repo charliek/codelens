@@ -7,9 +7,10 @@ resolved classpath, then answers structural questions about it over a small HTTP
 API and a command-line interface — classes, methods, annotations, type
 hierarchies, dependencies, and source (including JDK and library source).
 
-Java and Kotlin are the primary, tested languages. codelens also includes a set
-of Ratpack-migration helpers; these are secondary and may be phased out over
-time.
+Java and Kotlin are the primary, tested languages. Its primitives are
+framework-agnostic — including `calls` (what a method invokes) and `xref` (what
+references a type). Framework-specific analysis is composed from these
+primitives in agent skills rather than baked into the tool (see below).
 
 **📖 Full documentation: [charliek.github.io/codelens](https://charliek.github.io/codelens/)**
 
