@@ -329,6 +329,91 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 }
             respondCalls(analysisService.getCalls(fqn, method, descriptor))
         }
+
+        /**
+         * GET /api/v1/xref/{typeFqn}
+         * Find everything across the project that references a type (inverse
+         * cross-reference), grouped by reference kind.
+         *
+         * Query parameters:
+         * - includeLibraries: Include references from library classes (default: false)
+         * - kind: Restrict to one reference kind (EXTENDS, IMPLEMENTS, FIELD,
+         *   PARAM, RETURN, ANNOTATION, INSTANTIATION, CALL_RECEIVER)
+         * - scopeImplementing: Only count references from classes that implement
+         *   (or extend) this type
+         * - page / size: Pagination over the (kind-filtered) references
+         */
+        get("/xref/{typeFqn...}") {
+            val typeFqn = getFqnOrRespond("typeFqn", "Type FQN is required") ?: return@get
+            val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+            val scopeImplementing = call.request.queryParameters["scopeImplementing"]?.takeUnless { it.isBlank() }
+            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
+            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
+            val kindParam = call.request.queryParameters["kind"]?.takeUnless { it.isBlank() }
+
+            val kind =
+                if (kindParam != null) {
+                    try {
+                        XrefKind.valueOf(kindParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid xref kind: $kindParam. Valid values: ${XrefKind.entries.joinToString()}",
+                            ),
+                        )
+                        return@get
+                    }
+                } else {
+                    null
+                }
+
+            val all = analysisService.getReferencesToType(typeFqn, includeLibraries, scopeImplementing)
+            // Breakdown by kind over the full result (before the kind filter).
+            val countsByKind = all.groupingBy { it.kind.name }.eachCount()
+
+            val filtered = if (kind != null) all.filter { it.kind == kind } else all
+            val countsByPackage = filtered.groupingBy { it.fromFqn.substringBeforeLast('.', "") }.eachCount()
+
+            // Deterministic order so pagination and golden output are stable.
+            val sorted =
+                filtered.sortedWith(
+                    compareBy(
+                        { it.fromFqn },
+                        { it.kind.ordinal },
+                        { it.member ?: "" },
+                        { it.lineNumber ?: -1 },
+                        { it.detail ?: "" },
+                    ),
+                )
+
+            val totalCount = sorted.size
+            val totalPages = if (totalCount == 0) 1 else (totalCount + size - 1) / size
+            val startIndex = page * size
+            val endIndex = minOf(startIndex + size, totalCount)
+            val pageSlice = if (startIndex < totalCount) sorted.subList(startIndex, endIndex) else emptyList()
+
+            call.respond(
+                XrefResponse(
+                    typeFqn = typeFqn,
+                    references = pageSlice,
+                    totalCount = totalCount,
+                    page = page,
+                    pageSize = size,
+                    totalPages = totalPages,
+                    countsByKind = countsByKind,
+                    countsByPackage = countsByPackage,
+                    appliedFilter =
+                        XrefFilterSummary(
+                            includeLibraries = includeLibraries,
+                            kind = kindParam,
+                            scopeImplementing = scopeImplementing,
+                        ),
+                ),
+            )
+        }
     }
 }
 

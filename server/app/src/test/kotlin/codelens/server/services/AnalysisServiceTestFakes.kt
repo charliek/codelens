@@ -101,6 +101,12 @@ internal open class EmptyClassGraphProvider : ClassGraphProvider {
         methodName: String?,
         descriptor: String?,
     ): CallSiteList = CallSiteList(fqn, emptyList())
+
+    override fun getReferencesToType(
+        typeFqn: String,
+        includeLibraries: Boolean,
+        scopeImplementing: String?,
+    ): List<XrefReference> = emptyList()
 }
 
 /** ClassGraphProvider that throws on scan; otherwise behaves like the empty provider. */
