@@ -7,6 +7,7 @@ import codelens.core.model.ConstantKind
 import codelens.core.model.MethodCalls
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.Handle
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
@@ -22,6 +23,15 @@ import org.slf4j.LoggerFactory
  * `invokespecial`) becomes a [CallSite] carrying the constants seen since the
  * previous invocation. It returns *raw facts* — every invocation, with no
  * framework-specific filtering.
+ *
+ * Lambdas and method references compile to `invokedynamic`. The scan reads the
+ * `LambdaMetafactory` bootstrap and resolves the implementation method (the
+ * synthetic `lambda$…` body, or the referenced method for a method reference),
+ * recording it on the [CallSite] via [CallSite.invokeDynamic] /
+ * [CallSite.implMethodName]. `StringConcatFactory` invokedynamics (string
+ * concatenation) are recognized and skipped. The constant window is *not*
+ * cleared at an `invokedynamic`: a constant loaded before a lambda argument
+ * (e.g. a framework route path) must survive to the call that consumes it.
  *
  * The scan technique (track `LDC` constants, correlate with subsequent
  * `INVOKE`s) is generalized from an earlier framework-specific route extractor:
@@ -153,6 +163,46 @@ class CallSiteExtractor(
             // Constants belong to the call that just consumed them; reset so the
             // next call only sees constants loaded after this point.
             recentConstants.clear()
+        }
+
+        override fun visitInvokeDynamicInsn(
+            name: String?,
+            descriptor: String?,
+            bootstrapMethodHandle: Handle?,
+            vararg bootstrapMethodArguments: Any?,
+        ) {
+            // Note: the constant window is intentionally NOT cleared here. A lambda
+            // creation does not consume the constants destined for the call that
+            // takes the lambda (e.g. `chain.path("users", ctx -> …)` — "users"
+            // must survive the invokedynamic to reach the `path` call).
+            if (name == null || descriptor == null || bootstrapMethodHandle == null) return
+
+            // Only LambdaMetafactory bootstraps (metafactory / altMetafactory) denote
+            // a lambda or method reference. Everything else — notably
+            // StringConcatFactory (string concatenation) — is not a call we model.
+            if (bootstrapMethodHandle.owner != "java/lang/invoke/LambdaMetafactory") return
+
+            // For both metafactory and altMetafactory the second bootstrap argument
+            // is the implementation-method Handle (owner/name/desc + a tag marking
+            // a synthetic lambda vs a method-reference target).
+            val implHandle = bootstrapMethodArguments.getOrNull(1) as? Handle ?: return
+
+            calls.add(
+                CallSite(
+                    // The functional-interface (SAM) type produced by the indy is its return type.
+                    ownerType = Type.getReturnType(descriptor).className,
+                    // The functional-interface method being implemented (e.g. "run", "handle").
+                    methodName = name,
+                    descriptor = descriptor,
+                    isInterface = false,
+                    // The window belongs to the consuming call, not the lambda creation.
+                    constantArgs = emptyList(),
+                    lineNumber = currentLine,
+                    invokeDynamic = true,
+                    implMethodOwner = Type.getObjectType(implHandle.owner).className,
+                    implMethodName = implHandle.name,
+                ),
+            )
         }
 
         private fun push(arg: ConstantArg) {

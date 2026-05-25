@@ -221,6 +221,12 @@ Each call reports its `ownerType` (the callee's declaring type), `methodName`,
 `descriptor`, the `constantArgs` (LDC string/number/class literals passed near the call),
 and `lineNumber`. `--method` scopes to one method; `--descriptor` disambiguates overloads.
 
+Lambdas and method references appear as call sites with `"invokeDynamic": true`: there
+`ownerType`/`methodName` name the functional interface (SAM) being implemented, while
+`implMethodOwner`/`implMethodName` point at the implementation — a synthetic `lambda$…`
+body for a lambda, or the referenced method for a method reference. To read a lambda
+body, follow `implMethodName`: `codelens calls <implMethodOwner> --method <implMethodName>`.
+
 **Examples:**
 ```bash
 # Everything UserService's methods invoke
@@ -234,8 +240,9 @@ codelens calls com.example.UserService --method handle --json \
   | jq '.methods[].calls[] | select(.ownerType | startswith("java.sql"))'
 ```
 
-Known limits (Tier-1 scan): lambda/method-reference targets compile to `invokedynamic`
-(no callee class); computed (non-constant) arguments don't appear in `constantArgs`.
+Known limit (Tier-1 scan): computed (non-constant) arguments don't appear in
+`constantArgs`. (Lambda/method-reference targets *are* resolved — see the `invokeDynamic`
+call sites above.)
 
 ## Cross-Reference (inverse)
 

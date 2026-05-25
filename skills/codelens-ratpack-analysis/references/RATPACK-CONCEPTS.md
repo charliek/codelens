@@ -46,7 +46,10 @@ public class ApiChain implements Action<Chain> {
 
 Lambda or anonymous class handler defined inline. These compile to `invokedynamic` and have
 no class of their own, so `implementations` won't list them — find them inside the chain
-that registers them (`codelens calls <chain-fqn> --method execute`):
+that registers them (`codelens calls <chain-fqn> --method execute`). Each shows up as an
+`"invokeDynamic": true` call site whose `implMethodName` (e.g. `lambda$execute$0`) is the
+synthetic method holding the handler body; run `calls <chain-fqn> --method lambda$execute$0`
+to read what it does:
 
 ```java
 chain.path("hello", ctx -> ctx.render("Hello"));

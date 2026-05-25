@@ -134,4 +134,79 @@ class CallSiteExtractorTest {
         assertEquals("does.not.Exist", result.fqn)
         assertEquals(emptyList(), result.methods)
     }
+
+    private val lambdaFqn = "codelens.classgraph.fixtures.LambdaSample"
+
+    @Test
+    fun `getCalls resolves a lambda to its synthetic implementation method`() {
+        val calls =
+            provider
+                .getCalls(lambdaFqn, "makeLambda")
+                .methods
+                .single()
+                .calls
+
+        val lambda = calls.firstOrNull { it.invokeDynamic }
+        assertNotNull(lambda, "expected an invokedynamic lambda call site; got $calls")
+        assertEquals("java.lang.Runnable", lambda.ownerType, "SAM type should be the functional interface")
+        assertEquals("run", lambda.methodName, "methodName should be the functional-interface method")
+        assertEquals(lambdaFqn, lambda.implMethodOwner)
+        assertEquals(
+            "lambda\$makeLambda\$0",
+            lambda.implMethodName,
+            "a lambda body resolves to a synthetic lambda\$ method; got ${lambda.implMethodName}",
+        )
+    }
+
+    @Test
+    fun `getCalls resolves a method reference to the referenced method`() {
+        val calls =
+            provider
+                .getCalls(lambdaFqn, "methodRef")
+                .methods
+                .single()
+                .calls
+
+        val ref = calls.firstOrNull { it.invokeDynamic }
+        assertNotNull(ref, "expected an invokedynamic method-reference call site; got $calls")
+        assertEquals("java.util.function.Supplier", ref.ownerType)
+        assertEquals("get", ref.methodName)
+        assertEquals(lambdaFqn, ref.implMethodOwner)
+        assertEquals(
+            "provide",
+            ref.implMethodName,
+            "a method reference resolves directly to the referenced method; got ${ref.implMethodName}",
+        )
+    }
+
+    @Test
+    fun `getCalls skips a string-concatenation invokedynamic`() {
+        // `"value-" + suffix` compiles to a StringConcatFactory invokedynamic on
+        // Java 9+. It is not a call we model, so the method should expose no call
+        // sites at all — and certainly none flagged invokeDynamic.
+        val concat = provider.getCalls(lambdaFqn, "concat").methods.single()
+        assertTrue(
+            concat.calls.none { it.invokeDynamic },
+            "string concatenation must not be reported as an invokedynamic call; got ${concat.calls}",
+        )
+        assertEquals(
+            emptyList(),
+            concat.calls,
+            "a method whose only invokedynamic is string concatenation makes no modeled calls; got ${concat.calls}",
+        )
+    }
+
+    @Test
+    fun `the lambda creation site carries no constant args`() {
+        // The constant window passes through an invokedynamic to the call that
+        // consumes the lambda, so the creation site itself reports no constants.
+        val lambda =
+            provider
+                .getCalls(lambdaFqn, "makeLambda")
+                .methods
+                .single()
+                .calls
+                .single { it.invokeDynamic }
+        assertEquals(emptyList(), lambda.constantArgs)
+    }
 }

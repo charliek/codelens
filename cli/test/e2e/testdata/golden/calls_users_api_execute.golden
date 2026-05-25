@@ -26,11 +26,33 @@
         },
         {
           "constantArgs": [],
+          "descriptor": "()Lratpack/handling/Handler;",
+          "implMethodName": "lambda$execute$0",
+          "implMethodOwner": "sample.api.UsersApi",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 30,
+          "methodName": "handle",
+          "ownerType": "ratpack.handling.Handler"
+        },
+        {
+          "constantArgs": [],
           "descriptor": "(Lratpack/handling/Handler;)Lratpack/handling/Chain;",
           "isInterface": true,
           "lineNumber": 30,
           "methodName": "post",
           "ownerType": "ratpack.handling.Chain"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lratpack/handling/Handler;",
+          "implMethodName": "lambda$execute$1",
+          "implMethodOwner": "sample.api.UsersApi",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 31,
+          "methodName": "handle",
+          "ownerType": "ratpack.handling.Handler"
         },
         {
           "constantArgs": [
@@ -44,6 +66,17 @@
           "lineNumber": 31,
           "methodName": "delete",
           "ownerType": "ratpack.handling.Chain"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lratpack/func/Action;",
+          "implMethodName": "lambda$execute$4",
+          "implMethodOwner": "sample.api.UsersApi",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "execute",
+          "ownerType": "ratpack.func.Action"
         },
         {
           "constantArgs": [
@@ -77,5 +110,5 @@
       "methodName": "execute"
     }
   ],
-  "totalCalls": 6
+  "totalCalls": 9
 }

@@ -1,5 +1,7 @@
 package codelens.core.model
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 // Models for the general call-site extraction primitive (`calls`).
@@ -10,11 +12,17 @@ import kotlinx.serialization.Serializable
 // before the call. These are raw facts — no framework-specific filtering is
 // applied. Consumers (the CLI / an LLM via a skill) narrow and interpret them.
 //
+// Lambdas and method references compile to `invokedynamic`; the scan resolves
+// the `LambdaMetafactory` bootstrap to the implementation method (a synthetic
+// `lambda$…` body for a lambda, or the referenced method for a method
+// reference) and records it on the [CallSite] (see [CallSite.invokeDynamic] /
+// [CallSite.implMethodName]). `StringConcatFactory` invokedynamics (string
+// concatenation) are recognized and skipped, not mistaken for calls.
+//
 // This is a Tier-1 analysis: a linear scan with a sliding window of recent
-// constants, not operand-stack simulation. Known limits (documented, not
+// constants, not operand-stack simulation. Known limit (documented, not
 // fixed): arguments produced by other calls or computed at runtime resolve as
-// "unknown" (absent from CallSite.constantArgs); lambda / method-reference
-// targets compile to `invokedynamic` and carry no `.class` literal.
+// "unknown" (absent from CallSite.constantArgs).
 
 /** The kind of a captured bytecode constant. */
 @Serializable
@@ -56,6 +64,7 @@ data class ConstantArg(
 /**
  * A single invocation made by a method body.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class CallSite(
     /** Dotted FQN of the type that declares the invoked method (the call receiver's static type). */
@@ -73,6 +82,32 @@ data class CallSite(
     val constantArgs: List<ConstantArg> = emptyList(),
     /** Source line number of the call, when debug info is present; otherwise null. */
     val lineNumber: Int? = null,
+    /**
+     * True when this call site is a lambda or method reference materialized via
+     * `invokedynamic` (a `LambdaMetafactory` bootstrap) rather than a direct
+     * `invoke*` instruction. For such sites [ownerType]/[methodName] describe
+     * the functional interface (SAM) being implemented and [implMethodOwner]/
+     * [implMethodName] point at the implementation method.
+     *
+     * Annotated `@EncodeDefault(NEVER)` so ordinary call sites stay byte-identical
+     * on the wire (the field is omitted unless true).
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val invokeDynamic: Boolean = false,
+    /**
+     * For an [invokeDynamic] lambda/method reference: dotted FQN of the type
+     * declaring the implementation method (e.g. the enclosing class for a
+     * `lambda$…` body, or the receiver type for a method reference). Null otherwise.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val implMethodOwner: String? = null,
+    /**
+     * For an [invokeDynamic] lambda/method reference: the implementation
+     * method's name (e.g. `lambda$execute$0` for a lambda, or the referenced
+     * method name for a method reference). Null otherwise.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val implMethodName: String? = null,
 )
 
 /**
