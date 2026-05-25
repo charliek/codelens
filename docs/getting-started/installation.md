@@ -50,6 +50,33 @@ for the full resolution order and the floor/ceiling rules.
 codelens version
 ```
 
+## Install the skills
+
+codelens publishes four agent skills — JVM analysis, source lookup, Kotlin
+linting, and Ratpack migration analysis — that drive the codelens CLI for you.
+Install the CLI (above) first; the skills shell out to it.
+
+=== "Any agent (skills.sh)"
+
+    Installs into Claude Code, GitHub Copilot, OpenCode, and many other agents,
+    auto-detecting the ones you have:
+
+    ```bash
+    npx skills add charliek/codelens
+    ```
+
+=== "Claude Code plugin"
+
+    A native alternative that namespaces the skills as `codelens:<name>`:
+
+    ```text
+    /plugin marketplace add charliek/codelens
+    /plugin install codelens@codelens
+    ```
+
+What the skills do — composing the general primitives into framework-specific
+analysis — is covered in [Framework Analysis](../concepts/framework-analysis.md).
+
 ## Manual / standalone install
 
 You don't need Homebrew. Put the `codelens` binary on your `PATH` and make the
