@@ -1,5 +1,5 @@
 {
-  "edgeCount": 31,
+  "edgeCount": 36,
   "edges": [
     {
       "source": "com.example.shop.model.Order",
@@ -20,6 +20,21 @@
       "source": "com.example.shop.report.ReportGenerator",
       "target": "com.example.shop.service.ProductService",
       "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.repository.CustomerRepository",
+      "target": "com.example.shop.model.Customer",
+      "type": "IMPLEMENTS"
+    },
+    {
+      "source": "com.example.shop.repository.OrderRepository",
+      "target": "com.example.shop.model.Order",
+      "type": "IMPLEMENTS"
+    },
+    {
+      "source": "com.example.shop.repository.ProductRepository",
+      "target": "com.example.shop.model.Product",
+      "type": "IMPLEMENTS"
     },
     {
       "source": "com.example.shop.service.CustomerService",
@@ -88,6 +103,11 @@
     },
     {
       "source": "com.example.shop.service.ReactiveCatalogService",
+      "target": "com.example.shop.model.Product",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.service.ReactiveCatalogService",
       "target": "com.example.shop.service.ProductService",
       "type": "FIELD_TYPE"
     },
@@ -145,6 +165,11 @@
       "source": "com.example.shop.web.ProductController",
       "target": "com.example.shop.web.BaseController",
       "type": "EXTENDS"
+    },
+    {
+      "source": "com.example.shop.web.ReactiveController",
+      "target": "com.example.shop.model.Product",
+      "type": "METHOD_RETURN_TYPE"
     },
     {
       "source": "com.example.shop.web.ReactiveController",
@@ -210,21 +235,21 @@
     },
     {
       "fqn": "com.example.shop.model.Customer",
-      "inDegree": 3,
+      "inDegree": 4,
       "outDegree": 0,
       "packageName": "com.example.shop.model",
       "simpleName": "Customer"
     },
     {
       "fqn": "com.example.shop.model.Order",
-      "inDegree": 2,
+      "inDegree": 3,
       "outDegree": 1,
       "packageName": "com.example.shop.model",
       "simpleName": "Order"
     },
     {
       "fqn": "com.example.shop.model.Product",
-      "inDegree": 3,
+      "inDegree": 6,
       "outDegree": 0,
       "packageName": "com.example.shop.model",
       "simpleName": "Product"
@@ -239,21 +264,21 @@
     {
       "fqn": "com.example.shop.repository.CustomerRepository",
       "inDegree": 1,
-      "outDegree": 0,
+      "outDegree": 1,
       "packageName": "com.example.shop.repository",
       "simpleName": "CustomerRepository"
     },
     {
       "fqn": "com.example.shop.repository.OrderRepository",
       "inDegree": 1,
-      "outDegree": 0,
+      "outDegree": 1,
       "packageName": "com.example.shop.repository",
       "simpleName": "OrderRepository"
     },
     {
       "fqn": "com.example.shop.repository.ProductRepository",
       "inDegree": 1,
-      "outDegree": 0,
+      "outDegree": 1,
       "packageName": "com.example.shop.repository",
       "simpleName": "ProductRepository"
     },
@@ -302,7 +327,7 @@
     {
       "fqn": "com.example.shop.service.ReactiveCatalogService",
       "inDegree": 1,
-      "outDegree": 1,
+      "outDegree": 2,
       "packageName": "com.example.shop.service",
       "simpleName": "ReactiveCatalogService"
     },
@@ -337,7 +362,7 @@
     {
       "fqn": "com.example.shop.web.ReactiveController",
       "inDegree": 0,
-      "outDegree": 2,
+      "outDegree": 3,
       "packageName": "com.example.shop.web",
       "simpleName": "ReactiveController"
     }

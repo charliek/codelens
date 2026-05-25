@@ -11,6 +11,7 @@ import io.github.classgraph.AnnotationInfo as CGAnnotationInfo
 import io.github.classgraph.ClassInfo as CGClassInfo
 import io.github.classgraph.FieldInfo as CGFieldInfo
 import io.github.classgraph.MethodInfo as CGMethodInfo
+import io.github.classgraph.MethodParameterInfo as CGMethodParameterInfo
 import io.github.classgraph.ScanResult as CGScanResult
 
 /**
@@ -302,10 +303,13 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                     }
                 }
 
-                // Return type filter
+                // Return type filter. Match on the erased base type: widening
+                // returnType to its generic form for display must not silently
+                // broaden this filter into type arguments (to find a type used as a
+                // type argument, use `xref`).
                 filter.returnType?.let { returnType ->
                     val methodReturnType = extractTypeFqn(method.returnType)
-                    if (methodReturnType != returnType && !method.returnType.contains(returnType)) {
+                    if (methodReturnType != returnType && methodReturnType?.contains(returnType) != true) {
                         matches = false
                     }
                 }
@@ -424,6 +428,9 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         projectOutputPaths: Set<String>,
     ): ClassInfo {
         val source = classifySource(cgClass, projectOutputPaths)
+        // Generic class signature (when present): lets us capture type arguments of
+        // generic supertypes, e.g. `Foo` in `extends Base<Foo>`.
+        val classSignature = cgClass.typeSignatureOrTypeDescriptor
 
         return ClassInfo(
             name =
@@ -447,6 +454,12 @@ class ClassGraphProviderImpl : ClassGraphProvider {
             methods = cgClass.declaredMethodInfo.map { convertMethod(it) },
             fields = cgClass.declaredFieldInfo.map { convertField(it) },
             jarPath = cgClass.classpathElementFile?.absolutePath,
+            superclassTypeArgs = typeArgumentFqns(classSignature?.superclassSignature),
+            interfaceTypeArgs =
+                classSignature
+                    ?.superinterfaceSignatures
+                    ?.flatMap { typeArgumentFqns(it) }
+                    ?: emptyList(),
         )
     }
 
@@ -545,40 +558,48 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     private fun convertConstructor(ctor: CGMethodInfo): ConstructorInfo =
         ConstructorInfo(
             visibility = getMethodVisibility(ctor),
-            parameters =
-                ctor.parameterInfo.mapIndexed { index, param ->
-                    ParameterInfo(
-                        name = param.name ?: "arg$index",
-                        type = param.typeDescriptor?.toString() ?: "java.lang.Object",
-                        annotations = param.annotationInfo.map { convertAnnotation(it) },
-                    )
-                },
+            parameters = ctor.parameterInfo.mapIndexed { index, param -> convertParameter(index, param) },
             annotations = ctor.annotationInfo.map { convertAnnotation(it) },
             isSynthetic = ctor.isSynthetic,
         )
 
     /**
-     * Converts a method.
+     * Converts a method. The return type is captured in generic form (via the
+     * type signature) when available, with [MethodInfo.returnTypeRefs] holding
+     * every class FQN it references (container + type arguments).
      */
-    private fun convertMethod(method: CGMethodInfo): MethodInfo =
-        MethodInfo(
+    private fun convertMethod(method: CGMethodInfo): MethodInfo {
+        val resultType = method.typeSignatureOrTypeDescriptor?.resultType
+        return MethodInfo(
             name = method.name,
             visibility = getMethodVisibility(method),
-            returnType = method.typeDescriptor?.resultType?.toString() ?: "void",
-            parameters =
-                method.parameterInfo.mapIndexed { index, param ->
-                    ParameterInfo(
-                        name = param.name ?: "arg$index",
-                        type = param.typeDescriptor?.toString() ?: "java.lang.Object",
-                        annotations = param.annotationInfo.map { convertAnnotation(it) },
-                    )
-                },
+            returnType = resultType?.toString() ?: "void",
+            parameters = method.parameterInfo.mapIndexed { index, param -> convertParameter(index, param) },
             annotations = method.annotationInfo.map { convertAnnotation(it) },
             isStatic = method.isStatic,
             isAbstract = method.isAbstract,
             isFinal = method.isFinal,
             isSynthetic = method.isSynthetic,
+            returnTypeRefs = referencedClassFqns(resultType),
         )
+    }
+
+    /**
+     * Converts a method/constructor parameter, capturing its type in generic
+     * form and the set of class FQNs it references (container + type arguments).
+     */
+    private fun convertParameter(
+        index: Int,
+        param: CGMethodParameterInfo,
+    ): ParameterInfo {
+        val typeSignature = param.typeSignatureOrTypeDescriptor
+        return ParameterInfo(
+            name = param.name ?: "arg$index",
+            type = typeSignature?.toString() ?: "java.lang.Object",
+            annotations = param.annotationInfo.map { convertAnnotation(it) },
+            typeRefs = referencedClassFqns(typeSignature),
+        )
+    }
 
     /**
      * Gets the visibility modifier for a method.
@@ -594,15 +615,18 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     /**
      * Converts a field.
      */
-    private fun convertField(field: CGFieldInfo): FieldInfo =
-        FieldInfo(
+    private fun convertField(field: CGFieldInfo): FieldInfo {
+        val typeSignature = field.typeSignatureOrTypeDescriptor
+        return FieldInfo(
             name = field.name,
             visibility = getFieldVisibility(field),
-            type = field.typeDescriptor?.toString() ?: "java.lang.Object",
+            type = typeSignature?.toString() ?: "java.lang.Object",
             annotations = field.annotationInfo.map { convertAnnotation(it) },
             isStatic = field.isStatic,
             isFinal = field.isFinal,
+            typeRefs = referencedClassFqns(typeSignature),
         )
+    }
 
     /**
      * Gets the visibility modifier for a field.

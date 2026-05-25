@@ -1,6 +1,7 @@
 package codelens.core.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Source classification for a class.
@@ -59,10 +60,21 @@ data class AnnotationInfo(
 data class ParameterInfo(
     /** Parameter name (if available, otherwise "arg0", "arg1", etc.) */
     val name: String,
-    /** Fully qualified type name */
+    /**
+     * Fully qualified type name, in generic form when the bytecode carries a
+     * signature (e.g. `java.util.List<com.example.Foo>`), otherwise erased.
+     */
     val type: String,
     /** Annotations on this parameter */
     val annotations: List<AnnotationInfo> = emptyList(),
+    /**
+     * Every class FQN referenced by [type], including type arguments
+     * (`Map<K, Foo>` → `java.util.Map`, `com.example.Foo`). Captured by walking
+     * the bytecode type signature; type variables and primitives contribute
+     * nothing. Server-internal (drives `xref`/`deps`); not serialized.
+     */
+    @Transient
+    val typeRefs: List<String> = emptyList(),
 )
 
 /**
@@ -89,7 +101,11 @@ data class MethodInfo(
     val name: String,
     /** Visibility modifier */
     val visibility: Visibility,
-    /** Return type (fully qualified name) */
+    /**
+     * Return type (fully qualified name), in generic form when the bytecode
+     * carries a signature (e.g. `ratpack.exec.Promise<java.lang.String>`),
+     * otherwise erased.
+     */
     val returnType: String,
     /** Method parameters */
     val parameters: List<ParameterInfo> = emptyList(),
@@ -103,6 +119,13 @@ data class MethodInfo(
     val isFinal: Boolean = false,
     /** Is this method synthetic (compiler-generated)? */
     val isSynthetic: Boolean = false,
+    /**
+     * Every class FQN referenced by [returnType], including type arguments.
+     * Captured from the bytecode type signature (type variables/primitives
+     * excluded). Server-internal (drives `xref`/`deps`); not serialized.
+     */
+    @Transient
+    val returnTypeRefs: List<String> = emptyList(),
 )
 
 /**
@@ -114,7 +137,11 @@ data class FieldInfo(
     val name: String,
     /** Visibility modifier */
     val visibility: Visibility,
-    /** Field type (fully qualified name) */
+    /**
+     * Field type (fully qualified name), in generic form when the bytecode
+     * carries a signature (e.g. `java.util.Map<java.lang.String, com.example.Foo>`),
+     * otherwise erased.
+     */
     val type: String,
     /** Annotations on this field */
     val annotations: List<AnnotationInfo> = emptyList(),
@@ -122,6 +149,13 @@ data class FieldInfo(
     val isStatic: Boolean = false,
     /** Is this field final? */
     val isFinal: Boolean = false,
+    /**
+     * Every class FQN referenced by [type], including type arguments. Captured
+     * from the bytecode type signature (type variables/primitives excluded).
+     * Server-internal (drives `xref`/`deps`); not serialized.
+     */
+    @Transient
+    val typeRefs: List<String> = emptyList(),
 )
 
 /**
@@ -188,4 +222,20 @@ data class ClassInfo(
     val fields: List<FieldInfo> = emptyList(),
     /** Path to the JAR or directory containing this class (for library source resolution) */
     val jarPath: String? = null,
+    /**
+     * Type-argument FQNs of the generic superclass (e.g. `com.example.Foo` for
+     * `extends Base<Foo>`); the base superclass remains in [superclass]. Captured
+     * from the bytecode type signature. Server-internal (drives `xref`/`deps`);
+     * not serialized.
+     */
+    @Transient
+    val superclassTypeArgs: List<String> = emptyList(),
+    /**
+     * Type-argument FQNs of the generic superinterfaces (flattened across all
+     * interfaces, e.g. `com.example.Foo` for `implements Comparable<Foo>`); the
+     * base interfaces remain in [interfaces]. Captured from the bytecode type
+     * signature. Server-internal (drives `xref`/`deps`); not serialized.
+     */
+    @Transient
+    val interfaceTypeArgs: List<String> = emptyList(),
 )

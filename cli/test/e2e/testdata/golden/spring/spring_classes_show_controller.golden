@@ -130,7 +130,7 @@
         "isSynthetic": false,
         "name": "list",
         "parameters": [],
-        "returnType": "java.util.List",
+        "returnType": "java.util.List\u003ccom.example.shop.model.Product\u003e",
         "visibility": "PUBLIC"
       },
       {

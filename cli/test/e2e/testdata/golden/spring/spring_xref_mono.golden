@@ -16,7 +16,7 @@
   "pageSize": 50,
   "references": [
     {
-      "detail": "reactor.core.publisher.Mono",
+      "detail": "reactor.core.publisher.Mono\u003ccom.example.shop.model.Product\u003e",
       "fromFqn": "com.example.shop.service.ReactiveCatalogService",
       "fromSimpleName": "ReactiveCatalogService",
       "fromSource": "PROJECT",
@@ -34,7 +34,7 @@
       "member": "findProduct"
     },
     {
-      "detail": "reactor.core.publisher.Mono",
+      "detail": "reactor.core.publisher.Mono\u003ccom.example.shop.model.Product\u003e",
       "fromFqn": "com.example.shop.web.ReactiveController",
       "fromSimpleName": "ReactiveController",
       "fromSource": "PROJECT",

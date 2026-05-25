@@ -122,7 +122,7 @@
             "type": "java.lang.String"
           }
         ],
-        "returnType": "ratpack.exec.Promise",
+        "returnType": "ratpack.exec.Promise\u003cjava.lang.Object\u003e",
         "visibility": "PRIVATE"
       }
     },
@@ -193,7 +193,7 @@
             "type": "java.lang.String"
           }
         ],
-        "returnType": "ratpack.exec.Promise",
+        "returnType": "ratpack.exec.Promise\u003cjava.lang.String\u003e",
         "visibility": "PRIVATE"
       }
     },
@@ -237,7 +237,7 @@
             "type": "java.lang.String"
           }
         ],
-        "returnType": "ratpack.exec.Promise",
+        "returnType": "ratpack.exec.Promise\u003cjava.lang.String\u003e",
         "visibility": "PUBLIC"
       }
     },

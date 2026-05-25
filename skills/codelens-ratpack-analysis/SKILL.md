@@ -135,15 +135,21 @@ codelens xref ratpack.exec.Blocking
 codelens xref ratpack.exec.Execution
 codelens xref ratpack.exec.Promise
 
+# Which domain types flow through promises? xref spans type arguments, so a type
+# returned as Promise<Order> (or held as Promise<List<Order>>) is found here too:
+codelens xref com.example.model.Order --kind RETURN
+
 # Exactly what a class's method does with promises (operators, Blocking.get, fork):
 codelens calls com.example.UserHandler --method handle --json \
   | jq '.methods[].calls[] | select(.ownerType | test("ratpack.exec"))'
 ```
 
-`xref` of `ratpack.exec.Blocking` returns each reference as a `CALL_RECEIVER` with the
-method (`get`/`on`) and line number — the real blocking call sites. Judge intensity by
-counting these and reading the chains in `source`. See `RATPACK-CONCEPTS.md` for the
-operator/blocking taxonomy.
+`xref` of `ratpack.exec.Promise` finds every method that returns or takes a `Promise<…>`;
+because references span type arguments, `xref` of a *domain* type also surfaces it where it
+only ever appears wrapped in a `Promise<…>`. `xref` of `ratpack.exec.Blocking` returns each
+reference as a `CALL_RECEIVER` with the method (`get`/`on`) and line number — the real
+blocking call sites. Judge intensity by counting these and reading the chains in `source`.
+See `RATPACK-CONCEPTS.md` for the operator/blocking taxonomy.
 
 ## Guice modules and bindings
 
