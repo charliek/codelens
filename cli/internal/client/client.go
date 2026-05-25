@@ -347,6 +347,41 @@ func (c *Client) GetCalls(ctx context.Context, fqn, method, descriptor string) (
 }
 
 // =============================================================================
+// Xref (inverse type cross-reference)
+// =============================================================================
+
+// XrefFilter mirrors the query parameters of the xref endpoint.
+type XrefFilter struct {
+	IncludeLibraries  bool
+	Kind              string
+	ScopeImplementing string
+	Page              int
+	Size              int
+}
+
+// GetXref finds everything that references typeFqn. The type FQN is a single
+// percent-encoded path segment; the rest are query parameters.
+func (c *Client) GetXref(ctx context.Context, typeFqn string, f XrefFilter) (json.RawMessage, error) {
+	p := &params{}
+	size := f.Size
+	if size == 0 {
+		size = 50
+	}
+	p.add("page", strconv.Itoa(f.Page))
+	p.add("size", strconv.Itoa(size))
+	if f.IncludeLibraries {
+		p.add("includeLibraries", "true")
+	}
+	if f.Kind != "" {
+		p.add("kind", f.Kind)
+	}
+	if f.ScopeImplementing != "" {
+		p.add("scopeImplementing", f.ScopeImplementing)
+	}
+	return c.doGet(ctx, "/api/v1/xref/"+pythonQuote(typeFqn), p)
+}
+
+// =============================================================================
 // Ktlint (typed responses)
 // =============================================================================
 

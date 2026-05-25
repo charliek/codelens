@@ -39,6 +39,7 @@ func newRootCmd() *cobra.Command {
 		newClassesCmd(),
 		newMethodsCmd(),
 		newCallsCmd(),
+		newXrefCmd(),
 		newAnnotationsCmd(),
 		newSourceCmd(),
 		newHandlersCmd(),

@@ -1,0 +1,65 @@
+{
+  "appliedFilter": {
+    "includeLibraries": false,
+    "kind": null,
+    "scopeImplementing": null
+  },
+  "countsByKind": {
+    "IMPLEMENTS": 5
+  },
+  "countsByPackage": {
+    "sample.handlers": 5
+  },
+  "page": 0,
+  "pageSize": 50,
+  "references": [
+    {
+      "detail": null,
+      "fromFqn": "sample.handlers.AsyncHandler",
+      "fromSimpleName": "AsyncHandler",
+      "fromSource": "PROJECT",
+      "kind": "IMPLEMENTS",
+      "lineNumber": null,
+      "member": null
+    },
+    {
+      "detail": null,
+      "fromFqn": "sample.handlers.BadHandler",
+      "fromSimpleName": "BadHandler",
+      "fromSource": "PROJECT",
+      "kind": "IMPLEMENTS",
+      "lineNumber": null,
+      "member": null
+    },
+    {
+      "detail": null,
+      "fromFqn": "sample.handlers.BlockingHandler",
+      "fromSimpleName": "BlockingHandler",
+      "fromSource": "PROJECT",
+      "kind": "IMPLEMENTS",
+      "lineNumber": null,
+      "member": null
+    },
+    {
+      "detail": null,
+      "fromFqn": "sample.handlers.LoggingBadHandler",
+      "fromSimpleName": "LoggingBadHandler",
+      "fromSource": "PROJECT",
+      "kind": "IMPLEMENTS",
+      "lineNumber": null,
+      "member": null
+    },
+    {
+      "detail": null,
+      "fromFqn": "sample.handlers.SimpleHandler",
+      "fromSimpleName": "SimpleHandler",
+      "fromSource": "PROJECT",
+      "kind": "IMPLEMENTS",
+      "lineNumber": null,
+      "member": null
+    }
+  ],
+  "totalCount": 5,
+  "totalPages": 1,
+  "typeFqn": "ratpack.handling.Handler"
+}

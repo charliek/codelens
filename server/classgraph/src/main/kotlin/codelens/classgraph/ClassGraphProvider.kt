@@ -149,4 +149,23 @@ interface ClassGraphProvider {
         methodName: String? = null,
         descriptor: String? = null,
     ): CallSiteList
+
+    /**
+     * Find every reference to a type across the scanned classes (inverse
+     * cross-reference). Combines a signature-level pass (supertypes, field /
+     * parameter / return types, annotations) with a bytecode-level pass
+     * (instantiations, call receivers).
+     *
+     * @param typeFqn The type being cross-referenced
+     * @param includeLibraries Include references from library classes
+     *   (signature-level only; the bytecode pass always scans project classes)
+     * @param scopeImplementing When set, only count references from classes
+     *   that implement (or extend) this type
+     * @return Raw, unpaginated references
+     */
+    fun getReferencesToType(
+        typeFqn: String,
+        includeLibraries: Boolean = false,
+        scopeImplementing: String? = null,
+    ): List<XrefReference>
 }

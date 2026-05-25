@@ -279,6 +279,15 @@ class AnalysisService(
     ): CallSiteList = classGraphProvider.getCalls(fqn, methodName, descriptor)
 
     /**
+     * Find every reference to a type across the scanned classes (inverse cross-reference).
+     */
+    fun getReferencesToType(
+        typeFqn: String,
+        includeLibraries: Boolean = false,
+        scopeImplementing: String? = null,
+    ): List<XrefReference> = classGraphProvider.getReferencesToType(typeFqn, includeLibraries, scopeImplementing)
+
+    /**
      * Lazily initialized source resolver for project sources.
      */
     private val sourceResolver: SourceResolver? by lazy {

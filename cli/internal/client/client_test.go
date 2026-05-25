@@ -370,6 +370,50 @@ func TestCalls_DescriptorOnlySentWithMethod(t *testing.T) {
 	}
 }
 
+// ====================== xref ======================
+
+func TestXref_DefaultPaginationAndSingleSegment(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	if _, err := c.GetXref(ctx(), "javax.sql.DataSource", XrefFilter{}); err != nil {
+		t.Fatal(err)
+	}
+	if cap.last().Path != "/api/v1/xref/javax.sql.DataSource" {
+		t.Errorf("unexpected path: %s", cap.last().Path)
+	}
+	q := cap.last().Query
+	if q.Get("page") != "0" || q.Get("size") != "50" {
+		t.Errorf("expected default page=0 size=50; got page=%q size=%q", q.Get("page"), q.Get("size"))
+	}
+}
+
+func TestXref_ForwardsAllFilters(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	_, err := c.GetXref(ctx(), "ratpack.exec.Blocking", XrefFilter{
+		IncludeLibraries:  true,
+		Kind:              "CALL_RECEIVER",
+		ScopeImplementing: "ratpack.handling.Handler",
+		Page:              2,
+		Size:              10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := cap.last().Query
+	for k, want := range map[string]string{
+		"includeLibraries":  "true",
+		"kind":              "CALL_RECEIVER",
+		"scopeImplementing": "ratpack.handling.Handler",
+		"page":              "2",
+		"size":              "10",
+	} {
+		if got := q.Get(k); got != want {
+			t.Errorf("query[%q]=%q want %q", k, got, want)
+		}
+	}
+}
+
 // ====================== ktlint (POST + typed) ======================
 
 func TestKtlint_LintFile_BodyHasFilePath(t *testing.T) {

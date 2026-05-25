@@ -68,6 +68,14 @@ var allCases = []Case{
 	// Real Blocking.get / Promise.map / Promise.then calls in a handler body.
 	{Name: "calls_blocking_handler_handle", Args: []string{"calls", "sample.handlers.BlockingHandler", "--method", "handle"}},
 
+	// ---------- xref (inverse type cross-reference) ----------
+	// Signature-level: who implements the Handler interface (+ kind/package aggregates).
+	{Name: "xref_handler_interface", Args: []string{"xref", "ratpack.handling.Handler"}},
+	// Bytecode-level: who calls ratpack.exec.Blocking (CALL_RECEIVER with line numbers).
+	{Name: "xref_blocking", Args: []string{"xref", "ratpack.exec.Blocking"}},
+	// Kind filter narrows the references while aggregates still describe the set.
+	{Name: "xref_userservice_field", Args: []string{"xref", "sample.handlers.UserService", "--kind", "FIELD"}},
+
 	// ---------- handlers ----------
 	{Name: "handlers_list", Args: []string{"handlers", "list"}},
 	{Name: "handlers_list_filtered", Args: []string{"handlers", "list", "--include-libraries"}},
