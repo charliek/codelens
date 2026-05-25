@@ -1,15 +1,20 @@
 ---
 name: codelens-ratpack-analysis
 description: |
-  Assess a Ratpack application for migration (to Spring, Micronaut, Helidon, etc.) using
-  CodeLens's general JVM primitives. Use this skill whenever the user is analyzing,
-  scoping, or planning a migration OFF Ratpack — "how big is this Ratpack migration",
-  "find the handlers / routes / Promise usage", "what blocks the compute thread", "what
-  order should we migrate in" — or otherwise wants to understand a Ratpack codebase's
-  shape. This is a worked example of doing framework-specific analysis with general
-  tools: CodeLens has NO Ratpack-specific commands; every answer here is a recipe over
-  `classes`, `calls`, `xref`, `deps`, `methods`, `annotations`, and `source`, with the
-  Ratpack knowledge supplied by this skill's reference docs.
+  Use this skill for any request to examine, search, inventory, count, or map an existing
+  Ratpack codebase, or to scope, size, order, or estimate the effort of migrating one off
+  Ratpack onto another JVM framework (Spring, Micronaut, Helidon, etc.). It covers:
+  finding route handlers and Chain routing, building a route inventory, measuring
+  Promise/Blocking.get/fork/async usage, spotting handlers that block the compute thread,
+  locating Guice modules and Registry bindings, and listing external integrations. Ratpack
+  hides handlers and routes inside lambdas, invokedynamic, and bytecode that plain grep and
+  generic search miss, so reach for this skill even when the request sounds like a simple
+  "find the handlers," "count the Promise usage," or grep-style lookup over the code. Skip
+  it for writing or scaffolding new Ratpack code, conceptual "how does Ratpack work"
+  questions, and analyzing apps not built on Ratpack (plain Spring, Struts, etc.). It is a
+  worked example of framework-specific analysis built entirely from CodeLens's general
+  primitives — `classes`, `calls`, `xref`, `deps`, `methods`, `annotations`, `source` —
+  with the Ratpack knowledge supplied by this skill's reference docs.
 ---
 
 # Ratpack Migration Analysis
@@ -96,27 +101,37 @@ codelens calls com.example.ApiChain --method execute --json \
              ((.constantArgs[]? | select(.kind=="STRING") | .value) // "(no literal path)")'
 ```
 
-`prefix(path, SomeChain.class)` nests a sub-chain: follow the class-literal constant arg
-by running `calls` on that nested `Action<Chain>` and prepend the prefix path. To preview
-the target shape, map each `METHOD path` to the destination framework's annotation by hand
-(e.g. `GET /users/:id` → Spring `@GetMapping("/users/{id}")`).
+`prefix(path, …)` nests a sub-chain. If the second arg is a class literal
+(`prefix("admin", AdminChain.class)`), follow the `CLASS` constant arg by running `calls` on
+that nested `Action<Chain>` and prepend the prefix path. If it's an inline lambda
+(`prefix("admin", c -> { … })`), the sub-chain lives in a synthetic `lambda$…` method —
+resolve it like any inline handler (below) and recurse into it, since it registers its own
+routes (which may themselves use inline lambdas). To preview the target shape, map each
+`METHOD path` to the destination framework's annotation by hand (e.g. `GET /users/:id` →
+Spring `@GetMapping("/users/{id}")`).
 
-**Inline lambda handlers** (`chain.post(ctx -> …)`) resolve too: the lambda is created by
-an `"invokeDynamic": true` call site that sits *immediately before* its route call in
-program order, and its `implMethodName` (e.g. `lambda$execute$0`) names the handler body.
-So to read what an inline handler does, take the `implMethodName` of the indy site preceding
-the route and run `calls` on it:
+**Inline lambda handlers** (`chain.post(ctx -> …)`) resolve too. The lambda is an
+`"invokeDynamic": true` call site, and the reliable pairing signal is *position*: the indy
+site sits immediately before the route call it feeds and shares its `lineNumber`. Its
+`implMethodName` (e.g. `lambda$execute$0`) names the handler body, which is its own method —
+read it with another `calls`. So walk the call list in program order: a route call
+(`ownerType == "ratpack.handling.Chain"`) whose handler was inline is preceded by an indy
+site on the same line; pair them, then read the body:
 
 ```bash
-# Pair each inline-lambda handler with the route it backs (indy site → next Chain route):
+# Pair adjacent indy→route entries WITHIN one method (the indy handler and its Chain route):
 codelens calls com.example.ApiChain --method execute --json \
-  | jq -r '.methods[].calls as $c | range(0; $c|length) as $i
-           | select($c[$i].invokeDynamic and ($c[$i+1].ownerType?=="ratpack.handling.Chain"))
-           | "\($c[$i+1].methodName | ascii_upcase) -> \($c[$i].implMethodName)"'
+  | jq -r '.methods[].calls as $c | range(0; ($c|length)-1) as $i
+           | select($c[$i].invokeDynamic and $c[$i+1].ownerType=="ratpack.handling.Chain")
+           | "\($c[$i+1].methodName | ascii_upcase)\t\($c[$i].implMethodName)"'
 
-# Then read the handler body:
+# Read an inline handler's body (or a prefix's sub-chain), then recurse if it registers routes:
 codelens calls com.example.ApiChain --method 'lambda$execute$0'
 ```
+
+Treat that `jq` as a per-method starting point, not the whole answer: it pairs sites within
+a single method, so run it again on each `lambda$…` sub-chain to cover nested routes, and
+confirm pairings against the raw `calls` output (the indy and its route share a `lineNumber`).
 
 > Known limit: computed (non-literal) paths show no string constant. (Lambda and
 > method-reference handlers *are* resolved — via the `invokeDynamic` call site's

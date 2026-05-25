@@ -1,9 +1,16 @@
 ---
 name: codelens-kotlin-linting
 description: |
-  Check and format Kotlin code using ktlint. Use this skill when you need to verify
-  Kotlin code style, find style violations, or automatically format Kotlin files
-  to conform to the Kotlin coding conventions and ktlint rules.
+  Use when the user's goal is checking or fixing the style/formatting of existing Kotlin
+  (.kt) code. Triggers: asking whether Kotlin follows its coding conventions or a team style
+  guide; formatting or reformatting a file, directory, or whole project; finding or fixing
+  style violations (indentation, import ordering, wildcard imports, blank lines, trailing
+  commas, max line length); making a ktlint or lint gate pass before a commit/PR or in CI;
+  or diagnosing why a ktlint check is failing. Applies even when "ktlint" isn't named — e.g.
+  "does this Kotlin match the style guide?", "check MyViewModel.kt for style violations," or
+  "auto-format my changed .kt before the PR." Do NOT use for Java or other-language
+  formatting, detekt static analysis / code smells / complexity, writing or generating new
+  Kotlin, navigating or finding Kotlin types, or upgrading ktlint/Gradle versions.
 ---
 
 # Kotlin Linting
