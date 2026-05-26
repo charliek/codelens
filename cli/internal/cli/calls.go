@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/charliek/codelens/cli/internal/client"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -31,9 +32,9 @@ func newCallsCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetCalls(ctx, args[0], method, descriptor)
-			})
+			}, render.Calls)
 		},
 	}
 	cmd.Flags().StringVarP(&method, "method", "m", "", "Only show calls made by this method")

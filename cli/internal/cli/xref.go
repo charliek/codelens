@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/charliek/codelens/cli/internal/client"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -21,9 +22,9 @@ func newXrefCmd() *cobra.Command {
 			"calls methods on it. Results are grouped by kind with package/kind aggregates.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetXref(ctx, args[0], f)
-			})
+			}, render.Xref)
 		},
 	}
 	cmd.Flags().BoolVarP(&f.IncludeLibraries, "include-libraries", "L", false, "Include references from library classes")

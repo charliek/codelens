@@ -46,8 +46,11 @@ dependencies. Use `codelens status` to monitor — the server transitions throug
 `LOADING` (scanning) to `READY` (fully available). Subsequent starts are fast
 due to cached dependencies.
 
-Several examples below pipe JSON output through `jq` — install it via your
-package manager if you want to follow those verbatim.
+**Output:** in a terminal, commands print human-readable tables. Pass `--json`
+to get the stable machine-readable payload — it is the documented shape and is
+also auto-selected when output is piped or captured. When parsing output (e.g.
+through `jq`), pass `--json` explicitly. Several examples below pipe JSON through
+`jq` — install it via your package manager if you want to follow those verbatim.
 
 ## Class Discovery
 
@@ -189,10 +192,10 @@ separate `incoming` and `outgoing` arrays. Use `jq` to pick the side you want.
 codelens classes dependencies com.example.UserService
 
 # What does UserService depend on?
-codelens classes dependencies com.example.UserService | jq '.outgoing'
+codelens classes dependencies com.example.UserService --json | jq '.outgoing'
 
 # What depends on UserService?
-codelens classes dependencies com.example.UserService | jq '.incoming'
+codelens classes dependencies com.example.UserService --json | jq '.incoming'
 ```
 
 ## Annotation Usages
@@ -324,7 +327,7 @@ codelens classes list --annotation org.springframework.web.bind.annotation.RestC
 codelens classes implementations com.example.UserRepository
 
 # 2. Find incoming dependencies (one call returns both directions)
-codelens classes dependencies com.example.UserRepository | jq '.incoming'
+codelens classes dependencies com.example.UserRepository --json | jq '.incoming'
 
 # 3. View the source (use codelens-source-lookup skill)
 codelens source show com.example.UserRepositoryImpl

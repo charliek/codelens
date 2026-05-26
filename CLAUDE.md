@@ -86,9 +86,14 @@ The server is split into six Gradle modules:
 - `internal/server/` — child-process lifecycle: spawn, ready-line parsing, graceful stop
 - `internal/state/` — ServerState repository at `~/.cache/codelens/servers/<hash>.json`
 - `internal/settings/` — env-driven config, Java/SDKMAN/Gradle detection, JAR discovery
-- `internal/output/` — JSON / table / tty rendering
+- `internal/output/` — JSON emit (`PrintRawJSON` preserves server key order) + `IsTTY`
+- `internal/render/` — human-readable table renderers (one per command); pure consumers of the response bytes
 - `internal/errors/` — typed exit codes (Success=0, ServerError=4, Timeout=5, NotRunning=7, …)
 - `test/e2e/` — runs the CLI against a live JVM and diffs `--json` output against committed golden fixtures
+
+### Output: tables vs JSON
+
+Commands render either a human-readable table (default on a TTY) or JSON (default when piped, or with `--json`); `--table` forces a table, and the two flags are mutually exclusive (`internal/cli/mode.go:resolveMode`). The JSON path is the canonical, golden-locked contract and stays byte-identical — `emit` (`internal/cli/common.go`) passes `json.RawMessage` straight to `output.PrintRawJSON`; table renderers in `internal/render/` decode the same bytes into presentation-only structs and never feed back into the JSON path (re-marshaling would reorder keys and break golden parity). A renderer returns `render.ErrFallback` when there's no sensible table (DOT bytes, empty graph), and `emit` falls back to JSON. The e2e goldens always pass `--json`, and unit/e2e runs are non-TTY (so the default is JSON) — that's why the table layer is additive and existing goldens are unaffected. `completeness_test.go` fails if a new analysis command isn't wired to a renderer.
 
 ### Key Entry Points
 

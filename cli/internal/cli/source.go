@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charliek/codelens/cli/internal/client"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -20,9 +21,9 @@ func newSourceShowCmd() *cobra.Command {
 		Short: "Show source code for a class",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetSource(ctx, args[0])
-			})
+			}, render.SourceShow)
 		},
 	}
 }
@@ -39,9 +40,9 @@ func newSourceMethodCmd() *cobra.Command {
 			if paramTypes != "" {
 				pts = strings.Split(paramTypes, ",")
 			}
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetMethodSource(ctx, args[0], args[1], pts, contextLines)
-			})
+			}, render.SourceMethod)
 		},
 	}
 	cmd.Flags().StringVar(&paramTypes, "param-types", "", "Comma-separated parameter types for disambiguation")

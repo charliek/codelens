@@ -10,10 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Globals populated by persistent flags. PersistentPreRun resolves them.
+// Globals populated by persistent flags. resolveMode() reads flagJSON/flagTable
+// to pick the output mode; resolveProjectPath reads flagProject.
 var (
 	flagProject string
 	flagJSON    bool
+	flagTable   bool
 )
 
 func newRootCmd() *cobra.Command {
@@ -25,7 +27,12 @@ func newRootCmd() *cobra.Command {
 	}
 
 	root.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "Path to the target Gradle project (defaults to cwd)")
-	root.PersistentFlags().BoolVar(&flagJSON, "json", false, "Emit JSON output (auto-enabled when stdout is not a TTY)")
+	root.PersistentFlags().BoolVar(&flagJSON, "json", false, "Force JSON output (default when stdout is not a TTY)")
+	root.PersistentFlags().BoolVar(&flagTable, "table", false, "Force human-readable table output (default on a TTY)")
+	// --json and --table are opposites; reject both at once. Marking on the
+	// root command covers every subcommand because cobra merges persistent
+	// flags and validates flag groups per command during execute().
+	root.MarkFlagsMutuallyExclusive("json", "table")
 
 	root.AddCommand(
 		newVersionCmd(),
@@ -90,6 +97,7 @@ func isUsageError(err error) bool {
 		"invalid argument",
 		"required flag(s)",
 		"accepts ",
+		"if any flags in the group", // cobra's MarkFlagsMutuallyExclusive violation
 	} {
 		if len(msg) >= len(prefix) && msg[:len(prefix)] == prefix {
 			return true

@@ -5,6 +5,7 @@ import (
 
 	"github.com/charliek/codelens/cli/internal/client"
 	clierrors "github.com/charliek/codelens/cli/internal/errors"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +35,7 @@ func newLintCheckCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if emitErr := emitAnalysisResult(cmd, result); emitErr != nil {
+			if emitErr := emit(cmd, result, render.LintCheck); emitErr != nil {
 				return emitErr
 			}
 			// Drive exit 1 when violations were found. Empty message
@@ -70,12 +71,12 @@ func newLintFormatCmd() *cobra.Command {
 		Short: "Format a Kotlin file (or whole project); writes by default unless --dry-run",
 		Args:  cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				if len(args) == 1 {
 					return c.FormatFile(ctx, args[0], !dryRun)
 				}
 				return c.FormatProject(ctx, pattern, includeTests, dryRun)
-			})
+			}, render.LintFormat)
 		},
 	}
 	cmd.Flags().StringVar(&pattern, "pattern", "", "Glob pattern (project mode only)")

@@ -11,6 +11,7 @@ import (
 	"github.com/charliek/codelens/cli/internal/client"
 	clierrors "github.com/charliek/codelens/cli/internal/errors"
 	"github.com/charliek/codelens/cli/internal/output"
+	renderpkg "github.com/charliek/codelens/cli/internal/render"
 	"github.com/charliek/codelens/cli/internal/server"
 	"github.com/charliek/codelens/cli/internal/state"
 	"github.com/spf13/cobra"
@@ -25,18 +26,44 @@ var dataClientFactory = client.NewClient
 // struct) is emitted as JSON / raw bytes to cmd.OutOrStdout().
 type analysisFunc func(ctx context.Context, c *client.Client) (any, error)
 
-// withRunningServer is the standard preamble for any analysis command:
-// resolve project, auto-start the server if needed, call fn, emit result.
+// renderFunc renders a fetched result as human-readable table output to w. It
+// receives the same value runWithServer returns (json.RawMessage, []byte for
+// DOT, or a typed struct), so renderers cast as needed. Returning
+// render.ErrFallback means "no sensible table — emit JSON instead". The
+// render.* functions satisfy this type structurally.
+type renderFunc func(w io.Writer, v any) error
+
+// withRenderedServer is the standard preamble for an analysis command: resolve
+// project, auto-start the server if needed, call fetch, then emit the result —
+// as a table (via render) on a TTY or as JSON when piped / forced with --json.
 //
-// Use this for commands that don't need to react to the response (no exit
-// code based on response content, no client-side filtering). Commands that
-// need that should call runWithServer directly.
-func withRunningServer(cmd *cobra.Command, fn analysisFunc) error {
-	result, err := runWithServer(fn)
+// Use this for commands that don't need to react to the response (no exit code
+// based on response content). Commands that need that should call runWithServer
+// directly and then call emit.
+func withRenderedServer(cmd *cobra.Command, fetch analysisFunc, render renderFunc) error {
+	result, err := runWithServer(fetch)
 	if err != nil {
 		return err
 	}
-	return emitAnalysisResult(cmd, result)
+	return emit(cmd, result, render)
+}
+
+// emit is the single output-dispatch point. It resolves the output mode once
+// and either prints JSON (byte-identical to the pre-table behavior) or runs the
+// renderer, falling back to JSON when the renderer returns render.ErrFallback
+// (e.g. DOT bytes, an empty graph, or an unparseable payload).
+func emit(cmd *cobra.Command, v any, render renderFunc) error {
+	w := cmd.OutOrStdout()
+	if render == nil || resolveMode() == modeJSON {
+		return emitAnalysisResultTo(w, v)
+	}
+	if err := render(w, v); err != nil {
+		if errors.Is(err, renderpkg.ErrFallback) {
+			return emitAnalysisResultTo(w, v)
+		}
+		return err
+	}
+	return nil
 }
 
 // runWithServer handles project resolution + server auto-start + the
@@ -84,10 +111,6 @@ func runWithServer(fn analysisFunc) (any, error) {
 	return result, nil
 }
 
-func emitAnalysisResult(cmd *cobra.Command, v any) error {
-	return emitAnalysisResultTo(cmd.OutOrStdout(), v)
-}
-
 func emitAnalysisResultTo(w io.Writer, v any) error {
 	switch r := v.(type) {
 	case json.RawMessage:
@@ -101,6 +124,18 @@ func emitAnalysisResultTo(w io.Writer, v any) error {
 	default:
 		return output.PrintJSON(w, v)
 	}
+}
+
+// emitLifecycle emits a locally-computed lifecycle result. JSON mode (or a
+// non-TTY) uses the JSON path with jsonValue, byte-identical to before tables
+// existed; table mode runs table. Unlike emit, table takes no value because
+// lifecycle commands already hold typed data and render it directly.
+func emitLifecycle(cmd *cobra.Command, jsonValue any, table func(w io.Writer) error) error {
+	w := cmd.OutOrStdout()
+	if resolveMode() == modeJSON {
+		return emitAnalysisResultTo(w, jsonValue)
+	}
+	return table(w)
 }
 
 // apiErrorToExit maps client errors to typed exit codes. Mirrors Python

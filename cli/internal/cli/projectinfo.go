@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/charliek/codelens/cli/internal/client"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -15,9 +16,9 @@ func newProjectCmd() *cobra.Command {
 		Use:   "project",
 		Short: "Show project info",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.Project(ctx)
-			})
+			}, render.Project)
 		},
 	}
 }

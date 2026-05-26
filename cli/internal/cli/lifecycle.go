@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/charliek/codelens/cli/internal/client"
 	clierrors "github.com/charliek/codelens/cli/internal/errors"
-	"github.com/charliek/codelens/cli/internal/output"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/charliek/codelens/cli/internal/server"
 	"github.com/charliek/codelens/cli/internal/settings"
 	"github.com/charliek/codelens/cli/internal/state"
@@ -140,9 +142,16 @@ func newStopCmd() *cobra.Command {
 			if err != nil {
 				return clierrors.New(clierrors.ServerError, "%v", err)
 			}
-			return output.PrintJSON(cmd.OutOrStdout(), map[string]any{
+			return emitLifecycle(cmd, map[string]any{
 				"stopped": stopped,
 				"project": projectPath,
+			}, func(w io.Writer) error {
+				if stopped {
+					fmt.Fprintf(w, "Stopped server for %s\n", projectPath)
+				} else {
+					fmt.Fprintf(w, "No running server for %s\n", projectPath)
+				}
+				return nil
 			})
 		},
 	}
@@ -178,18 +187,51 @@ func newStatusCmd() *cobra.Command {
 			// When one IS running, emit the merged server-state dict — with
 			// NO "running" field at all.
 			if st == nil {
-				return output.PrintJSON(cmd.OutOrStdout(), map[string]any{
+				return emitLifecycle(cmd, map[string]any{
 					"running": false,
 					"project": projectPath,
+				}, func(w io.Writer) error {
+					return render.KVBlock(w, [][2]string{
+						{"Running:", "No"},
+						{"Project:", projectPath},
+					})
 				})
 			}
 			merged, err := mergeStateWithInfo(st)
 			if err != nil {
 				return err
 			}
-			return output.PrintJSON(cmd.OutOrStdout(), merged)
+			return emitLifecycle(cmd, merged, func(w io.Writer) error {
+				return statusTable(w, merged)
+			})
 		},
 	}
+}
+
+// statusTable renders the merged status dict as a key/value block, reading a
+// fixed set of keys in a stable order (never via map iteration). Keys absent
+// from the dict — e.g. live /admin/info fields when it didn't respond — are
+// skipped.
+func statusTable(w io.Writer, m map[string]any) error {
+	fields := []struct{ label, key string }{
+		{"Project:", "projectName"},
+		{"Path:", "projectPath"},
+		{"Status:", "status"},
+		{"Mode:", "serverMode"},
+		{"Host:", "host"},
+		{"Port:", "port"},
+		{"PID:", "pid"},
+		{"Version:", "version"},
+		{"Uptime:", "uptime"},
+		{"Idle:", "idleDuration"},
+	}
+	var rows [][2]string
+	for _, f := range fields {
+		if v, ok := m[f.key]; ok && v != nil {
+			rows = append(rows, [2]string{f.label, fmt.Sprintf("%v", v)})
+		}
+	}
+	return render.KVBlock(w, rows)
 }
 
 // mergeStateWithInfo joins the persisted state with /admin/info live data
@@ -299,7 +341,10 @@ func newRefreshCmd() *cobra.Command {
 			if err != nil {
 				return clierrors.New(clierrors.ServerError, "%v", err)
 			}
-			return output.PrintRawJSON(cmd.OutOrStdout(), raw)
+			return emitLifecycle(cmd, json.RawMessage(raw), func(w io.Writer) error {
+				fmt.Fprintf(w, "Refreshed project scan for %s\n", projectPath)
+				return nil
+			})
 		},
 	}
 }
@@ -347,7 +392,20 @@ func newListCmd() *cobra.Command {
 			if servers == nil {
 				servers = []*state.ServerState{}
 			}
-			return output.PrintJSON(cmd.OutOrStdout(), map[string]any{"servers": servers})
+			return emitLifecycle(cmd, map[string]any{"servers": servers}, func(w io.Writer) error {
+				if len(servers) == 0 {
+					fmt.Fprintln(w, "No running servers.")
+					return nil
+				}
+				rows := make([][]string, 0, len(servers))
+				for _, s := range servers {
+					rows = append(rows, []string{
+						s.ProjectName, string(s.ServerMode),
+						strconv.Itoa(s.Port), strconv.Itoa(s.PID), string(s.Status),
+					})
+				}
+				return render.Table(w, []string{"Project", "Mode", "Port", "PID", "Status"}, rows)
+			})
 		},
 	}
 }
@@ -357,7 +415,17 @@ func newListCmd() *cobra.Command {
 // ============================================================================
 
 func emitState(cmd *cobra.Command, st *state.ServerState) error {
-	return output.PrintJSON(cmd.OutOrStdout(), st)
+	return emitLifecycle(cmd, st, func(w io.Writer) error {
+		return render.KVBlock(w, [][2]string{
+			{"Project:", st.ProjectName},
+			{"Path:", st.ProjectPath},
+			{"Status:", string(st.Status)},
+			{"Mode:", string(st.ServerMode)},
+			{"Host:", st.Host},
+			{"Port:", strconv.Itoa(st.Port)},
+			{"PID:", strconv.Itoa(st.PID)},
+		})
+	})
 }
 
 // readAll: small wrapper so the postRefresh function above stays self-contained.
