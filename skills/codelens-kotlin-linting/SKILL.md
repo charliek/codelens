@@ -32,6 +32,12 @@ Ensure the CodeLens server is running for your project:
 codelens start --project /path/to/project
 ```
 
+**Output:** in a terminal, `lint check`/`lint format` print human-readable
+summaries; pass `--json` for the structured payload (violations with line/rule
+detail), which is also auto-selected when output is piped or captured. Exit
+codes are unaffected by the format — `lint check` exits non-zero when there are
+violations either way.
+
 ## Checking Code Style
 
 ### Check Single File

@@ -1,6 +1,6 @@
 # CodeLens CLI Reference
 
-The CodeLens CLI provides a command-line interface for analyzing JVM bytecode. It manages the CodeLens server lifecycle and provides formatted output for analysis queries.
+The CodeLens CLI provides a command-line interface for analyzing JVM bytecode. It manages the CodeLens server lifecycle and presents analysis results either as human-readable tables (in a terminal) or as JSON (when piped or with `--json`). See [Output formats](#output-formats).
 
 ## Installation
 
@@ -48,8 +48,35 @@ All commands support these options:
 | Option | Description |
 |--------|-------------|
 | `--project`, `-p` | Path to the target Gradle project (defaults to the current directory) |
-| `--json` | Emit JSON output (auto-enabled when stdout is not a TTY) |
+| `--json` | Force JSON output (the default when stdout is not a TTY) |
+| `--table` | Force human-readable table output (the default on a TTY) |
 | `--help` | Show help for the command |
+
+---
+
+## Output formats
+
+Every command renders its result in one of two ways:
+
+- **Table** — a compact, human-readable layout (the default when stdout is a
+  terminal). `source show`/`source method` print the actual source code;
+  `deps graph` prints a summary plus the most depended-on classes.
+- **JSON** — the full, stable, machine-readable payload (the default when stdout
+  is **not** a terminal, e.g. piped or redirected).
+
+The mode is chosen automatically by detecting whether stdout is a TTY, so
+pipelines and scripts get JSON without any flag:
+
+```bash
+codelens classes list                      # table (in a terminal)
+codelens classes list | jq '.classes'      # JSON (piped → auto-detected)
+codelens classes list --json               # JSON, even in a terminal
+codelens classes list --table | less       # table, even when piped
+```
+
+`--json` and `--table` are mutually exclusive. **Agents and scripts should pass
+`--json` explicitly** — it is the canonical, stable contract; the table layout
+is for humans and may change.
 
 ---
 
@@ -75,7 +102,7 @@ codelens start [OPTIONS]
 | `--timeout` | `180` | Startup timeout in seconds |
 | `--server-jar` | (discovered) | Override path to `codelens-server-all.jar` |
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -109,7 +136,7 @@ codelens stop [OPTIONS]
 |--------|---------|-------------|
 | `--force` | `false` | Force kill if graceful shutdown fails |
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -136,21 +163,21 @@ codelens status [OPTIONS]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 **Example Output:**
 
 ```
-CodeLens Server
-
-Project:       my-project
-Path:          /home/user/work/my-project
-Status:        READY
-Port:          61337
-Mode:          gradle
-Uptime:        5m 30s
-Idle:          30s
-Idle timeout:  30m
+Project:  my-project
+Path:     /home/user/work/my-project
+Status:   READY
+Mode:     gradle
+Host:     127.0.0.1
+Port:     61337
+PID:      61340
+Version:  0.1.0
+Uptime:   5m 30s
+Idle:     30s
 ```
 
 ---
@@ -172,7 +199,7 @@ codelens restart [OPTIONS]
 | `--timeout` | `180` | Startup timeout in seconds |
 | `--server-jar` | (discovered) | Override path to `codelens-server-all.jar` |
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 ---
 
@@ -189,7 +216,7 @@ codelens refresh [OPTIONS]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 ---
 
@@ -205,19 +232,14 @@ codelens list [OPTIONS]
 
 | Option | Description |
 |--------|-------------|
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Example Output:**
 
 ```
-Running CodeLens Servers
-
-┌──────────────┬───────┬────────┬────────┬─────────────────────────────┐
-│ Project      │ Port  │ Status │ Mode   │ Path                        │
-├──────────────┼───────┼────────┼────────┼─────────────────────────────┤
-│ my-project   │ 61337 │ READY  │ gradle │ /home/user/work/my-project  │
-│ other-proj   │ 62001 │ READY  │ gradle │ /home/user/work/other-proj  │
-└──────────────┴───────┴────────┴────────┴─────────────────────────────┘
+Project     Mode    Port   PID    Status
+my-project  gradle  61337  61340  READY
+other-proj  gradle  62001  62050  READY
 ```
 
 ---
@@ -237,7 +259,7 @@ codelens project [OPTIONS]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 **Example Output (JSON):**
 
@@ -295,7 +317,7 @@ codelens classes list [OPTIONS]
 | `--page` | Page number (0-based, default: 0) |
 | `--size` | Page size (default: 50) |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -354,7 +376,7 @@ codelens classes show <fqn> [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -368,28 +390,22 @@ codelens classes show com.example.web.ProductController
 ```
 com.example.web.ProductController
 
-Package:     com.example.web
-Type:        class
-Visibility:  PUBLIC
-Source:      PROJECT
-Extends:     com.example.web.BaseController
-Annotations: @RestController
+Package:      com.example.web
+Type:         class
+Visibility:   PUBLIC
+Source:       PROJECT
+Extends:      com.example.web.BaseController
+Annotations:  @RestController
 
-Methods (5)
-┌────────────────┬────────────┬─────────────┬─────────────────────┐
-│ Name           │ Visibility │ Return Type │ Parameters          │
-├────────────────┼────────────┼─────────────┼─────────────────────┤
-│ list           │ PUBLIC     │ List        │                     │
-│ create         │ PUBLIC     │ Product     │ dto: ProductDto     │
-└────────────────┴────────────┴─────────────┴─────────────────────┘
+Methods (2)
+Name    Visibility  Return   Parameters
+list    PUBLIC      List     -
+create  PUBLIC      Product  ProductDto
 
 Fields (2)
-┌─────────────────┬────────────┬────────────────┐
-│ Name            │ Visibility │ Type           │
-├─────────────────┼────────────┼────────────────┤
-│ productService  │ PRIVATE    │ ProductService │
-│ logger          │ PRIVATE    │ Logger         │
-└─────────────────┴────────────┴────────────────┘
+Name            Visibility  Type
+productService  PRIVATE     ProductService
+logger          PRIVATE     Logger
 ```
 
 ---
@@ -407,7 +423,7 @@ codelens classes stats [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Example Output:**
 
@@ -421,12 +437,10 @@ Project Classes:      150
   - Annotations:      3
 Project Methods:      1200
 Project Fields:       450
-
 Library Classes:      2500
 JDK Classes:          8000
-
 Classpath Entries:    85
-Resolved By:          GradleToolingAPI
+Resolved By:          Gradle Tooling API
 Scan Duration:        1250ms
 Scanned At:           2026-01-05T12:00:05.000Z
 ```
@@ -453,7 +467,7 @@ codelens classes implementations <fqn> [OPTIONS]
 |--------|-------------|
 | `--include-libraries`, `-L` | Include library classes |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -474,11 +488,8 @@ codelens classes implementations com.example.service.ProductService -L
 Implementations of com.example.service.ProductService
 Total: 1 (1 direct, 0 indirect)
 
-┌─────────────────────────────────────────┬───────────┬────────┬─────────┐
-│ Class                                   │ Type      │ Direct │ Source  │
-├─────────────────────────────────────────┼───────────┼────────┼─────────┤
-│ com.example.service.ProductServiceImpl  │ class     │ Yes    │ PROJECT │
-└─────────────────────────────────────────┴───────────┴────────┴─────────┘
+Class                                   Type   Direct  Source
+com.example.service.ProductServiceImpl  class  yes     PROJECT
 ```
 
 ---
@@ -502,7 +513,7 @@ codelens classes hierarchy <fqn> [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -517,12 +528,10 @@ codelens classes hierarchy com.example.web.ProductController
 Hierarchy for com.example.web.ProductController
 
 Parents:
-  └── com.example.web.BaseController (class)
-      └── java.lang.Object (class)
+  ├── java.lang.Object (class)
+  │   └── com.example.web.BaseController (class)
 
 com.example.web.ProductController (class)
-
-Children (0):
 ```
 
 ---
@@ -547,7 +556,7 @@ codelens classes dependencies <fqn> [OPTIONS]
 |--------|-------------|
 | `--include-libraries`, `-L` | Include library classes |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 This is the per-class view. For the whole-project graph, see [`codelens deps`](#codelens-deps).
 
@@ -566,14 +575,15 @@ codelens classes dependencies com.example.web.ProductController -L
 ```
 Dependencies for com.example.web.ProductController
 
-Outgoing (this class depends on 3 classes):
-┌───────────────────────────────────────┬───────────────────┬────────────────┬─────────┐
-│ Class                                 │ Type              │ Location       │ Source  │
-├───────────────────────────────────────┼───────────────────┼────────────────┼─────────┤
-│ com.example.service.ProductService    │ FIELD_TYPE        │ productService │ PROJECT │
-│ com.example.web.BaseController        │ EXTENDS           │ -              │ PROJECT │
-│ com.example.dto.ProductDto            │ METHOD_PARAMETER  │ create         │ PROJECT │
-└───────────────────────────────────────┴───────────────────┴────────────────┴─────────┘
+Outgoing (this class depends on) (3):
+Class                                Type              Location        Source
+com.example.service.ProductService   FIELD_TYPE        productService  PROJECT
+com.example.web.BaseController        EXTENDS           -               PROJECT
+com.example.dto.ProductDto            METHOD_PARAMETER  create          PROJECT
+
+Incoming (classes depending on this) (1):
+Class                       Type        Location    Source
+com.example.web.ApiGateway   FIELD_TYPE  controller  PROJECT
 
 Incoming (0 classes depend on this):
 ```
@@ -615,7 +625,7 @@ codelens annotations usages <annotation-fqn> [OPTIONS]
 |--------|-------------|
 | `--include-libraries`, `-L` | Include library classes |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -630,16 +640,12 @@ codelens annotations usages javax.inject.Singleton
 **Example Output:**
 
 ```
-Usages of @Service
-Total: 6 classes
+Usages of @org.springframework.stereotype.Service (3)
 
-┌─────────────────────────┬───────────┬─────────────────────────┬─────────┐
-│ Class                   │ Type      │ Package                 │ Source  │
-├─────────────────────────┼───────────┼─────────────────────────┼─────────┤
-│ ProductServiceImpl      │ class     │ com.example.service     │ PROJECT │
-│ OrderService            │ class     │ com.example.service     │ PROJECT │
-│ CustomerService         │ class     │ com.example.service     │ PROJECT │
-└─────────────────────────┴───────────┴─────────────────────────┴─────────┘
+Class               Package              Source
+ProductServiceImpl  com.example.service  PROJECT
+OrderService        com.example.service  PROJECT
+CustomerService     com.example.service  PROJECT
 ```
 
 ---
@@ -669,7 +675,7 @@ codelens methods search [OPTIONS]
 | `--page` | Page number (0-based, default: 0) |
 | `--size` | Page size (default: 50) |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -695,13 +701,10 @@ codelens methods search --annotation org.springframework.web.bind.annotation.Get
 ```
 Methods (1-3 of 3)
 
-┌────────────────────────────┬─────────────┬─────────────────────┬─────────┐
-│ Method                     │ Return Type │ Class               │ Source  │
-├────────────────────────────┼─────────────┼─────────────────────┼─────────┤
-│ list()                     │ List        │ ProductController   │ PROJECT │
-│ findAll()                  │ List        │ OrderService        │ PROJECT │
-│ search(String)             │ List        │ CustomerService     │ PROJECT │
-└────────────────────────────┴─────────────┴─────────────────────┴─────────┘
+Class              Method   Return  Parameters
+ProductController  list     List    -
+OrderService       findAll  List    -
+CustomerService    search   List    String
 ```
 
 ---
@@ -733,7 +736,7 @@ codelens calls <fqn> [OPTIONS]
 | `--method`, `-m` | Only show calls made by this method |
 | `--descriptor` | JVM descriptor to disambiguate overloads (requires `--method`) |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 `--descriptor` only disambiguates a named method, so it must be used together
 with `--method`. Passing it alone is rejected.
@@ -816,7 +819,7 @@ codelens xref <typeFqn> [OPTIONS]
 | `--page` | Page number (0-based, default: 0) |
 | `--size` | Page size (default: 50) |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Reference Kinds (`--kind`):**
 
@@ -907,7 +910,7 @@ codelens deps [OPTIONS]
 | `--format`, `-f` | Output format: `json` (default) or `dot` |
 | `--output`, `-o` | Write to this file instead of stdout |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -939,7 +942,7 @@ codelens deps graph [OPTIONS]
 |--------|-------------|
 | `--format` | Output format: `json` (default) or `dot` |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Example Output (JSON):**
 
@@ -998,7 +1001,7 @@ codelens deps foundation [OPTIONS]
 |--------|-------------|
 | `--min-dependents` | Minimum number of dependents to qualify (default: 2) |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -1060,7 +1063,7 @@ codelens source show <fqn> [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -1099,7 +1102,7 @@ codelens source method <fqn> <method> [OPTIONS]
 | `--param-types` | Comma-separated parameter types for disambiguation |
 | `--context`, `-c` | Number of context lines before/after the method (default: 0) |
 | `--project`, `-p` | Project directory |
-| `--json` | Output as JSON |
+| `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -1141,7 +1144,7 @@ codelens lint check [FILE] [OPTIONS]
 | `--pattern` | - | Glob pattern to filter files (project mode only) |
 | `--include-tests` | `true` | Include test sources (project mode only) |
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -1162,16 +1165,14 @@ codelens lint check --include-tests=false
 **Example Output:**
 
 ```
-Lint Results for my-project
+Lint: /home/user/work/my-project
+Scanned 10 file(s); 1 with violations; 3 total.
 
-3 issue(s) in 1 file(s) (10 scanned)
-
-src/main/kotlin/sample/BadFormatting.kt (3 issue(s))
-  1:17 standard:spacing: Missing space before '{'
-  2:10 standard:spacing: Missing space around '='
-  3:7 standard:spacing: Missing space after 'if' (auto-fixable)
-
-Checked in 150ms
+src/main/kotlin/sample/BadFormatting.kt
+Pos   Rule              Detail
+1:17  standard:spacing  Missing space before '{'
+2:10  standard:spacing  Missing space around '='
+3:7   standard:spacing  Missing space after 'if'
 ```
 
 **Exit Codes:**
@@ -1204,7 +1205,7 @@ codelens lint format [FILE] [OPTIONS]
 | `--include-tests` | `true` | Include test sources (project mode only) |
 | `--dry-run`, `-n` | `false` | Show changes without writing them |
 | `--project`, `-p` | `.` | Project directory |
-| `--json` | - | Output as JSON |
+| `--json` / `--table` | - | Force JSON / table output (default: auto by TTY) |
 
 **Examples:**
 
@@ -1225,14 +1226,10 @@ codelens lint format --include-tests=false
 **Example Output:**
 
 ```
-Format Results for my-project
-
-Formatted 2 file(s) (10 scanned)
-
+Format: /home/user/work/my-project
+Scanned 10 file(s); 2 changed.
   src/main/kotlin/sample/BadFormatting.kt
   src/main/kotlin/sample/AnotherFile.kt
-
-Processed in 200ms
 ```
 
 ---

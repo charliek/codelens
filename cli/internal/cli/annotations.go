@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/charliek/codelens/cli/internal/client"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -20,9 +21,9 @@ func newAnnotationsUsagesCmd() *cobra.Command {
 		Short: "Find classes using a specific annotation",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetAnnotationUsages(ctx, args[0], includeLibraries)
-			})
+			}, render.AnnotationUsages)
 		},
 	}
 	cmd.Flags().BoolVarP(&includeLibraries, "include-libraries", "L", false, "Include library classes")

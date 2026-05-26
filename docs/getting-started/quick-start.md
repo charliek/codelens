@@ -49,13 +49,18 @@ codelens source show com.google.common.collect.ImmutableList --stub
 
 See the [CLI Reference](../reference/cli.md) for every command and flag.
 
-## 4. Machine-readable output
+## 4. Output: tables for humans, JSON for tools
 
-Every command supports `--json` (auto-enabled when stdout is not a TTY):
+In a terminal, every command prints a readable table. When output is piped or
+redirected — or when you pass `--json` — you get the full JSON payload instead:
 
 ```bash
-codelens classes list --json | jq '.[].name'
+codelens classes list                          # table (in a terminal)
+codelens classes list --json | jq '.classes[].fqn'
 ```
+
+Scripts and agents should pass `--json` explicitly. See
+[Output formats](../reference/cli.md#output-formats).
 
 ## 5. Manage the server
 

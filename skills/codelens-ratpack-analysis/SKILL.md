@@ -41,8 +41,10 @@ codelens start --project /path/to/ratpack-project
 ```
 
 The first start may take a few minutes while CodeLens resolves the Gradle classpath and
-scans bytecode; `codelens status` reports `LOADING` → `READY`. All commands below accept
-`--json` (auto-enabled when stdout is not a TTY) for piping through `jq`.
+scans bytecode; `codelens status` reports `LOADING` → `READY`. In a terminal, commands
+print human-readable tables; **pass `--json` to get the stable machine-readable payload**
+(it is also auto-selected when output is piped or captured, as in tool execution). The
+recipes below pass `--json` explicitly so they parse reliably with `jq`.
 
 Read these reference docs for the Ratpack knowledge the recipes rely on — they hold the
 FQNs, handler shapes, anti-pattern catalog, and the complexity factors you weigh by hand:

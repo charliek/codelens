@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/charliek/codelens/cli/internal/client"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +20,9 @@ func newMethodsSearchCmd() *cobra.Command {
 		Use:   "search",
 		Short: "Search methods with filters",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.SearchMethods(ctx, f)
-			})
+			}, render.MethodsSearch)
 		},
 	}
 	cmd.Flags().StringVarP(&f.Name, "name", "n", "", "Filter by method name (supports *)")

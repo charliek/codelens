@@ -256,6 +256,51 @@ func TestE2EMicronaut(t *testing.T) {
 	runSuite(t, fixture.micronautPath, micronautCases, filepath.Join("testdata", "golden", "micronaut"))
 }
 
+// TestE2ETableSmoke exercises the human-readable (--table) output path against
+// a live ratpack server. Unlike the golden suites (which always pass --json),
+// this proves the table renderers decode real server responses: the substring
+// assertions check decoded *data*, so a wrong struct tag would surface as JSON
+// (caught by looksLikeJSON) or as missing data (caught by the substring check).
+func TestE2ETableSmoke(t *testing.T) {
+	guardE2E(t)
+	proj := fixture.ratpackPath
+	startServer(t, proj)
+	t.Cleanup(func() { stopServer(t, proj) })
+
+	cases := []struct {
+		name   string
+		args   []string
+		expect string // a token derived from decoded data, not just static text
+	}{
+		{"classes_list", []string{"classes", "list"}, "BlockingHandler"},
+		{"classes_show", []string{"classes", "show", "sample.handlers.BlockingHandler"}, "ratpack.handling.Handler"},
+		{"classes_stats", []string{"classes", "stats"}, "Project Classes:"},
+		{"methods_search", []string{"methods", "search", "--name", "handle"}, "handle"},
+		{"calls", []string{"calls", "sample.api.UsersApi", "--method", "execute"}, "Chain"},
+		{"xref", []string{"xref", "sample.handlers.UserService"}, "AsyncHandler"},
+		{"deps_foundation", []string{"deps", "foundation"}, "UserService"},
+		{"deps_graph", []string{"deps", "graph"}, "nodes"},
+		{"source_show", []string{"source", "show", "sample.handlers.SimpleHandler"}, "class SimpleHandler"},
+		{"project", []string{"project"}, "sample-ratpack-app"},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			args := append(append([]string{}, c.args...), "--project", proj, "--table")
+			run := runCLI(fixture.goBin, args...)
+			if err := run.cmd.Run(); err != nil {
+				t.Fatalf("%s failed: %v\nstderr=%s", c.name, err, run.stderr.String())
+			}
+			if looksLikeJSON(run.stdout.Bytes()) {
+				t.Fatalf("%s: --table produced JSON, not a table:\n%s", c.name, truncate(run.stdout.Bytes(), 512))
+			}
+			if !strings.Contains(run.stdout.String(), c.expect) {
+				t.Errorf("%s: table output missing decoded token %q:\n%s", c.name, c.expect, truncate(run.stdout.Bytes(), 512))
+			}
+		})
+	}
+}
+
 func guardE2E(t *testing.T) {
 	t.Helper()
 	if testing.Short() {

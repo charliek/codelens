@@ -15,7 +15,7 @@ codelens classes list --annotation org.springframework.stereotype.Service
 
 # For each, inspect dependencies (both directions in one call)
 codelens classes dependencies com.example.UserService
-codelens classes dependencies com.example.OrderService | jq '.outgoing'
+codelens classes dependencies com.example.OrderService --json | jq '.outgoing'
 ```
 
 ## Scenario: Finding interface implementations

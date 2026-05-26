@@ -13,6 +13,14 @@ linters:
     - revive
 
   settings:
+    errcheck:
+      # Writes to the CLI's output writer (os.Stdout / a buffer) are not
+      # meaningfully recoverable — if stdout is broken we cannot report it
+      # either — so the table renderers don't check fmt.Fprint* returns.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
     revive:
       rules:
         - name: exported

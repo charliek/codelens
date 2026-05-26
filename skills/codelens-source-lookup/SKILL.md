@@ -35,6 +35,11 @@ Ensure the CodeLens server is running for your project:
 codelens start --project /path/to/project
 ```
 
+**Output:** in a terminal these commands print the source code directly. Pass
+`--json` for the structured envelope documented in
+[FORMATS.md](references/FORMATS.md) (`source.content`, `filePath`, `language`,
+…) — that JSON shape is also auto-selected when output is piped or captured.
+
 ## Commands
 
 ### View Full Source

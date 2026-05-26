@@ -6,6 +6,7 @@ import (
 
 	"github.com/charliek/codelens/cli/internal/client"
 	clierrors "github.com/charliek/codelens/cli/internal/errors"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +30,7 @@ func newDepsCmd() *cobra.Command {
 			if outputPath != "" {
 				return writeOutput(outputPath, result)
 			}
-			return emitAnalysisResult(cmd, result)
+			return emit(cmd, result, render.DepsGraph)
 		},
 	}
 	cmd.Flags().StringVarP(&format, "format", "f", "json", "Output format: json | dot")
@@ -61,9 +62,9 @@ func newDepsGraphCmd() *cobra.Command {
 		Use:   "graph",
 		Short: "Project-wide dependency graph",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetGraph(ctx, format)
-			})
+			}, render.DepsGraph)
 		},
 	}
 	// dot output bypasses the JSON path; the wrapper sees a []byte and writes
@@ -78,9 +79,9 @@ func newDepsFoundationCmd() *cobra.Command {
 		Use:   "foundation",
 		Short: "Most depended-on classes (by in-degree)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetFoundation(ctx, minDependents)
-			})
+			}, render.Foundation)
 		},
 	}
 	cmd.Flags().IntVar(&minDependents, "min-dependents", 2, "Minimum number of dependents to qualify")

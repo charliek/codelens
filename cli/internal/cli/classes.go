@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/charliek/codelens/cli/internal/client"
+	"github.com/charliek/codelens/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -29,9 +30,9 @@ func newClassesListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List classes with optional filtering",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.ListClasses(ctx, f)
-			})
+			}, render.ClassesList)
 		},
 	}
 	cmd.Flags().StringVar(&f.Package, "package", "", "Filter by package pattern (supports *)")
@@ -52,9 +53,9 @@ func newClassesShowCmd() *cobra.Command {
 		Short: "Show detailed information about a specific class",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetClass(ctx, args[0])
-			})
+			}, render.ClassesShow)
 		},
 	}
 }
@@ -64,9 +65,9 @@ func newClassesStatsCmd() *cobra.Command {
 		Use:   "stats",
 		Short: "Show scan statistics for the codebase",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.Stats(ctx)
-			})
+			}, render.ClassesStats)
 		},
 	}
 }
@@ -78,9 +79,9 @@ func newClassesImplementationsCmd() *cobra.Command {
 		Short: "Find implementations of an interface or subclasses of a class",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetImplementations(ctx, args[0], includeLibraries)
-			})
+			}, render.Implementations)
 		},
 	}
 	cmd.Flags().BoolVarP(&includeLibraries, "include-libraries", "L", false, "Include library classes")
@@ -93,9 +94,9 @@ func newClassesHierarchyCmd() *cobra.Command {
 		Short: "Show the class hierarchy for a class",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetHierarchy(ctx, args[0])
-			})
+			}, render.Hierarchy)
 		},
 	}
 }
@@ -107,9 +108,9 @@ func newClassesDependenciesCmd() *cobra.Command {
 		Short: "Show dependencies for a class (incoming and outgoing)",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return withRunningServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
+			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetDependencies(ctx, args[0], includeLibraries)
-			})
+			}, render.Dependencies)
 		},
 	}
 	cmd.Flags().BoolVarP(&includeLibraries, "include-libraries", "L", false, "Include library classes")
