@@ -294,7 +294,34 @@ func TestLintFormatProject(t *testing.T) {
 	if err := LintFormat(&buf, resp); err != nil {
 		t.Fatal(err)
 	}
-	mustContainAll(t, buf.String(), "Format: /tmp/app", "1 changed", "/tmp/app/Bad.kt")
+	mustContainAll(t, buf.String(), "Format: /tmp/app", "1 with changes", "/tmp/app/Bad.kt")
+}
+
+// On a dry run the server returns formattedContent and does not write the file;
+// the table must show that preview, not just claim the file was "formatted".
+func TestLintFormatFileDryRun(t *testing.T) {
+	formatted := "package sample\n\nfun ok() {}\n"
+	resp := &client.FormatFileResponse{FilePath: "/tmp/Bad.kt", FormattedContent: &formatted, HasChanges: true}
+	var buf bytes.Buffer
+	if err := LintFormat(&buf, resp); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	mustContainAll(t, out, "/tmp/Bad.kt", "dry run", "not written", "fun ok() {}")
+	if strings.Contains(out, ": formatted") {
+		t.Errorf("dry run must not claim the file was formatted/written:\n%s", out)
+	}
+}
+
+// When the file is written (not a dry run), formattedContent is nil and only a
+// status line prints.
+func TestLintFormatFileWritten(t *testing.T) {
+	resp := &client.FormatFileResponse{FilePath: "/tmp/Bad.kt", FormattedContent: nil, HasChanges: true}
+	var buf bytes.Buffer
+	if err := LintFormat(&buf, resp); err != nil {
+		t.Fatal(err)
+	}
+	mustContainAll(t, buf.String(), "/tmp/Bad.kt: formatted")
 }
 
 func TestLintWrongTypeFallsBack(t *testing.T) {

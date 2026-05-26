@@ -1223,14 +1223,17 @@ codelens lint format --dry-run
 codelens lint format --include-tests=false
 ```
 
-**Example Output:**
+**Example Output (project):**
 
 ```
 Format: /home/user/work/my-project
-Scanned 10 file(s); 2 changed.
+Scanned 10 file(s); 2 with changes.
   src/main/kotlin/sample/BadFormatting.kt
   src/main/kotlin/sample/AnotherFile.kt
 ```
+
+For a single file with `--dry-run`, the table prints the reformatted source as a
+preview (the file is not written); use `--json` for the `formattedContent` field.
 
 ---
 

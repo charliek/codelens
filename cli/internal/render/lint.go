@@ -61,19 +61,12 @@ func violationTable(w io.Writer, errs []client.LintError) error {
 func LintFormat(w io.Writer, v any) error {
 	switch r := v.(type) {
 	case *client.FormatFileResponse:
-		status := "no changes"
-		if r.HasChanges {
-			status = "formatted"
-		}
-		fmt.Fprintf(w, "%s: %s", r.FilePath, status)
-		if n := len(r.RemainingErrors); n > 0 {
-			fmt.Fprintf(w, " (%d remaining violation(s))", n)
-		}
-		fmt.Fprintln(w)
-		return nil
+		return lintFormatFile(w, r)
 	case *client.FormatProjectResponse:
 		fmt.Fprintf(w, "Format: %s\n", r.ProjectPath)
-		fmt.Fprintf(w, "Scanned %d file(s); %d changed.\n", r.FilesScanned, r.FilesWithChanges)
+		// FilesWithChanges counts files that differ from formatted; on a dry run
+		// nothing is written, so "with changes" avoids implying a mutation.
+		fmt.Fprintf(w, "Scanned %d file(s); %d with changes.\n", r.FilesScanned, r.FilesWithChanges)
 		for _, f := range r.FilesFormatted {
 			fmt.Fprintf(w, "  %s\n", f)
 		}
@@ -81,4 +74,35 @@ func LintFormat(w io.Writer, v any) error {
 	default:
 		return ErrFallback
 	}
+}
+
+// lintFormatFile renders a single-file format result. On a dry run the server
+// returns the reformatted source (FormattedContent non-nil) and does NOT write
+// the file, so print that preview rather than implying the file was changed.
+// When the file is written, FormattedContent is nil and only a status prints.
+func lintFormatFile(w io.Writer, r *client.FormatFileResponse) error {
+	if r.FormattedContent != nil {
+		if !r.HasChanges {
+			fmt.Fprintf(w, "%s: already formatted (dry run, not written)\n", r.FilePath)
+			return nil
+		}
+		fmt.Fprintf(w, "%s: dry run — would reformat (not written)", r.FilePath)
+		if n := len(r.RemainingErrors); n > 0 {
+			fmt.Fprintf(w, "; %d violation(s) would remain", n)
+		}
+		fmt.Fprintln(w)
+		fmt.Fprintln(w)
+		writeCode(w, *r.FormattedContent)
+		return nil
+	}
+	status := "no changes"
+	if r.HasChanges {
+		status = "formatted"
+	}
+	fmt.Fprintf(w, "%s: %s", r.FilePath, status)
+	if n := len(r.RemainingErrors); n > 0 {
+		fmt.Fprintf(w, " (%d remaining violation(s))", n)
+	}
+	fmt.Fprintln(w)
+	return nil
 }
