@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.0.4
+
+Features:
+- TTY-aware human/JSON dual output: commands render a human-readable table on a
+  TTY and JSON when piped (or with `--json`); `--table` forces a table (#32).
+- Warn when a project scans to 0 classes, signaling an uncompiled project so the
+  fix (compile first) is obvious instead of an empty result (#36).
+
+Fixes:
+- Make the Gradle classpath init script compatible with Gradle's configuration
+  cache (8.14+/9.x). It collected the classpath at task-execution time via
+  `Task.project`, which the configuration cache forbids; resolution now reads all
+  project state at configuration time so it no longer fails when the cache is
+  enabled (#33).
+- Broaden JDK resolution: handle SDKMAN vendor-alias forms (e.g. `21-tem`),
+  discover JDKs under `/Library/Java/JavaVirtualMachines`, and give clearer
+  errors when a project's declared JDK can't be resolved (#35).
+
+Docs:
+- Document installing the skills on the documentation site (#31).
+
 ## v0.0.3
 
 - **Generalized from a Ratpack-specific tool to a general JVM facts engine.**
