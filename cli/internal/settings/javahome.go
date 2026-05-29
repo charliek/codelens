@@ -97,7 +97,12 @@ func installedJavaInfos() []JavaInstallInfo {
 
 	out = append(out, miseInstalledInfos()...)
 
-	for major := ServerJavaFloor; major <= ServerJavaCeiling; major++ {
+	// Homebrew enumeration spans 8..ServerJavaCeiling so error summaries
+	// include older kegs (`openjdk@8`, `openjdk@11`, `openjdk@17`) that
+	// might satisfy a project declaring an older Java. ResolveServerJavaHome
+	// still filters to [ServerJavaFloor, ServerJavaCeiling] for server selection,
+	// so this widening doesn't affect server-JVM choice.
+	for major := homebrewMinMajor; major <= ServerJavaCeiling; major++ {
 		if home := FindHomebrewJava(strconv.Itoa(major)); home != "" {
 			out = append(out, JavaInstallInfo{
 				Home: home, Major: major, Source: "Homebrew",
@@ -110,6 +115,13 @@ func installedJavaInfos() []JavaInstallInfo {
 
 	return out
 }
+
+// homebrewMinMajor is the lowest Java major that Homebrew typically packages
+// as `openjdk@<major>`. Pre-LTS or unstable majors aren't shipped, but the
+// enumeration walks every integer in [homebrewMinMajor, ServerJavaCeiling]
+// and silently skips kegs that aren't installed, so over-enumerating is
+// cheap and future-proofs new majors.
+const homebrewMinMajor = 8
 
 // InstalledJavaSummaries returns human-readable strings describing every
 // discovered JDK install, used in error messages. Format:

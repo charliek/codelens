@@ -85,6 +85,74 @@ func TestDetectProjectGradleJavaHomePath_TildeExpansion(t *testing.T) {
 	}
 }
 
+// Regression test for the precedence bug caught in PR #37 review: when
+// gradle.properties::org.gradle.java.home is the only declaration source
+// AND that path exists, codelens must use it directly — not substitute a
+// same-major install from SDKMAN. Otherwise, declaring an explicit JDK path
+// silently gets overridden by whatever same-major install happens to be
+// available, which is surprising and arguably a bug.
+func TestResolveProjectJavaHomeWithMatch_ExplicitPathBeatsSameMajor(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir())
+	t.Setenv("MISE_DATA_DIR", t.TempDir())
+	t.Setenv("CODELENS_JAVA_VM_DIRS", t.TempDir())
+
+	// SDKMAN has a major-21 install (potential substitute).
+	sdkmanHome := filepath.Join(tmp, ".sdkman", "candidates", "java", "21.0.9-amzn")
+	writeFile(t, filepath.Join(sdkmanHome, "bin", "java"), "#!/bin/sh\n")
+
+	// gradle.properties points at a DIFFERENT major-21 home that also exists
+	// (simulating an explicit Temurin install referenced by absolute path).
+	explicit := filepath.Join(tmp, "my-temurin-21.jdk", "Contents", "Home")
+	writeFile(t, filepath.Join(explicit, "bin", "java"), "#!/bin/sh\n")
+
+	proj := filepath.Join(tmp, "project")
+	writeFile(t, filepath.Join(proj, "gradle.properties"),
+		"org.gradle.java.home="+explicit+"\n")
+
+	got := ResolveProjectJavaHomeWithMatch(proj)
+	if got.Home != explicit {
+		t.Errorf("home = %q, want %q (explicit path must win over same-major SDKMAN substitute)",
+			got.Home, explicit)
+	}
+	if got.Source != "gradle.properties" {
+		t.Errorf("source = %q, want gradle.properties", got.Source)
+	}
+	if got.FellBack {
+		t.Errorf("FellBack should be false when honoring the explicit path")
+	}
+}
+
+// When .sdkmanrc declares a version, it wins over a parseable
+// gradle.properties path. (Existing behavior — make sure the precedence
+// fix above doesn't accidentally flip this.)
+func TestResolveProjectJavaHomeWithMatch_SDKManBeatsGradlePropertiesWhenBothPresent(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir())
+	t.Setenv("MISE_DATA_DIR", t.TempDir())
+	t.Setenv("CODELENS_JAVA_VM_DIRS", t.TempDir())
+
+	sdkmanHome := filepath.Join(tmp, ".sdkman", "candidates", "java", "21.0.9-amzn")
+	writeFile(t, filepath.Join(sdkmanHome, "bin", "java"), "#!/bin/sh\n")
+	explicit := filepath.Join(tmp, "other-jdk")
+	writeFile(t, filepath.Join(explicit, "bin", "java"), "#!/bin/sh\n")
+
+	proj := filepath.Join(tmp, "project")
+	writeFile(t, filepath.Join(proj, ".sdkmanrc"), "java=21.0.9-amzn\n")
+	writeFile(t, filepath.Join(proj, "gradle.properties"),
+		"org.gradle.java.home="+explicit+"\n")
+
+	got := ResolveProjectJavaHomeWithMatch(proj)
+	if got.Source != "SDKMAN" {
+		t.Errorf("source = %q, want SDKMAN (sdkmanrc must beat gradle.properties path)", got.Source)
+	}
+	if got.Home != sdkmanHome {
+		t.Errorf("home = %q, want %q", got.Home, sdkmanHome)
+	}
+}
+
 func TestProjectJavaSource(t *testing.T) {
 	t.Run("none", func(t *testing.T) {
 		if got := ProjectJavaSource(t.TempDir()); got != "" {

@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -198,6 +199,24 @@ func TestFindJavaVMJava_DifferentMajorRejected(t *testing.T) {
 	}
 }
 
+// FindJavaVMJava must same-major-match a vendor-prefixed mise-style version
+// request (e.g. "temurin-21.0.9" from a `.tool-versions` declaration), not
+// only bare-major or SDKMAN-style requests. Regression for PR #37 review.
+func TestFindJavaVMJava_VendorPrefixedRequest(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("CODELENS_JAVA_VM_DIRS", tmp)
+	fakeMacOSVMJDK(t, tmp, "amazon-corretto-21.jdk")
+
+	// "temurin-21.0.9" → JavaMajor returns 0 (vendor prefix isn't a digit),
+	// so the resolver must fall through to JavaMajorFromVMName which extracts 21.
+	for _, in := range []string{"temurin-21.0.9", "corretto-21", "zulu-21.0.5"} {
+		got := FindJavaVMJava(in)
+		if !strings.Contains(got, "amazon-corretto-21.jdk") {
+			t.Errorf("FindJavaVMJava(%q) = %q, want a match against amazon-corretto-21.jdk", in, got)
+		}
+	}
+}
+
 func TestFindJavaVMJava_LinuxLayout(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("CODELENS_JAVA_VM_DIRS", tmp)
@@ -244,6 +263,69 @@ func TestResolveServerJavaHome_SDKManBeatsJavaVMs(t *testing.T) {
 	}
 	if !strings.Contains(home, ".sdkman") {
 		t.Errorf("expected SDKMAN to win on ties; got %q", home)
+	}
+}
+
+// fakeHomebrewKeg drops a minimal `<prefix>/opt/openjdk@<major>/bin/java` so
+// FindHomebrewJava finds it via HOMEBREW_PREFIX. Returns the keg path.
+func fakeHomebrewKeg(t *testing.T, prefix string, major int) string {
+	t.Helper()
+	keg := filepath.Join(prefix, "opt", fmt.Sprintf("openjdk@%d", major))
+	dir := filepath.Join(keg, "bin")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "java"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return keg
+}
+
+// InstalledJavaSummaries must include Homebrew kegs OUTSIDE the
+// server-JVM range (8, 11, 17) so the error message for a project
+// declaring an older Java (e.g. java=8.0.392-amzn) tells the user about
+// their `openjdk@8` install. Regression for PR #37 review — previously
+// installedJavaInfos only enumerated Homebrew in [21, 25].
+func TestInstalledJavaSummaries_IncludesOlderHomebrewKegs(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("HOMEBREW_PREFIX", tmp)
+	t.Setenv("MISE_DATA_DIR", t.TempDir())
+	t.Setenv("CODELENS_JAVA_VM_DIRS", t.TempDir())
+
+	fakeHomebrewKeg(t, tmp, 8)
+	fakeHomebrewKeg(t, tmp, 17)
+	fakeHomebrewKeg(t, tmp, 21)
+
+	got := InstalledJavaSummaries()
+	joined := strings.Join(got, "\n")
+	for _, want := range []string{"openjdk@8", "openjdk@17", "openjdk@21"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("missing %q in summaries:\n%s", want, joined)
+		}
+	}
+}
+
+// The broadened Homebrew enumeration must NOT affect server-JVM
+// selection — ResolveServerJavaHome should still pick the highest in
+// [ServerJavaFloor, ServerJavaCeiling] = [21, 25] and ignore older kegs.
+func TestResolveServerJavaHome_IgnoresOlderHomebrewKegs(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("HOMEBREW_PREFIX", tmp)
+	t.Setenv("MISE_DATA_DIR", t.TempDir())
+	t.Setenv("CODELENS_JAVA_VM_DIRS", t.TempDir())
+
+	fakeHomebrewKeg(t, tmp, 8)
+	fakeHomebrewKeg(t, tmp, 17)
+	fakeHomebrewKeg(t, tmp, 21)
+
+	home, major := ResolveServerJavaHome(&Settings{})
+	if major != 21 {
+		t.Fatalf("major = %d, want 21 (8 and 17 are below floor)", major)
+	}
+	if !strings.Contains(home, "openjdk@21") {
+		t.Errorf("home = %q, want openjdk@21", home)
 	}
 }
 

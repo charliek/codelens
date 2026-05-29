@@ -9,19 +9,28 @@ import (
 )
 
 // javaVMVendorPrefixes are the well-known vendor prefixes used in
-// JavaVMs/jvm install directory names. They're stripped before parsing the
-// version number out of e.g. "temurin-21.0.5+11.jdk" → "21.0.5+11" or
-// "amazon-corretto-21.jdk" → "21". Order matters: longer-prefix-first so
-// "graalvm-ce-java" wins over "graalvm-".
+// JavaVMs/jvm install directory names AND in mise-style version strings.
+// They're stripped before parsing the version number out of e.g.
+// "temurin-21.0.5+11.jdk" → "21.0.5+11" or "amazon-corretto-21.jdk" → "21"
+// or "corretto-21.0.9.7.1" (mise) → "21.0.9.7.1".
+//
+// Order matters: longer-prefix-first so "amazon-corretto-" wins over the
+// shorter "corretto-" (and "graalvm-ce-java"/"graalvm-community-java" win
+// over "graalvm-"). The iteration returns on the first match.
 var javaVMVendorPrefixes = []string{
 	"amazon-corretto-",
 	"graalvm-community-java",
 	"graalvm-ce-java",
+	"oracle-graalvm-",
 	"graalvm-",
+	"corretto-",   // mise short form (cask uses amazon-corretto-)
+	"dragonwell-", // mise
 	"liberica-",
 	"microsoft-",
 	"openjdk-",
+	"oracle-jdk-",
 	"oracle-",
+	"sapmachine-", // mise
 	"semeru-",
 	"temurin-",
 	"zulu-",
@@ -149,11 +158,20 @@ func javaVMInstalledInfos() []JavaInstallInfo {
 // version. When multiple installs share the major, picks the one whose name
 // sorts highest lexically — for like-vendor entries this approximates
 // "highest patch version". Returns "" if nothing matches.
+//
+// The major is extracted via JavaMajor; when that returns 0 (because the
+// version is vendor-prefixed mise-style like "temurin-21.0.9"), falls back
+// to JavaMajorFromVMName which strips known vendor prefixes. This lets a
+// mise `.tool-versions: java temurin-21.0.9` declaration resolve against
+// JavaVMs installs even when mise itself isn't installed.
 func FindJavaVMJava(version string) string {
 	if version == "" {
 		return ""
 	}
 	major := JavaMajor(version)
+	if major == 0 {
+		major = JavaMajorFromVMName(version)
+	}
 	var bestHome, bestName string
 	for _, dir := range javaVMDirs() {
 		entries, err := os.ReadDir(dir)

@@ -118,8 +118,33 @@ type ProjectJavaResolution struct {
 // ResolveProjectJavaHomeWithMatch is the source-of-truth resolver returning
 // rich attribution so callers can surface a one-line stderr note when a
 // same-major fallback fires (e.g. requested "21-tem", matched "21.0.9-amzn").
+//
+// Precedence:
+//  1. If `gradle.properties::org.gradle.java.home` is the declaration
+//     source AND its path has `bin/java`, honor that path directly. The
+//     user explicitly pointed Gradle at THAT JDK; substituting a
+//     same-major install from another source would silently ignore the
+//     declaration (regression caught in PR #37 review).
+//  2. Otherwise, resolve the detected version through the standard chain
+//     (SDKMAN → Homebrew → JavaVMs → mise) with same-major fallback.
+//  3. As a last resort, the explicit gradle.properties path if it exists.
 func ResolveProjectJavaHomeWithMatch(projectPath string) ProjectJavaResolution {
 	requested := DetectProjectJavaVersion(projectPath)
+
+	// (1) Explicit gradle.properties path wins when that's the only
+	// declaration source and the path is usable. Prevents the resolver from
+	// silently substituting a different JDK for an explicitly-declared path.
+	if ProjectJavaSource(projectPath) == "gradle.properties::org.gradle.java.home" {
+		if path := DetectProjectGradleJavaHomePath(projectPath); path != "" && fileExists(filepath.Join(path, "bin", "java")) {
+			return ProjectJavaResolution{
+				Home: path, Requested: requested,
+				Matched: filepath.Base(path), Source: "gradle.properties",
+				FellBack: false,
+			}
+		}
+	}
+
+	// (2) Standard resolution chain.
 	if requested != "" {
 		if home, info := findJavaForVersionWithSource(requested); home != "" {
 			return ProjectJavaResolution{
@@ -129,9 +154,10 @@ func ResolveProjectJavaHomeWithMatch(projectPath string) ProjectJavaResolution {
 			}
 		}
 	}
-	// Explicit org.gradle.java.home path (with ~ expansion only) as a last
-	// resort. Useful when the declared version didn't resolve but the user
-	// pointed Gradle directly at a JDK home that exists.
+
+	// (3) Last-resort explicit path fallback — handles the case where
+	// .sdkmanrc/mise also declared something but didn't resolve, and the
+	// user has org.gradle.java.home as a backup path that does exist.
 	if path := DetectProjectGradleJavaHomePath(projectPath); path != "" {
 		if fileExists(filepath.Join(path, "bin", "java")) {
 			return ProjectJavaResolution{
