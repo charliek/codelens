@@ -79,6 +79,65 @@ also auto-selected when output is piped or captured. When parsing output (e.g.
 through `jq`), pass `--json` explicitly. Several examples below pipe JSON through
 `jq` — install it via your package manager if you want to follow those verbatim.
 
+## JDK setup and environment
+
+codelens uses two JDKs independently — see
+[JDK Resolution](https://charliek.github.io/codelens/concepts/jdk-resolution/)
+for the full design.
+
+- **Server JVM** runs `codelens-server-all.jar`. Auto-discovered: the newest
+  installed JDK with major in `[21, 25]` across SDKMAN, mise, Homebrew, and
+  the system JavaVMs / jvm dirs. Override with `CODELENS_JAVA_HOME`.
+- **Project JVM** runs the target project's Gradle daemon. **Must be
+  declared** by the project (or pass `--project-java` to bypass).
+
+### Declaring the project JDK
+
+Use any one of these in the project root (checked in this order):
+
+```text
+.sdkmanrc                       java=21.0.9-amzn        # or 21-tem, 25-graal, just "21", etc.
+.java-version                   21.0.9-amzn             # or just "21"
+gradle.properties               org.gradle.java.home=/abs/path/to/jdk
+.mise.toml | .tool-versions     java = "temurin-21.0.9" | java temurin-21.0.9
+```
+
+### Discovery sources (in order)
+
+JDKs are located across these sources for the project JVM resolution: SDKMAN
+(`~/.sdkman/candidates/java`) → Homebrew (`openjdk@<major>` keg) → JavaVMs
+(`/Library/Java/JavaVirtualMachines/*` on macOS, `/usr/lib/jvm/*` on Linux —
+catches Homebrew casks and DMG installers) → mise. If the exact declared
+version isn't installed, a **same-major** JDK is substituted and codelens
+prints a one-line `note:` to stderr explaining the swap (e.g. declared
+`21-tem` → used installed `21.0.9-amzn`). Cross-major substitution is
+never performed.
+
+### Common pitfalls
+
+- **`gradle.properties::org.gradle.java.home=/abs/path` pointing at a deleted
+  JDK** → error names the path explicitly. Fix by updating the path or
+  installing the JDK there.
+- **Declaring a vendor you don't have installed** (e.g. `21-tem` with only
+  Corretto 21) → resolves silently to the same-major install and prints
+  the substitution note. If exact vendor matters, install it
+  (`sdk install java 21-tem`, `brew install --cask temurin`).
+- **Homebrew cask installs** (`brew install --cask temurin`) ARE
+  discoverable — they land under `/Library/Java/JavaVirtualMachines/`. If
+  codelens claims a JDK is missing, run
+  `ls /Library/Java/JavaVirtualMachines/` to confirm what's actually there.
+
+### Useful env vars
+
+| Variable | Purpose |
+|----------|---------|
+| `CODELENS_JAVA_HOME` | Force the JDK that runs the server |
+| `JAVA_HOME` | Fallback for the server JVM when nothing in range was found |
+| `CODELENS_JAVA_OPTS` | Extra JVM options (e.g. `-Xmx4g`), whitespace-split |
+| `CODELENS_SERVER_JAR` | Force the server JAR path |
+| `CODELENS_REPO_PATH` | Hint the codelens repo root for `server/app/build/libs/...` discovery |
+| `--project-java <path>` flag | Bypass project-JDK declaration / resolution entirely |
+
 ## Class Discovery
 
 ### List Classes

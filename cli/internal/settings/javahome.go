@@ -45,37 +45,82 @@ type javaInstall struct {
 	major int
 }
 
-// installedJavaHomes enumerates JDKs from ~/.sdkman/candidates/java/*, mise, and
-// the Homebrew openjdk@<major> kegs across the supported range. SDKMAN entries
-// are listed first (then mise, then Homebrew) so they win ties in
-// ResolveServerJavaHome.
+// installedJavaHomes enumerates JDKs from all known sources: SDKMAN
+// (~/.sdkman/candidates/java/*), mise, Homebrew openjdk@<major> kegs across
+// the supported range, and JavaVMs (/Library/Java/JavaVirtualMachines on
+// macOS, /usr/lib/jvm on Linux). The order — SDKMAN, mise, Homebrew, JavaVMs
+// — is the tie-break order for ResolveServerJavaHome when multiple sources
+// provide the same major.
 func installedJavaHomes() []javaInstall {
-	var out []javaInstall
+	infos := installedJavaInfos()
+	out := make([]javaInstall, 0, len(infos))
+	for _, info := range infos {
+		out = append(out, javaInstall{home: info.Home, major: info.Major})
+	}
+	return out
+}
+
+// JavaInstallInfo describes a discovered JDK with attribution. The Source
+// field is one of "SDKMAN", "Homebrew", "mise", "JavaVMs"; Name is the
+// install-dir basename (e.g. "21.0.9-amzn", "openjdk@21", "temurin-21.0.9",
+// "temurin-21.jdk").
+type JavaInstallInfo struct {
+	Home   string
+	Major  int
+	Source string
+	Name   string
+}
+
+// installedJavaInfos is the source-of-truth enumeration used by
+// installedJavaHomes() and InstalledJavaSummaries(). Order:
+// SDKMAN → mise → Homebrew → JavaVMs.
+func installedJavaInfos() []JavaInstallInfo {
+	var out []JavaInstallInfo
 
 	if userHome, err := os.UserHomeDir(); err == nil {
 		dir := filepath.Join(userHome, ".sdkman", "candidates", "java")
 		if entries, err := os.ReadDir(dir); err == nil {
 			for _, e := range entries {
-				if !e.IsDir() {
+				if !e.IsDir() || e.Name() == "current" {
 					continue
 				}
 				m := JavaMajor(e.Name())
 				cand := filepath.Join(dir, e.Name())
 				if m > 0 && fileExists(filepath.Join(cand, "bin", "java")) {
-					out = append(out, javaInstall{home: cand, major: m})
+					out = append(out, JavaInstallInfo{
+						Home: cand, Major: m, Source: "SDKMAN", Name: e.Name(),
+					})
 				}
 			}
 		}
 	}
 
-	out = append(out, miseInstalledJavaHomes()...)
+	out = append(out, miseInstalledInfos()...)
 
 	for major := ServerJavaFloor; major <= ServerJavaCeiling; major++ {
 		if home := FindHomebrewJava(strconv.Itoa(major)); home != "" {
-			out = append(out, javaInstall{home: home, major: major})
+			out = append(out, JavaInstallInfo{
+				Home: home, Major: major, Source: "Homebrew",
+				Name: fmt.Sprintf("openjdk@%d", major),
+			})
 		}
 	}
 
+	out = append(out, javaVMInstalledInfos()...)
+
+	return out
+}
+
+// InstalledJavaSummaries returns human-readable strings describing every
+// discovered JDK install, used in error messages. Format:
+// `<name> (<Source> <home>)`, e.g. `21.0.9-amzn (SDKMAN ~/.sdkman/...)`.
+// Empty slice when nothing is installed.
+func InstalledJavaSummaries() []string {
+	infos := installedJavaInfos()
+	out := make([]string, 0, len(infos))
+	for _, info := range infos {
+		out = append(out, fmt.Sprintf("%s (%s %s)", info.Name, info.Source, info.Home))
+	}
 	return out
 }
 
@@ -107,17 +152,66 @@ func homebrewPrefixes() []string {
 }
 
 // FindJavaForVersion resolves a JDK home for a specifically requested version,
-// trying SDKMAN first (exact, then the major-prefix fallback), then Homebrew,
-// then mise. Used for the target project's JDK so SDKMAN/Homebrew/mise users all
-// keep auto-discovery.
+// trying SDKMAN first (exact, then the major-prefix fallback), then Homebrew
+// (openjdk@<major> keg), then JavaVMs (/Library/Java/JavaVirtualMachines on
+// macOS, /usr/lib/jvm on Linux — catches cask/DMG-installed JDKs that aren't
+// under any package manager's tree), then mise.
 func FindJavaForVersion(version string) string {
-	if home := FindSDKManJava(version); home != "" {
-		return home
+	home, _ := findJavaForVersionWithSource(version)
+	return home
+}
+
+// findJavaForVersionWithSource is the internal variant that also reports
+// which source matched and whether it required a fallback. Used by
+// resolveProjectJava in service.go to surface a same-major substitution to
+// the user as a one-line stderr note.
+func findJavaForVersionWithSource(version string) (home string, info matchInfo) {
+	if home, fellBack := findSDKManJavaWithFallback(version); home != "" {
+		return home, matchInfo{source: "SDKMAN", fellBack: fellBack, matchedName: filepath.Base(home)}
 	}
 	if home := FindHomebrewJava(version); home != "" {
-		return home
+		// Homebrew kegs are always major-only, so a request for "21.0.11-tem"
+		// matching "openjdk@21" is always a fallback. Exact match would
+		// require version to be e.g. "21" (matches keg directly).
+		fellBack := JavaMajor(version) != 0 && !isBareMajorMatch(version, JavaMajor(version))
+		return home, matchInfo{source: "Homebrew", fellBack: fellBack, matchedName: filepath.Base(home)}
 	}
-	return FindMiseJava(version)
+	if home := FindJavaVMJava(version); home != "" {
+		// JavaVMs: detect fallback by comparing requested version to the matched dir name.
+		matched := filepath.Base(filepath.Dir(filepath.Dir(home))) // strip Contents/Home on macOS
+		if !strings.HasSuffix(home, "Contents/Home") {
+			matched = filepath.Base(home) // Linux flat layout
+		}
+		fellBack := matched != version
+		return home, matchInfo{source: "JavaVMs", fellBack: fellBack, matchedName: matched}
+	}
+	if home := FindMiseJava(version); home != "" {
+		// mise's resolver already handles loose matching; treat any non-exact
+		// match as a fallback for note purposes.
+		base := filepath.Base(home)
+		if base == "Home" {
+			base = filepath.Base(filepath.Dir(filepath.Dir(home)))
+		}
+		fellBack := base != version
+		return home, matchInfo{source: "mise", fellBack: fellBack, matchedName: base}
+	}
+	return "", matchInfo{}
+}
+
+// matchInfo accompanies a resolved JDK home with attribution and whether the
+// match was an exact version hit or a same-major fallback. Internal to the
+// settings package; service.go consumes it via ResolveProjectJavaHomeWithMatch.
+type matchInfo struct {
+	source      string // "SDKMAN" | "Homebrew" | "JavaVMs" | "mise"
+	fellBack    bool   // true when the match was not the exact requested version
+	matchedName string // dir basename of the resolved install
+}
+
+// isBareMajorMatch reports whether a version string is exactly the bare major
+// (e.g. "21" matching major 21). Used by findJavaForVersionWithSource to
+// decide if a Homebrew keg match counts as exact or a fallback.
+func isBareMajorMatch(version string, major int) bool {
+	return version == strconv.Itoa(major)
 }
 
 // JavaMajor extracts the major version from a Java version string such as
@@ -139,15 +233,27 @@ func JavaMajor(version string) int {
 	return lead
 }
 
-// JavaMajorFromHome best-effort extracts a Java major version from a Java home
-// path (a SDKMAN candidate dir name like "21.0.9-amzn" or a Homebrew
-// "openjdk@21" keg). Returns 0 when it can't be determined.
+// JavaMajorFromHome best-effort extracts a Java major version from a Java
+// home path. Recognizes SDKMAN candidate dirs ("21.0.9-amzn"), Homebrew kegs
+// ("openjdk@21"), macOS JavaVMs (".../JavaVirtualMachines/<name>/Contents/Home"),
+// and Linux jvm dirs ("/usr/lib/jvm/temurin-21-jdk-amd64"). Returns 0 when
+// no major can be parsed.
 func JavaMajorFromHome(home string) int {
 	base := filepath.Base(home)
+	// macOS JavaVMs layout: strip trailing Contents/Home and parse the grandparent dir name.
+	if base == "Home" && filepath.Base(filepath.Dir(home)) == "Contents" {
+		if m := JavaMajorFromVMName(filepath.Base(filepath.Dir(filepath.Dir(home)))); m > 0 {
+			return m
+		}
+	}
 	if at := strings.Index(base, "@"); strings.HasPrefix(base, "openjdk") && at >= 0 {
 		return JavaMajor(base[at+1:])
 	}
-	return JavaMajor(base)
+	if m := JavaMajor(base); m > 0 {
+		return m
+	}
+	// Linux jvm dirs and other vendor-prefixed names.
+	return JavaMajorFromVMName(base)
 }
 
 // leadingInt returns the integer formed by the leading run of digits in s, or

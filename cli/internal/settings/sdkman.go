@@ -3,6 +3,7 @@ package settings
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -36,40 +37,68 @@ func ParseSDKManRC(path string) (map[string]string, error) {
 
 // FindSDKManJava locates a Java home in ~/.sdkman/candidates/java. Mirrors
 // settings.py:148-176 including the prefix-match fallback on the major
-// version when an exact match fails.
+// version when an exact match fails. The fallback handles vendor-alias forms
+// like "21-tem" or "25-graal" (no patch component) — see issue #35.
 func FindSDKManJava(version string) string {
-	home, err := os.UserHomeDir()
+	home, _ := findSDKManJavaWithFallback(version)
+	return home
+}
+
+// findSDKManJavaWithFallback is the internal variant that also reports
+// whether the match required the same-major fallback. Used by callers that
+// want to surface the substitution to the user (e.g. a stderr `note:`).
+//
+// Lookup order:
+//  1. Exact directory name match (e.g. "21.0.9-amzn" → that exact dir).
+//  2. Same-major fallback: bare integer dir (e.g. major 21 → "21"), then any
+//     dir whose name starts with "<major>." (e.g. "21." matches "21.0.9-amzn").
+//
+// The major is extracted via JavaMajor, which trims SDKMAN vendor aliases
+// correctly ("21-tem" → 21, fixing the SplitN bug from earlier releases).
+func findSDKManJavaWithFallback(version string) (home string, fellBack bool) {
+	userHome, err := os.UserHomeDir()
 	if err != nil {
-		return ""
+		return "", false
 	}
-	dir := filepath.Join(home, ".sdkman", "candidates", "java")
+	dir := filepath.Join(userHome, ".sdkman", "candidates", "java")
 	if _, err := os.Stat(dir); err != nil {
-		return ""
+		return "", false
 	}
 
 	exact := filepath.Join(dir, version)
 	if fileExists(filepath.Join(exact, "bin", "java")) {
-		return exact
+		return exact, false
 	}
 
-	// Prefix-match on major version, e.g. "21" matches "21.0.9-amzn".
-	major := strings.SplitN(version, ".", 2)[0] + "."
+	major := JavaMajor(version)
+	if major == 0 {
+		return "", false
+	}
+	majorStr := strconv.Itoa(major)
+	prefix := majorStr + "."
+
+	// Try the bare-major directory first (e.g. ~/.sdkman/candidates/java/21).
+	bare := filepath.Join(dir, majorStr)
+	if fileExists(filepath.Join(bare, "bin", "java")) {
+		return bare, true
+	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return ""
+		return "", false
 	}
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue
 		}
-		if strings.HasPrefix(e.Name(), major) {
+		if strings.HasPrefix(e.Name(), prefix) {
 			cand := filepath.Join(dir, e.Name())
 			if fileExists(filepath.Join(cand, "bin", "java")) {
-				return cand
+				return cand, true
 			}
 		}
 	}
-	return ""
+	return "", false
 }
 
 // CodelensJavaVersion reads the codelens repo's own .sdkmanrc to learn

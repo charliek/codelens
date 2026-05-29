@@ -22,20 +22,29 @@ codelens uses Java at two independent levels, and resolves each separately:
 
 The server is built for **Java 21** and is verified through **Java 25**. The CLI
 runs it on the **newest installed JDK whose major version is in the range
-21–25**, discovered across SDKMAN and Homebrew.
+21–25**, discovered across SDKMAN, mise, Homebrew, and macOS/Linux
+system JDK locations.
 
 ### Resolution order
 
 | Priority | Source | Notes |
 |----------|--------|-------|
 | 1 | `CODELENS_JAVA_HOME` | Explicit override; used as-is if it has `bin/java` |
-| 2 | SDKMAN + Homebrew (in range) | Highest installed JDK with major in **[21, 25]**; SDKMAN preferred on ties |
+| 2 | SDKMAN + mise + Homebrew + JavaVMs (in range) | Highest installed JDK with major in **[21, 25]**; tie-break order is SDKMAN > mise > Homebrew > JavaVMs |
 | 3 | `JAVA_HOME` | Fallback if nothing in range was found |
 | 4 | `java` on `PATH` | Last resort |
 
-SDKMAN candidates are read from `~/.sdkman/candidates/java/*`; Homebrew kegs are
-checked at `openjdk@21` … `openjdk@25` under the standard prefixes
-(`/opt/homebrew`, `/usr/local`, `/home/linuxbrew/.linuxbrew`).
+Sources scanned:
+
+- SDKMAN: `~/.sdkman/candidates/java/*`
+- mise: `~/.local/share/mise/installs/java/*` (or `$MISE_DATA_DIR/installs/java/*`)
+- Homebrew kegs `openjdk@21` … `openjdk@25` under the standard prefixes
+  (`/opt/homebrew`, `/usr/local`, `/home/linuxbrew/.linuxbrew`)
+- JavaVMs / jvm dirs — `/Library/Java/JavaVirtualMachines/*` and
+  `~/Library/Java/JavaVirtualMachines/*` on macOS (catches Homebrew casks,
+  Oracle/Zulu/Liberica DMG installers, and manual installs);
+  `/usr/lib/jvm/*` on Linux (deduped by real path so `default-java`
+  symlinks aren't double-counted)
 
 ### Floor and ceiling
 
@@ -94,16 +103,45 @@ A `.sdkmanrc` is the simplest. See [Target Project Setup](target-project.md).
 ### How the declared version is resolved
 
 The declared version is located in order: **SDKMAN** (`~/.sdkman/candidates/java`,
-exact then major-prefix), **Homebrew** (`openjdk@<major>`), then **mise**
-(`~/.local/share/mise/installs/java`). An absolute `org.gradle.java.home` path is
-used directly.
+exact then major-prefix), **Homebrew** (`openjdk@<major>`), **JavaVMs**
+(`/Library/Java/JavaVirtualMachines/*` on macOS, `/usr/lib/jvm/*` on Linux),
+then **mise** (`~/.local/share/mise/installs/java`). An absolute
+`org.gradle.java.home` path that has `bin/java` is used directly as a last
+resort when none of the above match.
 
-If nothing resolves, codelens stops with guidance to install the JDK
-(`sdk install java <v>` / `brew install openjdk@<major>` / `mise install java@<v>`)
-or to pass `--project-java`:
+### Same-major fallback
+
+When the exact declared version isn't installed but **another JDK with the
+same major version IS**, codelens uses it and prints a one-line informational
+note to stderr:
+
+```text
+note: project declares Java 21-tem; using installed 21.0.9-amzn (SDKMAN) as a same-major substitute
+```
+
+This is intentional. For bytecode scanning the patch version and vendor don't
+affect class-file compatibility — only the major matters. The note is
+discoverable so unexpected JDK choices are never silent.
+
+Cross-major substitution is **never** performed (declaring Java 21 will not
+silently use Java 17). If you need a specific patch or vendor, install it
+or pass `--project-java` explicitly.
+
+If nothing resolves at all, codelens stops with guidance to install the JDK
+(`sdk install java <v>` / `brew install openjdk@<major>` / `mise install java@<v>`).
+The error names **what was declared** AND lists **what IS installed** so you
+can pick a working version without guessing:
+
+```text
+project /path declares Java 8.0.392-amzn but it isn't installed;
+install it (`sdk install java 8.0.392-amzn`, `brew install openjdk@8`, or
+`mise install java@8.0.392-amzn`) or pass --project-java;
+installed JDKs: 17.0.13-tem (SDKMAN ~/.sdkman/...), 21.0.9-amzn (SDKMAN ~/.sdkman/...)
+```
+
+Explicit escape hatch (bypasses declaration/resolution):
 
 ```bash
-# Explicit escape hatch (bypasses declaration/resolution)
 codelens start -p /path/to/project \
   --project-java ~/.sdkman/candidates/java/11.0.28-tem
 ```
@@ -119,6 +157,11 @@ the project's (older) bytecode via ClassGraph.
 | `CODELENS_JAVA_HOME` | Server JVM | Force the JDK that runs the server |
 | `JAVA_HOME` | Server JVM | Fallback when nothing in range is found |
 | `CODELENS_JAVA_OPTS` | Server JVM | Extra JVM options (e.g. `-Xmx4g`), whitespace-split |
+| `CODELENS_SERVER_JAR` | Server JAR | Force the path to `codelens-server-all.jar` |
+| `CODELENS_REPO_PATH` | Server JAR | Hint the codelens repo root for `server/app/build/libs/...` |
+| `CODELENS_JAVA_VM_DIRS` | Discovery | Comma-separated override of the JavaVMs / jvm search dirs (test/diagnostic use only) |
+| `HOMEBREW_PREFIX` | Discovery | Override Homebrew prefix (read by Homebrew's `shellenv` too) |
+| `MISE_DATA_DIR` / `XDG_DATA_HOME` | Discovery | Override mise installs root |
 | `--project-java` | Project JVM | Java home for the target project's Gradle |
 
 ## Troubleshooting
@@ -128,7 +171,9 @@ the project's (older) bytecode via ClassGraph.
 | `UnsupportedClassVersionError` at startup | Server JVM older than Java 21 | Install a JDK 21+ (SDKMAN or `brew install openjdk@21`), or set `CODELENS_JAVA_HOME` |
 | Warning that the target needs a newer Java | Target bytecode newer than the server JVM | Install an in-range JDK ≥ the target version |
 | `no JDK declared for project …` | Project doesn't declare a JDK | Add a `.sdkmanrc` / `.java-version` / mise config, or pass `--project-java` |
-| `project … declares Java X but it isn't installed` | Declared JDK missing | `sdk install java <X>`, `brew install openjdk@<major>`, or `mise install java@<X>` |
+| `project … declares Java X but it isn't installed; installed JDKs: …` | Declared major isn't installed; the error lists what IS | Install the missing major (`sdk install java <X>`, `brew install openjdk@<major>`, or `mise install java@<X>`), or update the declaration to one of the listed JDKs |
+| `project … declares org.gradle.java.home=<P> but <P>/bin/java doesn't exist` | gradle.properties points at a deleted or moved JDK | Update the path in `gradle.properties` or install the JDK at that location |
+| `note: project declares Java X; using installed Y (Source) as a same-major substitute` | Not an error — your declared version isn't installed but a same-major JDK was found and used | None required. Install the exact version if vendor/patch matters to you |
 | Server starts but shows 0 classes | Project not compiled | Build the target first (`./gradlew build -x test`) |
 
 To see what the server logged:

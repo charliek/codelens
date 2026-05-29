@@ -42,6 +42,87 @@ func TestDetectProjectJavaVersion_GradlePropertiesSDKManPath(t *testing.T) {
 	}
 }
 
+func TestDetectProjectJavaVersion_GradlePropertiesJavaVMsPath(t *testing.T) {
+	// macOS JavaVMs path — extract bare major so downstream resolvers can
+	// find any matching JDK (cask, DMG, manual install).
+	tmp := t.TempDir()
+	writeFile(t, filepath.Join(tmp, "gradle.properties"),
+		"org.gradle.java.home=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home\n")
+	if got := DetectProjectJavaVersion(tmp); got != "21" {
+		t.Errorf("got %q, want 21", got)
+	}
+}
+
+func TestDetectProjectJavaVersion_GradlePropertiesLinuxJVMPath(t *testing.T) {
+	tmp := t.TempDir()
+	writeFile(t, filepath.Join(tmp, "gradle.properties"),
+		"org.gradle.java.home=/usr/lib/jvm/temurin-21-jdk-amd64\n")
+	if got := DetectProjectJavaVersion(tmp); got != "21" {
+		t.Errorf("got %q, want 21", got)
+	}
+}
+
+func TestDetectProjectGradleJavaHomePath_PresentAndAbsent(t *testing.T) {
+	tmp := t.TempDir()
+	if got := DetectProjectGradleJavaHomePath(tmp); got != "" {
+		t.Errorf("absent: got %q, want empty", got)
+	}
+	writeFile(t, filepath.Join(tmp, "gradle.properties"),
+		"org.gradle.java.home=/nonexistent/jdk21\n")
+	if got := DetectProjectGradleJavaHomePath(tmp); got != "/nonexistent/jdk21" {
+		t.Errorf("got %q", got)
+	}
+}
+
+func TestDetectProjectGradleJavaHomePath_TildeExpansion(t *testing.T) {
+	home, _ := os.UserHomeDir()
+	tmp := t.TempDir()
+	writeFile(t, filepath.Join(tmp, "gradle.properties"),
+		"org.gradle.java.home=~/.sdkman/candidates/java/21.0.9-amzn\n")
+	want := filepath.Join(home, ".sdkman", "candidates", "java", "21.0.9-amzn")
+	if got := DetectProjectGradleJavaHomePath(tmp); got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestProjectJavaSource(t *testing.T) {
+	t.Run("none", func(t *testing.T) {
+		if got := ProjectJavaSource(t.TempDir()); got != "" {
+			t.Errorf("got %q", got)
+		}
+	})
+	t.Run("sdkmanrc", func(t *testing.T) {
+		tmp := t.TempDir()
+		writeFile(t, filepath.Join(tmp, ".sdkmanrc"), "java=21.0.9-amzn\n")
+		if got := ProjectJavaSource(tmp); got != ".sdkmanrc" {
+			t.Errorf("got %q", got)
+		}
+	})
+	t.Run("java-version", func(t *testing.T) {
+		tmp := t.TempDir()
+		writeFile(t, filepath.Join(tmp, ".java-version"), "21\n")
+		if got := ProjectJavaSource(tmp); got != ".java-version" {
+			t.Errorf("got %q", got)
+		}
+	})
+	t.Run("gradle.properties", func(t *testing.T) {
+		tmp := t.TempDir()
+		writeFile(t, filepath.Join(tmp, "gradle.properties"),
+			"org.gradle.java.home=/somewhere\n")
+		want := "gradle.properties::org.gradle.java.home"
+		if got := ProjectJavaSource(tmp); got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+	t.Run("mise", func(t *testing.T) {
+		tmp := t.TempDir()
+		writeFile(t, filepath.Join(tmp, ".tool-versions"), "java temurin-21.0.9\n")
+		if got := ProjectJavaSource(tmp); got != "mise" {
+			t.Errorf("got %q", got)
+		}
+	})
+}
+
 func TestGradleVersion(t *testing.T) {
 	tmp := t.TempDir()
 	writeFile(t,

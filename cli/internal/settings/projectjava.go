@@ -11,6 +11,13 @@ import (
 // DetectProjectJavaVersion checks .sdkmanrc, .java-version, gradle.properties,
 // and mise (.mise.toml / mise.toml / .tool-versions) in that order. Returns ""
 // when the project declares no JDK.
+//
+// For gradle.properties::org.gradle.java.home, the extracted version is:
+//  1. The SDKMAN candidate name when the path matches `.../candidates/java/<v>`.
+//  2. Otherwise, the major version derived from the path basename, when
+//     parseable as a JavaVMs / Homebrew / jvm name (e.g.
+//     `/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home` → "21").
+//  3. Otherwise, "" (fall through to mise detection).
 func DetectProjectJavaVersion(projectPath string) string {
 	// 1. .sdkmanrc
 	cfg, _ := ParseSDKManRC(filepath.Join(projectPath, ".sdkmanrc"))
@@ -24,8 +31,7 @@ func DetectProjectJavaVersion(projectPath string) string {
 			return v
 		}
 	}
-	// 3. gradle.properties — look for org.gradle.java.home and try to
-	//    extract a SDKMAN version from the path.
+	// 3. gradle.properties — look for org.gradle.java.home.
 	if data, err := os.ReadFile(filepath.Join(projectPath, "gradle.properties")); err == nil {
 		re := regexp.MustCompile(`candidates/java/([^/]+)`)
 		for _, line := range strings.Split(string(data), "\n") {
@@ -35,6 +41,11 @@ func DetectProjectJavaVersion(projectPath string) string {
 				if m := re.FindStringSubmatch(value); m != nil {
 					return m[1]
 				}
+				// Non-SDKMAN absolute path — derive a major from the path
+				// so downstream resolution still has something to work with.
+				if maj := JavaMajorFromHome(expandTildeOnly(value)); maj > 0 {
+					return strconv.Itoa(maj)
+				}
 			}
 		}
 	}
@@ -42,15 +53,13 @@ func DetectProjectJavaVersion(projectPath string) string {
 	return MiseProjectJavaVersion(projectPath)
 }
 
-// ResolveProjectJavaHome mirrors settings.py:243-275, extended to resolve the
-// project's JDK from Homebrew as well as SDKMAN (see FindJavaForVersion).
-func ResolveProjectJavaHome(projectPath string) string {
-	if v := DetectProjectJavaVersion(projectPath); v != "" {
-		if home := FindJavaForVersion(v); home != "" {
-			return home
-		}
-	}
-	// Explicit org.gradle.java.home path (with ~ expansion only).
+// DetectProjectGradleJavaHomePath returns the raw, ~-expanded path declared
+// by `org.gradle.java.home=<path>` in gradle.properties, regardless of
+// whether `bin/java` exists at that path. Returns "" when no such
+// declaration is present. Used by service.go to detect the "declared path
+// missing" case and produce a pointed error instead of the misleading
+// "no JDK declared".
+func DetectProjectGradleJavaHomePath(projectPath string) string {
 	data, err := os.ReadFile(filepath.Join(projectPath, "gradle.properties"))
 	if err != nil {
 		return ""
@@ -59,13 +68,80 @@ func ResolveProjectJavaHome(projectPath string) string {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "org.gradle.java.home=") {
 			path := strings.TrimSpace(strings.SplitN(line, "=", 2)[1])
-			path = expandTildeOnly(path)
-			if fileExists(filepath.Join(path, "bin", "java")) {
-				return path
-			}
+			return expandTildeOnly(path)
 		}
 	}
 	return ""
+}
+
+// ProjectJavaSource returns a short tag identifying which mechanism the
+// project uses to declare its JDK. Used in error messages so the user knows
+// which file to edit. Returns "" when no declaration is present.
+func ProjectJavaSource(projectPath string) string {
+	if cfg, _ := ParseSDKManRC(filepath.Join(projectPath, ".sdkmanrc")); cfg["java"] != "" {
+		return ".sdkmanrc"
+	}
+	if data, err := os.ReadFile(filepath.Join(projectPath, ".java-version")); err == nil {
+		if strings.TrimSpace(string(data)) != "" {
+			return ".java-version"
+		}
+	}
+	if DetectProjectGradleJavaHomePath(projectPath) != "" {
+		return "gradle.properties::org.gradle.java.home"
+	}
+	if MiseProjectJavaVersion(projectPath) != "" {
+		return "mise"
+	}
+	return ""
+}
+
+// ResolveProjectJavaHome resolves the target project's JDK home. Tries the
+// declared version through SDKMAN → Homebrew → JavaVMs → mise (with same-major
+// fallback at each source), then the explicit `org.gradle.java.home` path.
+// Returns "" when nothing resolves. Callers that want attribution
+// (source + fallback flag for error messages and stderr notes) should use
+// ResolveProjectJavaHomeWithMatch instead.
+func ResolveProjectJavaHome(projectPath string) string {
+	return ResolveProjectJavaHomeWithMatch(projectPath).Home
+}
+
+// ProjectJavaResolution describes the outcome of project-JDK resolution
+// with full attribution for diagnostics.
+type ProjectJavaResolution struct {
+	Home      string // resolved JAVA_HOME; "" when nothing matched
+	Requested string // version declared by the project (DetectProjectJavaVersion)
+	Matched   string // basename of the install dir that matched (may differ from Requested)
+	Source    string // "SDKMAN" | "Homebrew" | "JavaVMs" | "mise" | "gradle.properties" | ""
+	FellBack  bool   // true when Matched != Requested (same-major substitution)
+}
+
+// ResolveProjectJavaHomeWithMatch is the source-of-truth resolver returning
+// rich attribution so callers can surface a one-line stderr note when a
+// same-major fallback fires (e.g. requested "21-tem", matched "21.0.9-amzn").
+func ResolveProjectJavaHomeWithMatch(projectPath string) ProjectJavaResolution {
+	requested := DetectProjectJavaVersion(projectPath)
+	if requested != "" {
+		if home, info := findJavaForVersionWithSource(requested); home != "" {
+			return ProjectJavaResolution{
+				Home: home, Requested: requested,
+				Matched: info.matchedName, Source: info.source,
+				FellBack: info.fellBack,
+			}
+		}
+	}
+	// Explicit org.gradle.java.home path (with ~ expansion only) as a last
+	// resort. Useful when the declared version didn't resolve but the user
+	// pointed Gradle directly at a JDK home that exists.
+	if path := DetectProjectGradleJavaHomePath(projectPath); path != "" {
+		if fileExists(filepath.Join(path, "bin", "java")) {
+			return ProjectJavaResolution{
+				Home: path, Requested: requested,
+				Matched: filepath.Base(path), Source: "gradle.properties",
+				FellBack: false,
+			}
+		}
+	}
+	return ProjectJavaResolution{Requested: requested}
 }
 
 // expandTildeOnly mirrors Python Path.expanduser() — only expands ~ at the

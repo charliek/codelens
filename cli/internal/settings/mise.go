@@ -135,9 +135,10 @@ func FindMiseJava(version string) string {
 	return ""
 }
 
-// miseInstalledJavaHomes lists installed mise JDKs as javaInstall entries for
-// the server-JVM discovery (ResolveServerJavaHome).
-func miseInstalledJavaHomes() []javaInstall {
+// miseInstalledInfos lists installed mise JDKs as JavaInstallInfo entries
+// for server-JVM discovery (ResolveServerJavaHome) and error messages
+// (InstalledJavaSummaries).
+func miseInstalledInfos() []JavaInstallInfo {
 	dir := miseInstallsJavaDir()
 	if dir == "" {
 		return nil
@@ -146,7 +147,7 @@ func miseInstalledJavaHomes() []javaInstall {
 	if err != nil {
 		return nil
 	}
-	var out []javaInstall
+	var out []JavaInstallInfo
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue
@@ -156,7 +157,9 @@ func miseInstalledJavaHomes() []javaInstall {
 			continue
 		}
 		if home := miseResolveHome(filepath.Join(dir, e.Name())); home != "" {
-			out = append(out, javaInstall{home: home, major: m})
+			out = append(out, JavaInstallInfo{
+				Home: home, Major: m, Source: "mise", Name: e.Name(),
+			})
 		}
 	}
 	return out
