@@ -34,7 +34,15 @@ Ratpack, Android, or plain-Java/Kotlin project.
 
 ## Prerequisites
 
-Ensure the CodeLens server is running for your project:
+**Compile the target project first.** CodeLens analyzes compiled *bytecode* under
+`build/classes`, not source files — so if the project hasn't been built, there is
+nothing for it to scan. Build it (skipping tests is fine and faster):
+
+```bash
+cd /path/to/project && ./gradlew build -x test   # or: ./gradlew classes testClasses
+```
+
+Then start the server:
 
 ```bash
 codelens start --project /path/to/project
@@ -45,6 +53,25 @@ large projects) while the server resolves the Gradle classpath and downloads
 dependencies. Use `codelens status` to monitor — the server transitions through
 `LOADING` (scanning) to `READY` (fully available). Subsequent starts are fast
 due to cached dependencies.
+
+**Verify the scan actually found your code before analyzing.** A project that
+wasn't compiled still starts cleanly and reports `READY` — it just finds zero
+project classes, so every query comes back empty and the emptiness looks like a
+real answer. Guard against that by checking the counts first:
+
+```bash
+codelens classes stats --json   # look at projectClassCount
+```
+
+If `projectClassCount` is `0`, the project is almost certainly uncompiled (or you
+pointed at the wrong directory). `codelens start`/`restart` also print a
+`warning:` line to stderr in this case. To recover: build the project (command
+above), then re-scan without a full restart and re-check:
+
+```bash
+codelens refresh --project /path/to/project
+codelens classes stats --json
+```
 
 **Output:** in a terminal, commands print human-readable tables. Pass `--json`
 to get the stable machine-readable payload — it is the documented shape and is

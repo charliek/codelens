@@ -36,12 +36,18 @@ explain your reasoning.
 
 ## Prerequisites
 
+**Build the project first** — CodeLens scans compiled bytecode (`build/classes`), so an
+uncompiled project scans to zero classes and every query comes back empty:
+`cd /path/to/ratpack-project && ./gradlew build -x test`. Then:
+
 ```bash
 codelens start --project /path/to/ratpack-project
 ```
 
 The first start may take a few minutes while CodeLens resolves the Gradle classpath and
-scans bytecode; `codelens status` reports `LOADING` → `READY`. In a terminal, commands
+scans bytecode; `codelens status` reports `LOADING` → `READY`. Sanity-check with
+`codelens classes stats --json` — a `projectClassCount` of `0` (also flagged by a
+`warning:` line from `start`) means rebuild, then `codelens refresh`. In a terminal, commands
 print human-readable tables; **pass `--json` to get the stable machine-readable payload**
 (it is also auto-selected when output is piped or captured, as in tool execution). The
 recipes below pass `--json` explicitly so they parse reliably with `jq`.

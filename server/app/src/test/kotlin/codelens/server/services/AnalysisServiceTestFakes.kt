@@ -124,12 +124,38 @@ internal class ThrowingClassGraphProvider(
     ): ScanResult = throw error
 }
 
+/**
+ * ClassGraphProvider whose scan reports a non-zero project class count, so the
+ * "no project classes" advisory must NOT fire. Otherwise behaves like the
+ * empty provider.
+ */
+internal class NonEmptyClassGraphProvider(
+    private val projectClassCount: Int = 3,
+) : EmptyClassGraphProvider() {
+    override fun scan(
+        classpathEntries: List<File>,
+        projectOutputDirs: Set<File>,
+        resolvedBy: String,
+    ): ScanResult =
+        ScanResult(
+            classes = emptyMap(),
+            statistics = statsWithProjectClasses(resolvedBy, classpathEntries.size, projectClassCount),
+            projectOutputDirs = projectOutputDirs,
+        )
+}
+
 internal fun emptyStats(
     resolvedBy: String,
     entryCount: Int,
+): ScanStatistics = statsWithProjectClasses(resolvedBy, entryCount, 0)
+
+internal fun statsWithProjectClasses(
+    resolvedBy: String,
+    entryCount: Int,
+    projectClassCount: Int,
 ): ScanStatistics =
     ScanStatistics(
-        projectClassCount = 0,
+        projectClassCount = projectClassCount,
         libraryClassCount = 0,
         jdkClassCount = 0,
         projectInterfaceCount = 0,

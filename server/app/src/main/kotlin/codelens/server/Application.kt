@@ -85,6 +85,10 @@ fun main(args: Array<String>) {
  *   - `CODELENS_STARTING port=<p> host=<h>` - HTTP listener is bound;
  *     the initial scan is still running. Informational only; the CLI does
  *     not treat this as readiness.
+ *   - `CODELENS_WARNING message="<msg>"` - an advisory emitted immediately
+ *     before `CODELENS_READY` (currently only when the scan found zero project
+ *     classes, the typical symptom of an uncompiled project). Additive and
+ *     non-fatal; older CLIs that don't recognize it simply ignore the line.
  *   - `CODELENS_READY port=<p> host=<h> version=<v>` - the initial scan
  *     completed successfully and every analysis endpoint is ready to serve
  *     real data. The CLI matches on this line.
@@ -145,6 +149,14 @@ internal fun runServer(
 
     return when (finalStatus) {
         ProjectStatus.READY -> {
+            // Advisory: a successful scan that found no project classes almost
+            // always means the target wasn't compiled. Emit before READY so the
+            // CLI (which returns the instant it sees READY) still consumes it.
+            if ((analysisService.getProjectInfo().classCount ?: 0) == 0) {
+                val message = AnalysisService.NO_PROJECT_CLASSES_WARNING.sanitizeForReadinessLine()
+                readinessOut.println("""CODELENS_WARNING message="$message"""")
+                readinessOut.flush()
+            }
             readinessOut.println(
                 "CODELENS_READY port=$port host=${config.host} version=${BuildConfig.VERSION}",
             )

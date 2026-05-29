@@ -143,6 +143,9 @@ class AnalysisService(
             logger.info(
                 "Scan completed for ${projectDir.name}: ${stats.projectClassCount} project classes, ${stats.libraryClassCount} library classes",
             )
+            if (stats.projectClassCount == 0) {
+                logger.warn("${projectDir.name}: $NO_PROJECT_CLASSES_WARNING")
+            }
         } catch (e: ClasspathResolutionException) {
             logger.error("Classpath resolution failed for ${projectDir.name}: ${e.message}", e)
             projectInfo.updateAndGet { it.copy(status = ProjectStatus.ERROR) }
@@ -596,5 +599,18 @@ class AnalysisService(
                 format = SourceFormat.JAVADOC,
             )
         }
+    }
+
+    companion object {
+        /**
+         * Advisory message surfaced when a scan resolves to zero project
+         * classes. CodeLens analyzes compiled bytecode under `build/classes`, so
+         * the overwhelmingly common cause is an uncompiled (or wrong) project.
+         * Kept single-line and free of double quotes so it can be embedded
+         * verbatim in the `CODELENS_WARNING` readiness line the CLI parses.
+         */
+        const val NO_PROJECT_CLASSES_WARNING: String =
+            "project may not be compiled (0 project classes found); CodeLens analyzes compiled bytecode, " +
+                "so run './gradlew build' (or 'classes testClasses'), then 'codelens refresh'"
     }
 }

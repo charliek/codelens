@@ -133,6 +133,11 @@ func (s *Service) Start(ctx context.Context, opts StartOptions) (*state.ServerSt
 		return nil, augmentReadyError(err, logPath)
 	}
 
+	// Surface any server advisories (e.g. an uncompiled project with 0 classes)
+	// on stderr, matching the warnIfTargetNewerThanServer convention. stderr
+	// keeps the start command's stdout JSON byte-identical.
+	writeWarnings(os.Stderr, info.Warnings)
+
 	// Reload, update status, persist the server-reported port.
 	st, err := s.Repo.Find(opts.ProjectPath)
 	if err != nil || st == nil {
@@ -359,6 +364,15 @@ func (s *Service) warnIfTargetNewerThanServer(projectPath string, serverMajor in
 			"install a JDK >= %d (<= %d) via `sdk install java %d...` or "+
 			"`brew install openjdk@%d` so codelens can analyze it.\n",
 		serverMajor, projectPath, target, target, settings.ServerJavaCeiling, target, target)
+}
+
+// writeWarnings prints each server advisory as a `warning:` line to w, in
+// order. Split out from Start so the formatting is unit-testable without
+// spawning a real server process.
+func writeWarnings(w io.Writer, warnings []string) {
+	for _, msg := range warnings {
+		fmt.Fprintf(w, "warning: %s\n", msg)
+	}
 }
 
 func fileExists(path string) bool {

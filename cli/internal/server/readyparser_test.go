@@ -82,6 +82,29 @@ func TestParseLine_UnrelatedLineReturnsNothing(t *testing.T) {
 	}
 }
 
+func TestParseWarning_Matches(t *testing.T) {
+	msg, ok := parseWarning(`CODELENS_WARNING message="project may not be compiled"`)
+	if !ok {
+		t.Fatal("expected a warning match")
+	}
+	if msg != "project may not be compiled" {
+		t.Errorf("msg = %q", msg)
+	}
+}
+
+func TestParseWarning_NonWarningLines(t *testing.T) {
+	for _, line := range []string{
+		"CODELENS_READY port=8080 host=127.0.0.1 version=1.0.0",
+		`CODELENS_ERROR reason=SCAN message="boom"`,
+		"CODELENS_STARTING port=8080 host=127.0.0.1",
+		"just some log noise",
+	} {
+		if _, ok := parseWarning(line); ok {
+			t.Errorf("line should not parse as warning: %q", line)
+		}
+	}
+}
+
 // =============================================================================
 // WaitForReady integration tests via in-memory pipes
 // =============================================================================
@@ -101,6 +124,44 @@ func TestWaitForReady_HappyPath(t *testing.T) {
 	}
 	if info.Port != 8080 {
 		t.Errorf("port = %d", info.Port)
+	}
+}
+
+func TestWaitForReady_CollectsWarningBeforeReady(t *testing.T) {
+	r, w := io.Pipe()
+	go func() {
+		_, _ = w.Write([]byte("CODELENS_STARTING port=8080 host=127.0.0.1\n"))
+		_, _ = w.Write([]byte(`CODELENS_WARNING message="0 project classes found"` + "\n"))
+		_, _ = w.Write([]byte("CODELENS_READY port=8080 host=127.0.0.1 version=1.0.0\n"))
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	info, err := WaitForReady(ctx, r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(info.Warnings) != 1 {
+		t.Fatalf("expected 1 warning, got %d: %v", len(info.Warnings), info.Warnings)
+	}
+	if !strings.Contains(info.Warnings[0], "0 project classes") {
+		t.Errorf("warning = %q", info.Warnings[0])
+	}
+	if info.Port != 8080 {
+		t.Errorf("port = %d (warning line must not disturb READY parsing)", info.Port)
+	}
+}
+
+func TestWaitForReady_WarningWithoutReadyIsExitedEarly(t *testing.T) {
+	r, w := io.Pipe()
+	go func() {
+		_, _ = w.Write([]byte(`CODELENS_WARNING message="0 project classes found"` + "\n"))
+		_ = w.Close()
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	info, err := WaitForReady(ctx, r)
+	if !errors.Is(err, ErrServerExitedEarly) {
+		t.Errorf("expected ErrServerExitedEarly; got info=%v err=%v", info, err)
 	}
 }
 

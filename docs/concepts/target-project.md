@@ -36,6 +36,14 @@ CodeLens analyzes compiled bytecode, not source files. Your project must be comp
 
 **Why this is needed:** CodeLens scans `build/classes/` directories to discover classes in your project. Without compiled bytecode, there's nothing to analyze.
 
+!!! warning "Symptom: a `READY` server that finds 0 project classes"
+    If you start CodeLens on an uncompiled project, the server still comes up and
+    reports `READY` — it just finds **zero** project classes, so every analysis
+    query returns empty results. `codelens start`/`restart` print a `warning:`
+    line to stderr in this case, and `codelens classes stats` shows
+    `projectClassCount: 0`. The fix is to compile (the commands above) and then
+    re-scan in place with `codelens refresh` — no full restart needed.
+
 ### 3. Gradle Version Compatibility
 
 CodeLens supports Gradle versions 4.x through 9.x. Your project's Gradle version must also be compatible with the JDK you're using to run CodeLens.

@@ -5,6 +5,8 @@ import codelens.server.config.ServerConfig
 import codelens.server.services.AnalysisService
 import codelens.server.services.DelayingResolver
 import codelens.server.services.EmptyClassGraphProvider
+import codelens.server.services.NonEmptyClassGraphProvider
+import codelens.server.services.StaticResolver
 import codelens.server.services.ThrowingClassGraphProvider
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -132,6 +134,90 @@ class StartupReadinessTest {
             output.contains("CODELENS_READY"),
             "Failed startup must not emit CODELENS_READY:\n$output",
         )
+    }
+
+    @Test
+    fun `zero project classes emits CODELENS_WARNING before CODELENS_READY`(
+        @TempDir tempDir: Path,
+    ) {
+        val projectDir = tempDir.toFile()
+
+        val analysisService =
+            AnalysisService(
+                projectDir = projectDir,
+                classpathResolverOverride = StaticResolver(),
+                classGraphProviderOverride = EmptyClassGraphProvider(),
+            )
+
+        val capturedOut = ByteArrayOutputStream()
+        val readinessStream = PrintStream(capturedOut, true, Charsets.UTF_8)
+        val config = newTestConfig(projectDir.absolutePath)
+
+        val handle =
+            runServer(
+                config = config,
+                projectDir = projectDir,
+                analysisService = analysisService,
+                readinessOut = readinessStream,
+                exit = { code -> throw ExitInvoked(code) },
+            )
+
+        try {
+            val output = capturedOut.toString(Charsets.UTF_8)
+            val warningIdx = output.indexOf("CODELENS_WARNING")
+            val readyIdx = output.indexOf("CODELENS_READY")
+
+            assertTrue(warningIdx >= 0, "Expected CODELENS_WARNING line in output, got:\n$output")
+            assertTrue(readyIdx >= 0, "Expected CODELENS_READY line in output, got:\n$output")
+            assertTrue(
+                warningIdx < readyIdx,
+                "CODELENS_WARNING must precede CODELENS_READY so the CLI consumes it:\n$output",
+            )
+            assertTrue(
+                output.contains("""CODELENS_WARNING message="""),
+                "CODELENS_WARNING must use the message=\"...\" shape the CLI parses:\n$output",
+            )
+        } finally {
+            handle.stop()
+        }
+    }
+
+    @Test
+    fun `non-zero project classes does not emit CODELENS_WARNING`(
+        @TempDir tempDir: Path,
+    ) {
+        val projectDir = tempDir.toFile()
+
+        val analysisService =
+            AnalysisService(
+                projectDir = projectDir,
+                classpathResolverOverride = StaticResolver(),
+                classGraphProviderOverride = NonEmptyClassGraphProvider(),
+            )
+
+        val capturedOut = ByteArrayOutputStream()
+        val readinessStream = PrintStream(capturedOut, true, Charsets.UTF_8)
+        val config = newTestConfig(projectDir.absolutePath)
+
+        val handle =
+            runServer(
+                config = config,
+                projectDir = projectDir,
+                analysisService = analysisService,
+                readinessOut = readinessStream,
+                exit = { code -> throw ExitInvoked(code) },
+            )
+
+        try {
+            val output = capturedOut.toString(Charsets.UTF_8)
+            assertTrue(output.contains("CODELENS_READY"), "Expected CODELENS_READY in output:\n$output")
+            assertFalse(
+                output.contains("CODELENS_WARNING"),
+                "A scan with project classes must not emit CODELENS_WARNING:\n$output",
+            )
+        } finally {
+            handle.stop()
+        }
     }
 
     // ----- helpers -----
