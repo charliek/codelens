@@ -279,26 +279,61 @@ func (s *Service) buildCommand(opts StartOptions, mode state.ServerMode, port in
 	return nil, fmt.Errorf("unknown server mode: %s", mode)
 }
 
+// noteWriter is the destination for one-line informational `note:` lines
+// (e.g. same-major substitution notices). Defaults to stderr; tests override
+// it to capture output. Mirrors the writeWarnings(os.Stderr, …) pattern.
+var noteWriter io.Writer = os.Stderr
+
 // resolveProjectJava resolves the JDK home for the target project's Gradle
 // daemon. The project must declare a JDK (.sdkmanrc / .java-version /
 // gradle.properties / mise) so its Gradle runs on a compatible JVM regardless
-// of the (possibly newer) server JVM. codelens never guesses: a missing or
-// unresolvable declaration is a hard error that aborts startup. Pass
-// --project-java to bypass.
+// of the (possibly newer) server JVM. codelens never guesses a missing
+// declaration; same-major substitution within a declared major IS performed
+// (e.g. declared 21-tem, installed 21.0.9-amzn → resolves with a stderr
+// note) since bytecode scanning isn't sensitive to vendor/patch. Pass
+// --project-java to bypass entirely.
+//
+// On the unhappy path the error names what was declared AND lists what IS
+// installed, so the user can pick a working version without guessing.
 func (s *Service) resolveProjectJava(projectPath string) (string, error) {
-	if home := settings.ResolveProjectJavaHome(projectPath); home != "" {
-		return home, nil
+	match := settings.ResolveProjectJavaHomeWithMatch(projectPath)
+	if match.Home != "" {
+		if match.FellBack && match.Requested != "" {
+			// Surface the substitution so the user understands why codelens
+			// picked a different JDK than they declared. One line, stderr only.
+			fmt.Fprintf(noteWriter,
+				"note: project declares Java %s; using installed %s (%s) as a same-major substitute\n",
+				match.Requested, match.Matched, match.Source)
+		}
+		return match.Home, nil
 	}
-	if v := settings.DetectProjectJavaVersion(projectPath); v != "" {
+
+	// org.gradle.java.home pointed at a path that doesn't have bin/java —
+	// give a pointed error instead of the misleading "no JDK declared".
+	if path := settings.DetectProjectGradleJavaHomePath(projectPath); path != "" && !fileExists(filepath.Join(path, "bin", "java")) {
+		return "", fmt.Errorf(
+			"project %s declares org.gradle.java.home=%s but %s/bin/java doesn't exist; "+
+				"install that JDK or update gradle.properties, or pass --project-java",
+			projectPath, path, path)
+	}
+
+	if v := match.Requested; v != "" {
 		brew := "`brew install openjdk@<major>`"
 		if m := settings.JavaMajor(v); m > 0 {
 			brew = fmt.Sprintf("`brew install openjdk@%d`", m)
 		}
-		return "", fmt.Errorf(
+		base := fmt.Sprintf(
 			"project %s declares Java %s but it isn't installed; install it "+
 				"(`sdk install java %s`, %s, or `mise install java@%s`) or pass --project-java",
 			projectPath, v, v, brew, v)
+		if list := settings.InstalledJavaSummaries(); len(list) > 0 {
+			return "", fmt.Errorf("%s; installed JDKs: %s", base, strings.Join(list, ", "))
+		}
+		return "", fmt.Errorf(
+			"%s; no JDKs found on this machine (searched SDKMAN, Homebrew, /Library/Java/JavaVirtualMachines, mise)",
+			base)
 	}
+
 	hint := ""
 	if g := settings.GradleVersion(projectPath); g != "" {
 		hint = fmt.Sprintf(" (Gradle %s)", g)

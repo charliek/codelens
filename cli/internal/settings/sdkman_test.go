@@ -84,3 +84,110 @@ func TestFindSDKManJava_PrefixFallback(t *testing.T) {
 		t.Errorf("expected empty; got %s", got)
 	}
 }
+
+// TestFindSDKManJava_VendorAliasBareMajor is the primary regression test for
+// the SplitN bug behind issue #35: requesting "21-tem" (a valid SDKMAN
+// vendor-alias meaning "latest Temurin 21", no patch component) must fall
+// back to any installed major-21 dir. The old `strings.SplitN("21-tem", ".",
+// 2)[0] + "."` produced the prefix "21-tem." which matched nothing.
+func TestFindSDKManJava_VendorAliasBareMajor(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	fakeSDKManJDK(t, tmp, "21.0.9-amzn")
+
+	for _, in := range []string{"21-tem", "21-amzn", "25-graal"} {
+		got, fellBack := findSDKManJavaWithFallback(in)
+		if in == "25-graal" {
+			// No major-25 installed — must NOT match the 21-* dir.
+			if got != "" {
+				t.Errorf("%q: expected empty; got %s", in, got)
+			}
+			continue
+		}
+		if filepath.Base(got) != "21.0.9-amzn" {
+			t.Errorf("%q: expected 21.0.9-amzn; got %s", in, got)
+		}
+		if !fellBack {
+			t.Errorf("%q: expected fellBack=true", in)
+		}
+	}
+}
+
+// TestFindSDKManJava_BareMajorRequest covers `.sdkmanrc: java=21` — a
+// bare-major declaration. Should match any installed major-21 JDK.
+func TestFindSDKManJava_BareMajorRequest(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	fakeSDKManJDK(t, tmp, "21.0.9-amzn")
+
+	got, fellBack := findSDKManJavaWithFallback("21")
+	if filepath.Base(got) != "21.0.9-amzn" {
+		t.Errorf("got %s, want 21.0.9-amzn", got)
+	}
+	if !fellBack {
+		t.Errorf("expected fellBack=true")
+	}
+}
+
+// TestFindSDKManJava_BareMajorDirExactMatch covers the rarer case where
+// SDKMAN actually installed under a bare-major dir name (e.g. some snapshot
+// layouts) — the bare-major branch should match it without falling back.
+func TestFindSDKManJava_BareMajorDirExactMatch(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	fakeSDKManJDK(t, tmp, "21") // dir literally named "21"
+
+	got, fellBack := findSDKManJavaWithFallback("21-tem")
+	if filepath.Base(got) != "21" {
+		t.Errorf("got %s, want 21", got)
+	}
+	if !fellBack {
+		// The request was "21-tem" but matched dir "21" — that's still a
+		// substitution, not an exact match.
+		t.Errorf("expected fellBack=true")
+	}
+}
+
+// TestFindSDKManJava_DifferentMajorRejected guards against over-matching.
+// "17-tem" must not pick up a major-21 install.
+func TestFindSDKManJava_DifferentMajorRejected(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	fakeSDKManJDK(t, tmp, "21.0.9-amzn")
+
+	if got := FindSDKManJava("17-tem"); got != "" {
+		t.Errorf("17-tem should NOT match 21-* installs; got %s", got)
+	}
+}
+
+// TestFindSDKManJava_Issue35Scenario is a permanent regression anchor for
+// the literal scenario in https://github.com/charliek/codelens/issues/35:
+// project declares 21.0.11-tem, only 21.0.9-amzn is installed → must
+// resolve to 21.0.9-amzn via the same-major fallback.
+func TestFindSDKManJava_Issue35Scenario(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	fakeSDKManJDK(t, tmp, "21.0.9-amzn")
+
+	got, fellBack := findSDKManJavaWithFallback("21.0.11-tem")
+	if filepath.Base(got) != "21.0.9-amzn" {
+		t.Errorf("got %s, want 21.0.9-amzn", got)
+	}
+	if !fellBack {
+		t.Errorf("expected fellBack=true (different vendor + patch)")
+	}
+}
+
+// TestFindSDKManJava_InlineCommentInVersion confirms that a declared
+// version carrying a preserved-comment suffix (the .sdkmanrc parser keeps
+// inline `# comment` text verbatim, matching Python) still resolves via the
+// same-major fallback because JavaMajor strips correctly.
+func TestFindSDKManJava_InlineCommentInVersion(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	fakeSDKManJDK(t, tmp, "21.0.9-amzn")
+
+	if got := FindSDKManJava("21.0.11-tem # comment"); filepath.Base(got) != "21.0.9-amzn" {
+		t.Errorf("got %s, want 21.0.9-amzn", got)
+	}
+}

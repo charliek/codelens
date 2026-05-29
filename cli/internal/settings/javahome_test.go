@@ -54,7 +54,9 @@ func fakeSDKManJDK(t *testing.T, home, name string) {
 func TestResolveServerJavaHome_PicksHighestInRange(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
-	t.Setenv("HOMEBREW_PREFIX", t.TempDir()) // isolate from any system Homebrew JDKs
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir())       // isolate from any system Homebrew JDKs
+	t.Setenv("CODELENS_JAVA_VM_DIRS", t.TempDir()) // isolate from any system /Library/Java or /usr/lib/jvm
+	t.Setenv("MISE_DATA_DIR", t.TempDir())         // isolate from any system mise installs
 	// 17 is below the floor, 26 is above the ceiling; 21 and 25 are in range.
 	fakeSDKManJDK(t, tmp, "17.0.10-tem")
 	fakeSDKManJDK(t, tmp, "21.0.9-amzn")
@@ -73,7 +75,9 @@ func TestResolveServerJavaHome_PicksHighestInRange(t *testing.T) {
 func TestResolveServerJavaHome_NoneInRange(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
-	t.Setenv("HOMEBREW_PREFIX", t.TempDir()) // isolate from any system Homebrew JDKs
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir())       // isolate from any system Homebrew JDKs
+	t.Setenv("CODELENS_JAVA_VM_DIRS", t.TempDir()) // isolate from system /Library/Java or /usr/lib/jvm
+	t.Setenv("MISE_DATA_DIR", t.TempDir())         // isolate from system mise installs
 	fakeSDKManJDK(t, tmp, "17.0.10-tem")
 	fakeSDKManJDK(t, tmp, "26-open")
 
@@ -85,7 +89,9 @@ func TestResolveServerJavaHome_NoneInRange(t *testing.T) {
 func TestFindJavaForVersion_SDKManThenEmpty(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
-	t.Setenv("HOMEBREW_PREFIX", t.TempDir()) // isolate from any system Homebrew JDKs
+	t.Setenv("HOMEBREW_PREFIX", t.TempDir())       // isolate from any system Homebrew JDKs
+	t.Setenv("CODELENS_JAVA_VM_DIRS", t.TempDir()) // isolate from system /Library/Java or /usr/lib/jvm
+	t.Setenv("MISE_DATA_DIR", t.TempDir())         // isolate from system mise installs
 	fakeSDKManJDK(t, tmp, "17.0.10-tem")
 
 	if got := FindJavaForVersion("17.0.10-tem"); filepath.Base(got) != "17.0.10-tem" {
