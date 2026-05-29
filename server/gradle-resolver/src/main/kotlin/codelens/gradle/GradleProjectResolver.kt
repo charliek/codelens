@@ -15,6 +15,10 @@ import java.io.File
  * - Uses the project's own Gradle wrapper
  * - Works across Gradle 4.x - 8.x and Java 8-21 projects
  * - Resolves the full runtimeClasspath including transitive dependencies
+ * - Is compatible with Gradle's configuration cache (8.14+ / 9.x): the injected
+ *   init script reads all project state at configuration time and the writer
+ *   task's action touches only captured Strings, so it never references
+ *   `Task.project` at execution time (see issue #33).
  */
 class GradleProjectResolver : ClasspathResolver {
     private val logger = LoggerFactory.getLogger(GradleProjectResolver::class.java)
@@ -127,130 +131,126 @@ class GradleProjectResolver : ClasspathResolver {
     /**
      * Creates a temporary Gradle init script that defines a task to write the classpath.
      * This aggregates classpath from ALL subprojects in a multi-module build.
+     *
+     * Configuration-cache compatible (issue #33): all project state (source sets,
+     * configurations, project paths) is read during the CONFIGURATION phase inside
+     * `gradle.projectsEvaluated`, accumulating into plain serializable Strings. The
+     * `codelensWriteClasspath` task's action references only those captured String
+     * lists, so it never touches `Task.project` at execution time. The output byte
+     * format is identical to the previous (execution-time) script so
+     * [parseClasspathOutput] is unchanged.
      */
     private fun createTempInitScript(): File {
         val script =
             """
-            // Initialize shared collections on rootProject during configuration phase
-            rootProject {
-                ext.codelensClasspathEntries = new LinkedHashSet()
-                ext.codelensProjectOutputDirs = new LinkedHashSet()
-                ext.codelensSourceRoots = new LinkedHashSet()
-                ext.codelensArtifactMappings = new LinkedHashSet()
-            }
+            import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 
-            allprojects {
-                task codelensCollectClasspath {
-                    doLast {
-                        // Collect from all source sets in this project
-                        if (project.plugins.hasPlugin('java') || project.plugins.hasPlugin('java-library')) {
-                            project.sourceSets.each { sourceSet ->
-                                // Add output directories
-                                sourceSet.output.classesDirs.each { dir ->
-                                    if (dir.exists()) {
-                                        rootProject.ext.codelensProjectOutputDirs << dir.absolutePath
-                                        rootProject.ext.codelensClasspathEntries << dir.absolutePath
-                                    }
-                                }
+            // Collect during the CONFIGURATION phase, after every project is evaluated.
+            // Reading the project model here (not inside a task action) keeps this init
+            // script compatible with Gradle's configuration cache: the writer task's
+            // action below captures only plain Strings, never Project/Task/Configuration.
+            gradle.projectsEvaluated {
+                def codelensClasspathEntries  = new LinkedHashSet()
+                def codelensProjectOutputDirs = new LinkedHashSet()
+                def codelensSourceRoots       = new LinkedHashSet()   // "path|language|sourceSet|module"
+                def codelensArtifactMappings  = new LinkedHashSet()   // "group:name:version|jarPath"
 
-                                // Add resources
-                                if (sourceSet.output.resourcesDir?.exists()) {
-                                    rootProject.ext.codelensProjectOutputDirs << sourceSet.output.resourcesDir.absolutePath
-                                    rootProject.ext.codelensClasspathEntries << sourceSet.output.resourcesDir.absolutePath
-                                }
-
-                                // Collect Java source directories
-                                sourceSet.java.srcDirs.each { dir ->
-                                    if (dir.exists()) {
-                                        rootProject.ext.codelensSourceRoots << [
-                                            path: dir.absolutePath,
-                                            language: 'java',
-                                            sourceSet: sourceSet.name,
-                                            module: project.path
-                                        ]
-                                    }
-                                }
-
-                                // Collect Kotlin source directories (if Kotlin plugin is applied)
-                                try {
-                                    sourceSet.kotlin?.srcDirs?.each { dir ->
-                                        if (dir.exists()) {
-                                            rootProject.ext.codelensSourceRoots << [
-                                                path: dir.absolutePath,
-                                                language: 'kotlin',
-                                                sourceSet: sourceSet.name,
-                                                module: project.path
-                                            ]
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    // Kotlin plugin not applied, ignore
+                gradle.rootProject.allprojects { proj ->
+                    if (proj.plugins.hasPlugin('java') || proj.plugins.hasPlugin('java-library')) {
+                        proj.sourceSets.each { sourceSet ->
+                            // Output directories
+                            sourceSet.output.classesDirs.each { dir ->
+                                if (dir.exists()) {
+                                    codelensProjectOutputDirs << dir.absolutePath
+                                    codelensClasspathEntries  << dir.absolutePath
                                 }
                             }
-
-                            // Add runtime dependencies with artifact coordinates
+                            // Resources
+                            if (sourceSet.output.resourcesDir?.exists()) {
+                                codelensProjectOutputDirs << sourceSet.output.resourcesDir.absolutePath
+                                codelensClasspathEntries  << sourceSet.output.resourcesDir.absolutePath
+                            }
+                            // Java source directories
+                            sourceSet.java.srcDirs.each { dir ->
+                                if (dir.exists()) {
+                                    codelensSourceRoots << (dir.absolutePath + '|java|' + sourceSet.name + '|' + proj.path)
+                                }
+                            }
+                            // Kotlin source directories (if the Kotlin plugin is applied)
                             try {
-                                configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-                                    rootProject.ext.codelensClasspathEntries << artifact.file.absolutePath
-                                    // Capture Maven coordinates for library source resolution
-                                    def id = artifact.moduleVersion.id
-                                    rootProject.ext.codelensArtifactMappings << "${'$'}{id.group}:${'$'}{id.name}:${'$'}{id.version}|${'$'}{artifact.file.absolutePath}"
+                                sourceSet.kotlin?.srcDirs?.each { dir ->
+                                    if (dir.exists()) {
+                                        codelensSourceRoots << (dir.absolutePath + '|kotlin|' + sourceSet.name + '|' + proj.path)
+                                    }
                                 }
                             } catch (Exception e) {
-                                // Try compileClasspath as fallback
-                                try {
-                                    configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-                                        rootProject.ext.codelensClasspathEntries << artifact.file.absolutePath
-                                        // Capture Maven coordinates for library source resolution
-                                        def id = artifact.moduleVersion.id
-                                        rootProject.ext.codelensArtifactMappings << "${'$'}{id.group}:${'$'}{id.name}:${'$'}{id.version}|${'$'}{artifact.file.absolutePath}"
-                                    }
-                                } catch (Exception e2) {
-                                    logger.warn("Could not resolve classpath configurations for " + project.name + ": " + e2.message)
+                                // Kotlin plugin not applied, ignore
+                            }
+                        }
+
+                        // Runtime dependencies with artifact coordinates. Uses the modern
+                        // ArtifactCollection API (incoming.artifacts) and only emits a
+                        // coordinate mapping for module components; project/flat-dir/file
+                        // dependencies contribute a classpath entry but no coordinate.
+                        def collectArtifacts = { conf ->
+                            conf.incoming.artifacts.artifacts.each { art ->
+                                def f = art.file
+                                codelensClasspathEntries << f.absolutePath
+                                def cid = art.id.componentIdentifier
+                                if (cid instanceof ModuleComponentIdentifier) {
+                                    codelensArtifactMappings << (cid.group + ':' + cid.module + ':' + cid.version + '|' + f.absolutePath)
                                 }
                             }
                         }
-                        println "CodeLens: Collected classpath from project: " + project.name
+                        try {
+                            if (proj.configurations.findByName('runtimeClasspath') != null) {
+                                collectArtifacts(proj.configurations.runtimeClasspath)
+                            } else {
+                                throw new IllegalStateException('no runtimeClasspath configuration')
+                            }
+                        } catch (Exception e) {
+                            // Fall back to compileClasspath
+                            try {
+                                if (proj.configurations.findByName('compileClasspath') != null) {
+                                    collectArtifacts(proj.configurations.compileClasspath)
+                                }
+                            } catch (Exception e2) {
+                                proj.logger.warn("CodeLens: Could not resolve classpath configurations for " + proj.name + ": " + e2.message)
+                            }
+                        }
                     }
+                    println "CodeLens: Collected classpath from project: " + proj.name
                 }
-            }
 
-            // Root project task that writes the aggregated results
-            rootProject {
-                task codelensWriteClasspath {
-                    dependsOn allprojects.collect { it.tasks.findByName('codelensCollectClasspath') }.findAll { it != null }
+                // Materialize captured state into plain Strings/Lists for the task action.
+                def outPath   = (gradle.rootProject.findProperty('codelensOutputFile') ?: 'build/codelens-classpath.txt').toString()
+                def outDirs   = codelensProjectOutputDirs.toList()
+                def cpEntries = codelensClasspathEntries.toList()
+                def srcRoots  = codelensSourceRoots.toList()
+                def artMaps   = codelensArtifactMappings.toList()
 
+                // Single writer task on the root project. Its action captures ONLY the
+                // Strings above, so it is safe to serialize into the configuration cache
+                // and re-run on a cache-reuse build without re-reading the project model.
+                gradle.rootProject.tasks.create('codelensWriteClasspath') {
                     doLast {
-                        def outputPath = project.findProperty('codelensOutputFile') ?: 'build/codelens-classpath.txt'
-                        def outputFile = new File(outputPath)
+                        def outputFile = new File(outPath)
                         outputFile.parentFile?.mkdirs()
 
-                        def projectOutputDirs = rootProject.ext.codelensProjectOutputDirs.toList()
-                        def classpathEntries = rootProject.ext.codelensClasspathEntries.toList()
-                        def sourceRoots = rootProject.ext.codelensSourceRoots.toList()
-                        def artifactMappings = rootProject.ext.codelensArtifactMappings.toList()
-
-                        // Write output in a parseable format
                         def content = new StringBuilder()
                         content.append("# CodeLens Classpath\n")
                         content.append("# PROJECT_OUTPUTS\n")
-                        content.append(projectOutputDirs.join('\n') + '\n')
+                        content.append(outDirs.join('\n') + '\n')
                         content.append("# CLASSPATH_ENTRIES\n")
-                        content.append(classpathEntries.join('\n') + '\n')
+                        content.append(cpEntries.join('\n') + '\n')
                         content.append("# SOURCE_ROOTS\n")
-                        sourceRoots.each { root ->
-                            // Format: path|language|sourceSet|module
-                            content.append(root.path + '|' + root.language + '|' + root.sourceSet + '|' + root.module + '\n')
-                        }
+                        srcRoots.each { line -> content.append(line + '\n') }   // path|language|sourceSet|module
                         content.append("# ARTIFACT_MAPPINGS\n")
-                        artifactMappings.each { mapping ->
-                            // Format: groupId:artifactId:version|jarPath
-                            content.append(mapping + '\n')
-                        }
+                        artMaps.each { line -> content.append(line + '\n') }    // group:name:version|jarPath
 
                         outputFile.text = content.toString()
 
-                        println "CodeLens: Wrote aggregated classpath (" + classpathEntries.size() + " entries, " + projectOutputDirs.size() + " project outputs, " + sourceRoots.size() + " source roots, " + artifactMappings.size() + " artifact mappings) to " + outputFile.absolutePath
+                        println "CodeLens: Wrote aggregated classpath (" + cpEntries.size() + " entries, " + outDirs.size() + " project outputs, " + srcRoots.size() + " source roots, " + artMaps.size() + " artifact mappings) to " + outputFile.absolutePath
                     }
                 }
             }
