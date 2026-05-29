@@ -35,6 +35,13 @@ Ensure the CodeLens server is running for your project:
 codelens start --project /path/to/project
 ```
 
+**To look up *project* class source, the project must be compiled** — CodeLens
+discovers project classes by scanning compiled bytecode (`build/classes`), so
+build it first (`./gradlew build -x test`). Library and JDK source lookups work
+regardless. If project classes aren't found, check `codelens classes stats --json`
+(a `projectClassCount` of `0`, also flagged by a `warning:` from `start`, means
+rebuild then `codelens refresh`).
+
 **Output:** in a terminal these commands print the source code directly. Pass
 `--json` for the structured envelope documented in
 [FORMATS.md](references/FORMATS.md) (`source.content`, `filePath`, `language`,

@@ -17,6 +17,10 @@ import (
 var (
 	reReady = regexp.MustCompile(`CODELENS_READY port=(\d+) host=(\S+) version=(\S+)`)
 	reError = regexp.MustCompile(`CODELENS_ERROR reason=(\S+) message="([^"]*)"`)
+	// CODELENS_WARNING is an additive, non-fatal advisory line the server emits
+	// just before CODELENS_READY (e.g. an uncompiled project with 0 classes).
+	// Mirrors reError's `message="..."` shape and its [^"]*] truncation quirk.
+	reWarning = regexp.MustCompile(`CODELENS_WARNING message="([^"]*)"`)
 )
 
 // ReadyInfo is the result of a successful ready signal.
@@ -24,6 +28,9 @@ type ReadyInfo struct {
 	Port    int
 	Host    string
 	Version string
+	// Warnings holds any CODELENS_WARNING advisories seen before READY, in
+	// emission order. Empty in the common case.
+	Warnings []string
 }
 
 // ErrServerExitedEarly is returned if the child process exits before
@@ -66,6 +73,11 @@ func WaitForReady(ctx context.Context, stdout io.Reader) (*ReadyInfo, error) {
 		lines <- lineMsg{eof: true}
 	}()
 
+	// Warnings accumulate across the pre-READY window; the server prints them
+	// immediately before CODELENS_READY, so they arrive first and ride out on
+	// the returned ReadyInfo. Discarded if the child exits before READY.
+	var warnings []string
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -77,7 +89,14 @@ func WaitForReady(ctx context.Context, stdout io.Reader) (*ReadyInfo, error) {
 			if msg.eof {
 				return nil, ErrServerExitedEarly
 			}
+			if w, ok := parseWarning(msg.text); ok {
+				warnings = append(warnings, w)
+				continue
+			}
 			if info, err := ParseLine(msg.text); info != nil || err != nil {
+				if info != nil {
+					info.Warnings = warnings
+				}
 				return info, err
 			}
 		}
@@ -100,4 +119,14 @@ func ParseLine(line string) (*ReadyInfo, error) {
 		return nil, &ScanError{Reason: m[1], Message: m[2]}
 	}
 	return nil, nil
+}
+
+// parseWarning extracts the message from a CODELENS_WARNING line. Returns
+// (msg, true) on a match, ("", false) otherwise. Kept separate from ParseLine
+// so the READY/ERROR contract there stays untouched.
+func parseWarning(line string) (string, bool) {
+	if m := reWarning.FindStringSubmatch(line); m != nil {
+		return m[1], true
+	}
+	return "", false
 }

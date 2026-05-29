@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -149,5 +150,23 @@ func TestBuildCommand_GradleModePassesProjectJava(t *testing.T) {
 	args := strings.Join(cmd.Args, " ")
 	if !strings.Contains(args, `--project-java-home "/fake/jdk21"`) {
 		t.Errorf("gradle mode should pass quoted --project-java-home; got: %s", args)
+	}
+}
+
+func TestWriteWarnings(t *testing.T) {
+	var buf bytes.Buffer
+	writeWarnings(&buf, []string{"project may not be compiled", "second advisory"})
+	got := buf.String()
+	want := "warning: project may not be compiled\nwarning: second advisory\n"
+	if got != want {
+		t.Errorf("writeWarnings output mismatch:\n got %q\nwant %q", got, want)
+	}
+}
+
+func TestWriteWarnings_EmptyIsSilent(t *testing.T) {
+	var buf bytes.Buffer
+	writeWarnings(&buf, nil)
+	if buf.Len() != 0 {
+		t.Errorf("no warnings should produce no output; got %q", buf.String())
 	}
 }
