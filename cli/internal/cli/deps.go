@@ -16,8 +16,9 @@ import (
 func newDepsCmd() *cobra.Command {
 	var format, outputPath string
 	cmd := &cobra.Command{
-		Use:   "deps",
-		Short: "Project-wide dependency graph (no args: the full graph)",
+		Use:     "deps",
+		Short:   "Project-wide dependency graph (no args: the full graph)",
+		GroupID: "analyze",
 		// When a subcommand is invoked, Cobra dispatches to it and this RunE
 		// is skipped. Without args, emit the graph.
 		RunE: func(cmd *cobra.Command, _ []string) error {

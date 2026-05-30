@@ -10,8 +10,9 @@ import (
 
 func newClassesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "classes",
-		Short: "Analyze and explore classes in the codebase",
+		Use:     "classes",
+		Short:   "Analyze and explore classes in the codebase",
+		GroupID: "analyze",
 	}
 	cmd.AddCommand(
 		newClassesListCmd(),

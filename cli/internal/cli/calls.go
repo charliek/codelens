@@ -15,8 +15,9 @@ import (
 func newCallsCmd() *cobra.Command {
 	var method, descriptor string
 	cmd := &cobra.Command{
-		Use:   "calls <fqn>",
-		Short: "Show the calls a class's methods make (raw bytecode call sites)",
+		Use:     "calls <fqn>",
+		Short:   "Show the calls a class's methods make (raw bytecode call sites)",
+		GroupID: "analyze",
 		Long: "Extract, from bytecode, every invocation a class's methods make — owner type, " +
 			"method name, descriptor, any constant string/number/class arguments, and source line. " +
 			"Use --method to scope to one method. Returns raw facts; the caller interprets them.",

@@ -10,7 +10,7 @@ import (
 )
 
 func newLintCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "lint", Short: "Kotlin ktlint check/format"}
+	cmd := &cobra.Command{Use: "lint", Short: "Kotlin ktlint check/format", GroupID: "tools"}
 	cmd.AddCommand(newLintCheckCmd(), newLintFormatCmd())
 	return cmd
 }

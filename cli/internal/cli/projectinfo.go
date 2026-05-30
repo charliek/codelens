@@ -13,8 +13,9 @@ import (
 // `app.command(name="project")(project.project_info)`).
 func newProjectCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "project",
-		Short: "Show project info",
+		Use:     "project",
+		Short:   "Show project info",
+		GroupID: "analyze",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.Project(ctx)

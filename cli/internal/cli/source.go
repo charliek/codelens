@@ -10,7 +10,7 @@ import (
 )
 
 func newSourceCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "source", Short: "Source code retrieval"}
+	cmd := &cobra.Command{Use: "source", Short: "Source code retrieval", GroupID: "analyze"}
 	cmd.AddCommand(newSourceShowCmd(), newSourceMethodCmd())
 	return cmd
 }

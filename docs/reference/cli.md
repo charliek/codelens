@@ -80,7 +80,7 @@ is for humans and may change.
 
 ---
 
-## Lifecycle Commands
+## Server lifecycle
 
 These commands manage the CodeLens server.
 
@@ -244,7 +244,7 @@ other-proj  gradle  62001  62050  READY
 
 ---
 
-## Project Commands
+## Code analysis
 
 ### codelens project
 
@@ -275,27 +275,11 @@ codelens project [OPTIONS]
 
 ---
 
-### codelens version
-
-Show the CLI version.
-
-```bash
-codelens version
-```
-
-**Example Output:**
-
-```
-codelens-cli 0.1.0
-```
-
----
-
-## Class Analysis Commands
+### Classes
 
 All class analysis commands are under the `codelens classes` subcommand.
 
-### codelens classes list
+#### codelens classes list
 
 List classes in the codebase with optional filtering.
 
@@ -357,7 +341,7 @@ Classes (1-3 of 3) | Filter: package=com.example.web.*
 
 ---
 
-### codelens classes show
+#### codelens classes show
 
 Show detailed information about a specific class.
 
@@ -410,7 +394,7 @@ logger          PRIVATE     Logger
 
 ---
 
-### codelens classes stats
+#### codelens classes stats
 
 Show scan statistics for the codebase.
 
@@ -447,7 +431,7 @@ Scanned At:           2026-01-05T12:00:05.000Z
 
 ---
 
-### codelens classes implementations
+#### codelens classes implementations
 
 Find all implementations of an interface or subclasses of a class.
 
@@ -494,7 +478,7 @@ com.example.service.ProductServiceImpl  class  yes     PROJECT
 
 ---
 
-### codelens classes hierarchy
+#### codelens classes hierarchy
 
 Show the class hierarchy for a class.
 
@@ -536,7 +520,7 @@ com.example.web.ProductController (class)
 
 ---
 
-### codelens classes dependencies
+#### codelens classes dependencies
 
 Show dependencies for a class (incoming and outgoing).
 
@@ -601,11 +585,11 @@ Incoming (0 classes depend on this):
 
 ---
 
-## Annotation Commands
+### Annotations
 
 Commands for analyzing annotation usage are under `codelens annotations`.
 
-### codelens annotations usages
+#### codelens annotations usages
 
 Find all classes using a specific annotation.
 
@@ -650,11 +634,11 @@ CustomerService     com.example.service  PROJECT
 
 ---
 
-## Method Commands
+### Methods
 
 Commands for searching methods are under `codelens methods`.
 
-### codelens methods search
+#### codelens methods search
 
 Search methods across all classes.
 
@@ -709,9 +693,9 @@ CustomerService    search   List    String
 
 ---
 
-## Call Site Commands
+### Call sites
 
-### codelens calls
+#### codelens calls
 
 Extract, from bytecode, the invocations a class's methods make — the owner type
 of each invoked method, the method name, its JVM descriptor, any constant
@@ -789,9 +773,9 @@ Each entry in `constantArgs` is a `{"kind": ..., "value": ...}` pair, where
 
 ---
 
-## Cross-Reference Commands
+### Cross-reference
 
-### codelens xref
+#### codelens xref
 
 Find everything across the project that references a type — the inverse of
 `calls`. Reports who extends or implements it, holds it as a field, takes or
@@ -891,9 +875,9 @@ it always shows the complete breakdown.
 
 ---
 
-## Dependency Graph Commands
+### Dependency graph
 
-### codelens deps
+#### codelens deps
 
 Emit the project-wide dependency graph: every project class as a node, and every
 project-to-project dependency as a directed edge. Run with no subcommand it
@@ -928,7 +912,7 @@ dot -Tsvg graph.dot -o graph.svg
 
 ---
 
-### codelens deps graph
+#### codelens deps graph
 
 The project-wide dependency graph (same data as bare `codelens deps`).
 
@@ -985,7 +969,7 @@ digraph dependencies {
 
 ---
 
-### codelens deps foundation
+#### codelens deps foundation
 
 List the "foundation" classes — the project classes the most other project
 classes depend on, ranked by in-degree. A quick way to find the load-bearing
@@ -1037,13 +1021,13 @@ codelens deps foundation --min-dependents 5
 
 ---
 
-## Source Commands
+### Source
 
 Commands for viewing source code are under `codelens source`. Source can be
 retrieved for project classes, library classes (from source JARs or
 decompilation), and JDK classes (from `src.zip`).
 
-### codelens source show
+#### codelens source show
 
 View source code for a class. Supports project classes, library classes, and JDK
 classes.
@@ -1080,7 +1064,7 @@ codelens source show java.util.HashMap
 
 ---
 
-### codelens source method
+#### codelens source method
 
 View source code for a specific method.
 
@@ -1119,7 +1103,7 @@ codelens source method com.example.service.ProductService create --param-types S
 
 ---
 
-## Lint Commands
+## Kotlin tooling
 
 Commands for linting and formatting Kotlin code are under `codelens lint`.
 
@@ -1304,6 +1288,24 @@ codelens deps --json > graph.json
 
 # Use with jq for filtering
 codelens classes list --json | jq '.classes[] | select(.methodCount > 10)'
+```
+
+---
+
+## Additional commands
+
+### codelens version
+
+Show the CLI version.
+
+```bash
+codelens version
+```
+
+**Example Output:**
+
+```
+codelens-cli 0.1.0
 ```
 
 ---

@@ -70,8 +70,9 @@ type startFlags struct {
 func newStartCmd() *cobra.Command {
 	var f startFlags
 	cmd := &cobra.Command{
-		Use:   "start",
-		Short: "Start the CodeLens server for a project",
+		Use:     "start",
+		Short:   "Start the CodeLens server for a project",
+		GroupID: "lifecycle",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runStart(cmd, f)
 		},
@@ -127,8 +128,9 @@ func runStart(cmd *cobra.Command, f startFlags) error {
 func newStopCmd() *cobra.Command {
 	var force bool
 	cmd := &cobra.Command{
-		Use:   "stop",
-		Short: "Stop the CodeLens server for a project",
+		Use:     "stop",
+		Short:   "Stop the CodeLens server for a project",
+		GroupID: "lifecycle",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			projectPath, err := resolveProjectPath(flagProject)
 			if err != nil {
@@ -165,8 +167,9 @@ func newStopCmd() *cobra.Command {
 
 func newStatusCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "status",
-		Short: "Show server status for a project",
+		Use:     "status",
+		Short:   "Show server status for a project",
+		GroupID: "lifecycle",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			projectPath, err := resolveProjectPath(flagProject)
 			if err != nil {
@@ -271,8 +274,9 @@ func mergeStateWithInfo(st *state.ServerState) (map[string]any, error) {
 func newRestartCmd() *cobra.Command {
 	var f startFlags
 	cmd := &cobra.Command{
-		Use:   "restart",
-		Short: "Restart the CodeLens server for a project",
+		Use:     "restart",
+		Short:   "Restart the CodeLens server for a project",
+		GroupID: "lifecycle",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			projectPath, err := resolveProjectPath(flagProject)
 			if err != nil {
@@ -315,8 +319,9 @@ func newRestartCmd() *cobra.Command {
 
 func newRefreshCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "refresh",
-		Short: "Refresh the project scan (re-runs the bytecode analysis)",
+		Use:     "refresh",
+		Short:   "Refresh the project scan (re-runs the bytecode analysis)",
+		GroupID: "lifecycle",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			projectPath, err := resolveProjectPath(flagProject)
 			if err != nil {
@@ -375,8 +380,9 @@ func postRefresh(_ adminClient, host string, port int) ([]byte, error) {
 
 func newListCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: "List all running CodeLens servers (does not require a project)",
+		Use:     "list",
+		Short:   "List all running CodeLens servers (does not require a project)",
+		GroupID: "lifecycle",
 		// Skip the global project validation for this command.
 		PreRunE: func(_ *cobra.Command, _ []string) error { return nil },
 		RunE: func(cmd *cobra.Command, _ []string) error {
