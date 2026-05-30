@@ -81,7 +81,7 @@ The server is split into six Gradle modules:
 ### Go CLI structure (`cli/`)
 
 - `cmd/codelens/main.go` — entry point
-- `internal/cli/` — Cobra commands (one file per group: classes, methods, handlers, promises, …)
+- `internal/cli/` — Cobra commands tagged with `GroupID` so `--help` renders them under "Server lifecycle" (`lifecycle.go`), "Code analysis" (`classes.go`, `methods.go`, `calls.go`, `xref.go`, `deps.go`, `annotations.go`, `source.go`, `projectinfo.go`), and "Kotlin tooling" (`lint.go`); `version.go` is intentionally ungrouped
 - `internal/client/` — HTTP client; characterization tests lock the wire contract (`client_test.go`)
 - `internal/server/` — child-process lifecycle: spawn, ready-line parsing, graceful stop
 - `internal/state/` — ServerState repository at `~/.cache/codelens/servers/<hash>.json`

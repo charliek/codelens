@@ -9,7 +9,7 @@ import (
 )
 
 func newMethodsCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "methods", Short: "Search methods across the codebase"}
+	cmd := &cobra.Command{Use: "methods", Short: "Search methods across the codebase", GroupID: "analyze"}
 	cmd.AddCommand(newMethodsSearchCmd())
 	return cmd
 }

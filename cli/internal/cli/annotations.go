@@ -9,7 +9,7 @@ import (
 )
 
 func newAnnotationsCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "annotations", Short: "Annotation usage analysis"}
+	cmd := &cobra.Command{Use: "annotations", Short: "Annotation usage analysis", GroupID: "analyze"}
 	cmd.AddCommand(newAnnotationsUsagesCmd())
 	return cmd
 }

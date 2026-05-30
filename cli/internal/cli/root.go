@@ -34,6 +34,12 @@ func newRootCmd() *cobra.Command {
 	// flags and validates flag groups per command during execute().
 	root.MarkFlagsMutuallyExclusive("json", "table")
 
+	root.AddGroup(
+		&cobra.Group{ID: "lifecycle", Title: "Server lifecycle:"},
+		&cobra.Group{ID: "analyze", Title: "Code analysis:"},
+		&cobra.Group{ID: "tools", Title: "Kotlin tooling:"},
+	)
+
 	root.AddCommand(
 		newVersionCmd(),
 		newStartCmd(),
@@ -42,7 +48,6 @@ func newRootCmd() *cobra.Command {
 		newRestartCmd(),
 		newRefreshCmd(),
 		newListCmd(),
-		// analysis groups
 		newClassesCmd(),
 		newMethodsCmd(),
 		newCallsCmd(),

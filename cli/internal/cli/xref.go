@@ -15,8 +15,9 @@ import (
 func newXrefCmd() *cobra.Command {
 	var f client.XrefFilter
 	cmd := &cobra.Command{
-		Use:   "xref <typeFqn>",
-		Short: "Find everything that references a type (inverse cross-reference)",
+		Use:     "xref <typeFqn>",
+		Short:   "Find everything that references a type (inverse cross-reference)",
+		GroupID: "analyze",
 		Long: "Find every reference to a type across the project: who extends/implements it, " +
 			"holds it as a field, takes or returns it, is annotated with it, instantiates it, or " +
 			"calls methods on it. Results are grouped by kind with package/kind aggregates.",
