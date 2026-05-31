@@ -6,11 +6,11 @@ top correctness concern in WebFlux code. CodeLens finds the candidate call-sites
 reading context (`source`/`calls`) and judging whether the method is on a reactive path.
 
 The general recipe: find methods returning `Mono`/`Flux` (the reactive entry points), then inspect
-their call-sites (`calls`) for the blocking surfaces below. Remember lambdas: a blocking call inside
-a `flatMap`/`map`/`fromCallable` lambda lives in a synthetic `lambda$…` method — resolve it via the
-`invokeDynamic` site's `implMethodName` and `calls` that method too.
+their call-sites (`calls`) for the blocking surfaces below. Two things a naive one-hop scan misses —
+read §0 first.
 
 ## Contents
+0. **How to look: trace transitively + watch eager assembly** (read this first)
 1. `.block()` / `blockFirst()` / `blockLast()` / `blockOptional()`
 2. Blocking JDBC / JPA
 3. `RestTemplate`
@@ -20,6 +20,35 @@ a `flatMap`/`map`/`fromCallable` lambda lives in a synthetic `lambda$…` method
 7. Missing `subscribeOn(boundedElastic())`
 8. The two runtime guards (Reactor + BlockHound)
 9. MVC → WebFlux migration: the hard parts
+
+## 0. How to look (the two things a one-hop scan misses)
+
+**Trace transitively — the blocking call is rarely in the handler body.** It's usually one or two
+hops down in a `@Service`/`@Repository`. Follow `calls` from the reactive method *into its callees*,
+resolving interface hops with `classes implementations`, until you hit a blocking surface (or run
+out of project code). Stopping at the reactive wrapper (`Flux.fromIterable(...)`, `Mono.just(...)`)
+hides the real blocking. Remember lambdas too: a blocking call inside a `flatMap`/`map`/`fromCallable`
+lambda lives in a synthetic `lambda$…` method — resolve it via the `invokeDynamic` site's
+`implMethodName` and `calls` that method.
+
+**Watch eager assembly — a blocking call passed as the *argument* to a reactive factory runs
+immediately, on the request (event-loop) thread, before any subscription:**
+
+```java
+return Flux.fromIterable(productService.findAll());   // findAll() (blocking JPA) runs NOW
+return Mono.justOrEmpty(repo.findById(id));           // findById()  runs NOW
+return Mono.just(inventory.stockLevel(id));           // stockLevel() (blocking JDBC) runs NOW
+```
+
+`Flux.fromIterable` / `Mono.just` / `Mono.justOrEmpty` / `Mono.from(...)` are **not** deferral
+operators — their argument is evaluated eagerly when the handler method is invoked to build its
+return value. So a handler that "only" calls `Flux.fromIterable(service.loadAll())` blocks the event
+loop just as surely as one that calls `.block()`. This is the most-missed case, because the call
+chain *looks* reactive. **Detect it** by reading the *arguments* of `Mono`/`Flux` factory calls and
+tracing those (per above) for blocking surfaces — not just the operator chain. **Fix:** defer with
+`Mono.fromCallable(() -> service.loadAll()).subscribeOn(Schedulers.boundedElastic())` (or
+`Flux.defer(...)`), or go fully reactive (R2DBC / `ReactiveCrudRepository`). Contrast with
+`Mono.fromCallable(supplier)` / `Mono.defer(...)`, which *do* defer the call to subscription time.
 
 ## 1. `block*` terminal operators
 

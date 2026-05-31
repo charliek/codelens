@@ -160,7 +160,12 @@ codelens deps foundation
 
 The cardinal WebFlux sin is blocking the event loop. Find methods that return `Mono`/`Flux`, then
 inspect their call-sites for blocking surfaces — see `BLOCKING-IN-REACTIVE.md` for the full catalog
-and why each blocks:
+and why each blocks. **Two easy-to-miss cases (read `BLOCKING-IN-REACTIVE.md` §0):** the blocking
+call is usually a hop or two down in a `@Service`/`@Repository` — trace transitively (chain `calls`,
+resolving interface→impl via `classes implementations`), don't stop at the reactive wrapper; and a
+blocking call passed as an *argument* to a reactive factory (`Flux.fromIterable(repo.findAll())`,
+`Mono.just(svc.load())`) runs **eagerly at assembly time on the event-loop thread**, so inspect the
+arguments of `Mono`/`Flux` factory calls, not just the operator chain.
 
 ```bash
 # the reactive surface:
