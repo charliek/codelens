@@ -50,14 +50,18 @@ jobs:
           set -euo pipefail
           expect="${GITHUB_REF_NAME#v}"
           got_txt="$(cat version.txt)"
-          got_json="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' .claude-plugin/plugin.json | sed -E 's/.*"([^"]+)"$/\1/')"
+          # Use jq to anchor to the top-level .version field rather than a
+          # regex that could match nested "version" fields (e.g. in a future
+          # "dependencies" or "repositories" block). jq is preinstalled on
+          # ubuntu-latest runners and fails loudly on malformed JSON.
+          got_json="$(jq -r '.version' .claude-plugin/plugin.json)"
           fail=0
           if [ "${got_txt}" != "${expect}" ]; then
             echo "::error::version.txt=${got_txt} != tag=${expect}"
             fail=1
           fi
           if [ "${got_json}" != "${expect}" ]; then
-            echo "::error::plugin.json version=${got_json} != tag=${expect}"
+            echo "::error::plugin.json .version=${got_json} != tag=${expect}"
             fail=1
           fi
           [ "${fail}" -eq 0 ] || { echo "Re-run /release-workflows:release after correcting."; exit 1; }

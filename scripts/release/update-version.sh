@@ -47,12 +47,16 @@ PLUGIN_JSON="${ROOT}/.claude-plugin/plugin.json"
 # Verify both bumps landed. The grep-back closes the silent-failure gap
 # in sed-based bumpers (see cc-plugins:release-workflows convention).
 
-if ! grep -qE "^${V}\$" "${VERSION_TXT}"; then
+if [ "$(cat "${VERSION_TXT}")" != "${V}" ]; then
   echo "error: version.txt did not bump to ${V}" >&2
   exit 1
 fi
 
-if ! grep -qE "\"version\"[[:space:]]*:[[:space:]]*\"${V}\"" "${PLUGIN_JSON}"; then
-  echo "error: plugin.json did not bump to ${V} — check the \"version\" field's shape in ${PLUGIN_JSON}" >&2
+# Use jq to anchor to the top-level .version field rather than a regex
+# that could match nested "version" fields (e.g. in a future
+# "dependencies" or "repositories" block). The cc-plugins template
+# specifically recommends jq for plugin.json checks for this reason.
+if [ "$(jq -r '.version' "${PLUGIN_JSON}")" != "${V}" ]; then
+  echo "error: plugin.json top-level .version did not bump to ${V}" >&2
   exit 1
 fi
