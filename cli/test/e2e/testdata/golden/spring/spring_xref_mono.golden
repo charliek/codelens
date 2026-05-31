@@ -5,12 +5,12 @@
     "scopeImplementing": null
   },
   "countsByKind": {
-    "CALL_RECEIVER": 1,
-    "RETURN": 2
+    "CALL_RECEIVER": 6,
+    "RETURN": 6
   },
   "countsByPackage": {
     "com.example.shop.service": 2,
-    "com.example.shop.web": 1
+    "com.example.shop.web": 10
   },
   "page": 0,
   "pageSize": 50,
@@ -34,6 +34,51 @@
       "member": "findProduct"
     },
     {
+      "detail": "reactor.core.publisher.Mono\u003corg.springframework.web.reactive.function.server.ServerResponse\u003e",
+      "fromFqn": "com.example.shop.web.CatalogHandler",
+      "fromSimpleName": "CatalogHandler",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "get"
+    },
+    {
+      "detail": "reactor.core.publisher.Mono\u003corg.springframework.web.reactive.function.server.ServerResponse\u003e",
+      "fromFqn": "com.example.shop.web.CatalogHandler",
+      "fromSimpleName": "CatalogHandler",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "list"
+    },
+    {
+      "detail": "flatMap",
+      "fromFqn": "com.example.shop.web.CatalogHandler",
+      "fromSimpleName": "CatalogHandler",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 33,
+      "member": "get"
+    },
+    {
+      "detail": "switchIfEmpty",
+      "fromFqn": "com.example.shop.web.CatalogHandler",
+      "fromSimpleName": "CatalogHandler",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 34,
+      "member": "get"
+    },
+    {
+      "detail": "reactor.core.publisher.Mono\u003ccom.example.shop.model.Product\u003e",
+      "fromFqn": "com.example.shop.web.ReactiveController",
+      "fromSimpleName": "ReactiveController",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "blocking"
+    },
+    {
       "detail": "reactor.core.publisher.Mono\u003ccom.example.shop.model.Product\u003e",
       "fromFqn": "com.example.shop.web.ReactiveController",
       "fromSimpleName": "ReactiveController",
@@ -41,9 +86,45 @@
       "kind": "RETURN",
       "lineNumber": null,
       "member": "one"
+    },
+    {
+      "detail": "reactor.core.publisher.Mono\u003cjava.lang.Integer\u003e",
+      "fromFqn": "com.example.shop.web.ReactiveController",
+      "fromSimpleName": "ReactiveController",
+      "fromSource": "PROJECT",
+      "kind": "RETURN",
+      "lineNumber": null,
+      "member": "stock"
+    },
+    {
+      "detail": "block",
+      "fromFqn": "com.example.shop.web.ReactiveController",
+      "fromSimpleName": "ReactiveController",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 41,
+      "member": "blocking"
+    },
+    {
+      "detail": "justOrEmpty",
+      "fromFqn": "com.example.shop.web.ReactiveController",
+      "fromSimpleName": "ReactiveController",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 42,
+      "member": "blocking"
+    },
+    {
+      "detail": "just",
+      "fromFqn": "com.example.shop.web.ReactiveController",
+      "fromSimpleName": "ReactiveController",
+      "fromSource": "PROJECT",
+      "kind": "CALL_RECEIVER",
+      "lineNumber": 50,
+      "member": "stock"
     }
   ],
-  "totalCount": 3,
+  "totalCount": 12,
   "totalPages": 1,
   "typeFqn": "reactor.core.publisher.Mono"
 }

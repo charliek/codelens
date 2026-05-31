@@ -33,6 +33,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    // MapStruct generates a *Impl mapper at compile time (componentModel = "spring"),
+    // so the generated impl is part of the scanned bytecode — the DTO<->entity surface.
+    implementation("org.mapstruct:mapstruct:1.6.3")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
+
     runtimeOnly("com.h2database:h2")
 
     implementation(kotlin("stdlib"))

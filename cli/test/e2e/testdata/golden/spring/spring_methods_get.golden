@@ -1,6 +1,38 @@
 {
   "methods": [
     {
+      "classFqn": "com.example.shop.config.AppProperties",
+      "classSimpleName": "AppProperties",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getCatalogUrl",
+        "parameters": [],
+        "returnType": "java.lang.String",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.config.AppProperties",
+      "classSimpleName": "AppProperties",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "getPageSize",
+        "parameters": [],
+        "returnType": "int",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
       "classFqn": "com.example.shop.dto.OrderDto",
       "classSimpleName": "OrderDto",
       "classSource": "PROJECT",
@@ -209,6 +241,28 @@
       }
     },
     {
+      "classFqn": "com.example.shop.web.CatalogHandler",
+      "classSimpleName": "CatalogHandler",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "get",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "org.springframework.web.reactive.function.server.ServerRequest"
+          }
+        ],
+        "returnType": "reactor.core.publisher.Mono\u003corg.springframework.web.reactive.function.server.ServerResponse\u003e",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
       "classFqn": "com.example.shop.web.CustomerController",
       "classSimpleName": "CustomerController",
       "classSource": "PROJECT",
@@ -347,6 +401,6 @@
   ],
   "page": 0,
   "pageSize": 50,
-  "totalCount": 15,
+  "totalCount": 18,
   "totalPages": 1
 }

@@ -1,0 +1,60 @@
+{
+  "methods": [
+    {
+      "classFqn": "com.example.shop.service.OrderService",
+      "classSimpleName": "OrderService",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "isolation": "org.springframework.transaction.annotation.Isolation.DEFAULT",
+              "label": "[]",
+              "noRollbackFor": "[]",
+              "noRollbackForClassName": "[]",
+              "propagation": "org.springframework.transaction.annotation.Propagation.REQUIRED",
+              "readOnly": "false",
+              "rollbackFor": "[]",
+              "rollbackForClassName": "[]",
+              "timeout": "-1",
+              "timeoutString": "",
+              "transactionManager": "",
+              "value": ""
+            },
+            "type": "org.springframework.transaction.annotation.Transactional"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "placeOrder",
+        "parameters": [
+          {
+            "annotations": [],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          },
+          {
+            "annotations": [],
+            "name": "arg1",
+            "type": "double"
+          }
+        ],
+        "returnType": "com.example.shop.model.Order",
+        "visibility": "PUBLIC"
+      }
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 1,
+  "totalPages": 1
+}

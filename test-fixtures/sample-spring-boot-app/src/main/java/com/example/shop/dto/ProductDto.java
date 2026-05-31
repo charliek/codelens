@@ -1,9 +1,15 @@
 package com.example.shop.dto;
 
-/** A data-transfer object for products. */
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+
+/** A data-transfer object for products. Carries jakarta.validation constraints. */
 public class ProductDto {
 
+    @NotBlank
     private final String name;
+
+    @Positive
     private final double price;
 
     public ProductDto(String name, double price) {

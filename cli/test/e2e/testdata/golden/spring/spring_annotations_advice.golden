@@ -1,0 +1,18 @@
+{
+  "annotationFqn": "org.springframework.web.bind.annotation.RestControllerAdvice",
+  "totalCount": 1,
+  "usages": [
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.web.GlobalExceptionHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "com.example.shop.web",
+      "simpleName": "GlobalExceptionHandler",
+      "source": "PROJECT"
+    }
+  ]
+}

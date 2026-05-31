@@ -1,0 +1,74 @@
+{
+  "fqn": "com.example.shop.config.SecurityConfig",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/Customizer;",
+          "implMethodName": "lambda$filterChain$0",
+          "implMethodOwner": "com.example.shop.config.SecurityConfig",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 25,
+          "methodName": "customize",
+          "ownerType": "org.springframework.security.config.Customizer"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lorg/springframework/security/config/Customizer;)Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;",
+          "isInterface": false,
+          "lineNumber": 26,
+          "methodName": "csrf",
+          "ownerType": "org.springframework.security.config.annotation.web.builders.HttpSecurity"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/Customizer;",
+          "implMethodName": "lambda$filterChain$1",
+          "implMethodOwner": "com.example.shop.config.SecurityConfig",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 26,
+          "methodName": "customize",
+          "ownerType": "org.springframework.security.config.Customizer"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lorg/springframework/security/config/Customizer;)Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;",
+          "isInterface": false,
+          "lineNumber": 27,
+          "methodName": "authorizeHttpRequests",
+          "ownerType": "org.springframework.security.config.annotation.web.builders.HttpSecurity"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/Customizer;",
+          "isInterface": true,
+          "lineNumber": 33,
+          "methodName": "withDefaults",
+          "ownerType": "org.springframework.security.config.Customizer"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lorg/springframework/security/config/Customizer;)Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;",
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "httpBasic",
+          "ownerType": "org.springframework.security.config.annotation.web.builders.HttpSecurity"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 34,
+          "methodName": "build",
+          "ownerType": "org.springframework.security.config.annotation.web.builders.HttpSecurity"
+        }
+      ],
+      "descriptor": "(Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;)Lorg/springframework/security/web/SecurityFilterChain;",
+      "methodName": "filterChain"
+    }
+  ],
+  "totalCalls": 7
+}

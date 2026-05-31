@@ -69,3 +69,7 @@ test-results/
 
 # MkDocs build output
 site-build/
+
+# skill-creator ephemeral eval artifacts (not shipped)
+skills/*-workspace/
+*.skill

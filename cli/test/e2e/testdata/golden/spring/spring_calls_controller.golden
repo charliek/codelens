@@ -7,7 +7,7 @@
           "constantArgs": [],
           "descriptor": "()Ljava/lang/String;",
           "isInterface": false,
-          "lineNumber": 37,
+          "lineNumber": 42,
           "methodName": "getName",
           "ownerType": "com.example.shop.dto.ProductDto"
         },
@@ -15,7 +15,7 @@
           "constantArgs": [],
           "descriptor": "()D",
           "isInterface": false,
-          "lineNumber": 37,
+          "lineNumber": 42,
           "methodName": "getPrice",
           "ownerType": "com.example.shop.dto.ProductDto"
         },
@@ -23,7 +23,7 @@
           "constantArgs": [],
           "descriptor": "(Ljava/lang/String;D)Lcom/example/shop/model/Product;",
           "isInterface": true,
-          "lineNumber": 37,
+          "lineNumber": 42,
           "methodName": "create",
           "ownerType": "com.example.shop.service.ProductService"
         }

@@ -21,7 +21,7 @@
       "source": "PROJECT"
     },
     {
-      "fieldCount": 0,
+      "fieldCount": 1,
       "fqn": "com.example.shop.config.AppConfig",
       "isAbstract": false,
       "isAnnotation": false,
@@ -30,6 +30,18 @@
       "methodCount": 1,
       "packageName": "com.example.shop.config",
       "simpleName": "AppConfig",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 2,
+      "fqn": "com.example.shop.config.AppProperties",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 4,
+      "packageName": "com.example.shop.config",
+      "simpleName": "AppProperties",
       "source": "PROJECT"
     },
     {
@@ -42,6 +54,18 @@
       "methodCount": 1,
       "packageName": "com.example.shop.config",
       "simpleName": "DatabaseConfig",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.config.SecurityConfig",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 3,
+      "packageName": "com.example.shop.config",
+      "simpleName": "SecurityConfig",
       "source": "PROJECT"
     },
     {
@@ -219,7 +243,7 @@
       "isAnnotation": false,
       "isEnum": false,
       "isInterface": false,
-      "methodCount": 2,
+      "methodCount": 3,
       "packageName": "com.example.shop.service",
       "simpleName": "OrderService",
       "source": "PROJECT"
@@ -274,6 +298,30 @@
     },
     {
       "fieldCount": 1,
+      "fqn": "com.example.shop.web.CatalogHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 3,
+      "packageName": "com.example.shop.web",
+      "simpleName": "CatalogHandler",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.web.CatalogRouter",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 1,
+      "packageName": "com.example.shop.web",
+      "simpleName": "CatalogRouter",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 1,
       "fqn": "com.example.shop.web.CustomerController",
       "isAbstract": false,
       "isAnnotation": false,
@@ -282,6 +330,18 @@
       "methodCount": 2,
       "packageName": "com.example.shop.web",
       "simpleName": "CustomerController",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.web.GlobalExceptionHandler",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "com.example.shop.web",
+      "simpleName": "GlobalExceptionHandler",
       "source": "PROJECT"
     },
     {
@@ -297,32 +357,56 @@
       "source": "PROJECT"
     },
     {
-      "fieldCount": 1,
+      "fieldCount": 2,
       "fqn": "com.example.shop.web.ProductController",
       "isAbstract": false,
       "isAnnotation": false,
       "isEnum": false,
       "isInterface": false,
-      "methodCount": 3,
+      "methodCount": 4,
       "packageName": "com.example.shop.web",
       "simpleName": "ProductController",
       "source": "PROJECT"
     },
     {
-      "fieldCount": 1,
+      "fieldCount": 2,
       "fqn": "com.example.shop.web.ReactiveController",
       "isAbstract": false,
       "isAnnotation": false,
       "isEnum": false,
       "isInterface": false,
-      "methodCount": 2,
+      "methodCount": 4,
       "packageName": "com.example.shop.web",
       "simpleName": "ReactiveController",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.web.mapper.ProductMapper",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 2,
+      "packageName": "com.example.shop.web.mapper",
+      "simpleName": "ProductMapper",
+      "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.web.mapper.ProductMapperImpl",
+      "isAbstract": false,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": false,
+      "methodCount": 2,
+      "packageName": "com.example.shop.web.mapper",
+      "simpleName": "ProductMapperImpl",
       "source": "PROJECT"
     }
   ],
   "page": 0,
   "pageSize": 50,
-  "totalCount": 26,
+  "totalCount": 33,
   "totalPages": 1
 }

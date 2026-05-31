@@ -5,11 +5,11 @@
   "libraryClassCount": "__BLANK__",
   "projectAbstractClassCount": 1,
   "projectAnnotationCount": 0,
-  "projectClassCount": 26,
+  "projectClassCount": 33,
   "projectEnumCount": 0,
-  "projectFieldCount": 30,
-  "projectInterfaceCount": 4,
-  "projectMethodCount": 48,
+  "projectFieldCount": 36,
+  "projectInterfaceCount": 5,
+  "projectMethodCount": 69,
   "scanDurationMs": "__BLANK__",
   "scannedAt": "__BLANK__"
 }

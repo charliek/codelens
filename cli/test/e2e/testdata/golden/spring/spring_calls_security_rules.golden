@@ -1,0 +1,112 @@
+{
+  "fqn": "com.example.shop.config.SecurityConfig",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "/products/**"
+            }
+          ],
+          "descriptor": "([Ljava/lang/String;)Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 28,
+          "methodName": "requestMatchers",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/annotation/web/configurers/AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry;",
+          "isInterface": false,
+          "lineNumber": 28,
+          "methodName": "permitAll",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizedUrl"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "/catalog/**"
+            }
+          ],
+          "descriptor": "([Ljava/lang/String;)Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 29,
+          "methodName": "requestMatchers",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/annotation/web/configurers/AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry;",
+          "isInterface": false,
+          "lineNumber": 29,
+          "methodName": "permitAll",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizedUrl"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "/fn/catalog/**"
+            }
+          ],
+          "descriptor": "([Ljava/lang/String;)Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 30,
+          "methodName": "requestMatchers",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/annotation/web/configurers/AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry;",
+          "isInterface": false,
+          "lineNumber": 30,
+          "methodName": "permitAll",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizedUrl"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "/orders/**"
+            }
+          ],
+          "descriptor": "([Ljava/lang/String;)Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 31,
+          "methodName": "requestMatchers",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/annotation/web/configurers/AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry;",
+          "isInterface": false,
+          "lineNumber": 31,
+          "methodName": "authenticated",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizedUrl"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 32,
+          "methodName": "anyRequest",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Lorg/springframework/security/config/annotation/web/configurers/AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry;",
+          "isInterface": false,
+          "lineNumber": 32,
+          "methodName": "authenticated",
+          "ownerType": "org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer$AuthorizedUrl"
+        }
+      ],
+      "descriptor": "(Lorg/springframework/security/config/annotation/web/configurers/AuthorizeHttpRequestsConfigurer$AuthorizationManagerRequestMatcherRegistry;)V",
+      "methodName": "lambda$filterChain$1"
+    }
+  ],
+  "totalCalls": 10
+}

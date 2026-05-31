@@ -1,0 +1,84 @@
+{
+  "methods": [
+    {
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "value": "hasRole('ADMIN')"
+            },
+            "type": "org.springframework.security.access.prepost.PreAuthorize"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/import]"
+            },
+            "type": "org.springframework.web.bind.annotation.PostMapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.POST]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "importProduct",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {},
+                "type": "jakarta.validation.Valid"
+              },
+              {
+                "parameters": {
+                  "required": "true"
+                },
+                "type": "org.springframework.web.bind.annotation.RequestBody"
+              }
+            ],
+            "name": "arg0",
+            "type": "@jakarta.validation.Valid com.example.shop.dto.ProductDto"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      }
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 1,
+  "totalPages": 1
+}

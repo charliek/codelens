@@ -1,0 +1,92 @@
+{
+  "fqn": "com.example.shop.web.CatalogRouter",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "/fn/catalog/{id}"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;)Lorg/springframework/web/reactive/function/server/RequestPredicate;",
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "GET",
+          "ownerType": "org.springframework.web.reactive.function.server.RequestPredicates"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Object;)Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "requireNonNull",
+          "ownerType": "java.util.Objects"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lcom/example/shop/web/CatalogHandler;)Lorg/springframework/web/reactive/function/server/HandlerFunction;",
+          "implMethodName": "get",
+          "implMethodOwner": "com.example.shop.web.CatalogHandler",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "handle",
+          "ownerType": "org.springframework.web.reactive.function.server.HandlerFunction"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lorg/springframework/web/reactive/function/server/RequestPredicate;Lorg/springframework/web/reactive/function/server/HandlerFunction;)Lorg/springframework/web/reactive/function/server/RouterFunction;",
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "route",
+          "ownerType": "org.springframework.web.reactive.function.server.RouterFunctions"
+        },
+        {
+          "constantArgs": [
+            {
+              "kind": "STRING",
+              "value": "/fn/catalog"
+            }
+          ],
+          "descriptor": "(Ljava/lang/String;)Lorg/springframework/web/reactive/function/server/RequestPredicate;",
+          "isInterface": false,
+          "lineNumber": 34,
+          "methodName": "GET",
+          "ownerType": "org.springframework.web.reactive.function.server.RequestPredicates"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Object;)Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 34,
+          "methodName": "requireNonNull",
+          "ownerType": "java.util.Objects"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lcom/example/shop/web/CatalogHandler;)Lorg/springframework/web/reactive/function/server/HandlerFunction;",
+          "implMethodName": "list",
+          "implMethodOwner": "com.example.shop.web.CatalogHandler",
+          "invokeDynamic": true,
+          "isInterface": false,
+          "lineNumber": 34,
+          "methodName": "handle",
+          "ownerType": "org.springframework.web.reactive.function.server.HandlerFunction"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Lorg/springframework/web/reactive/function/server/RequestPredicate;Lorg/springframework/web/reactive/function/server/HandlerFunction;)Lorg/springframework/web/reactive/function/server/RouterFunction;",
+          "isInterface": true,
+          "lineNumber": 34,
+          "methodName": "andRoute",
+          "ownerType": "org.springframework.web.reactive.function.server.RouterFunction"
+        }
+      ],
+      "descriptor": "(Lcom/example/shop/web/CatalogHandler;)Lorg/springframework/web/reactive/function/server/RouterFunction;",
+      "methodName": "catalogRoutes"
+    }
+  ],
+  "totalCalls": 8
+}

@@ -171,15 +171,59 @@ var springCases = []Case{
 	{Name: "spring_annotations_service", Args: []string{
 		"annotations", "usages", "org.springframework.stereotype.Service",
 	}},
+	// Meta-annotation match: @RestController classes are found by their @Controller meta.
+	{Name: "spring_classes_controller_meta", Args: []string{
+		"classes", "list", "--annotation", "org.springframework.stereotype.Controller",
+	}},
+	// Centralized exception handling (class-level @RestControllerAdvice).
+	{Name: "spring_annotations_advice", Args: []string{
+		"annotations", "usages", "org.springframework.web.bind.annotation.RestControllerAdvice",
+	}},
+	// MapStruct DTO<->entity mappers (class-level @Mapper on the interface).
+	{Name: "spring_annotations_mapper", Args: []string{
+		"annotations", "usages", "org.mapstruct.Mapper",
+	}},
 
 	// ---------- methods ----------
 	{Name: "spring_methods_get", Args: []string{"methods", "search", "--name", "get*"}},
+	// Meta-annotation expansion: every @GetMapping/@PostMapping handler method is
+	// found by searching the meta @RequestMapping it composes.
+	{Name: "spring_methods_requestmapping", Args: []string{
+		"methods", "search", "--annotation", "org.springframework.web.bind.annotation.RequestMapping",
+	}},
+	// Method-level @Transactional (annotations usages is class-only, so search methods).
+	{Name: "spring_methods_transactional", Args: []string{
+		"methods", "search", "--annotation", "org.springframework.transaction.annotation.Transactional",
+	}},
+	// Method-level @PreAuthorize.
+	{Name: "spring_methods_preauthorize", Args: []string{
+		"methods", "search", "--annotation", "org.springframework.security.access.prepost.PreAuthorize",
+	}},
 
 	// ---------- calls (constant string args in @Bean methods) ----------
 	// Builder setters with constant JDBC connection strings.
 	{Name: "spring_calls_dbconfig", Args: []string{"calls", "com.example.shop.config.DatabaseConfig", "--method", "dataSource"}},
 	// Controller method delegating to a service.
 	{Name: "spring_calls_controller", Args: []string{"calls", "com.example.shop.web.ProductController", "--method", "create"}},
+	// WebFlux functional routing: GET/POST builder calls + path string constants
+	// in the @Bean returning a RouterFunction (routes carry no annotations).
+	{Name: "spring_calls_router", Args: []string{
+		"calls", "com.example.shop.web.CatalogRouter", "--method", "catalogRoutes",
+	}},
+	// Security posture: top-level SecurityFilterChain structure (csrf /
+	// authorizeHttpRequests / httpBasic) — the matcher rules live in a lambda.
+	{Name: "spring_calls_security", Args: []string{
+		"calls", "com.example.shop.config.SecurityConfig", "--method", "filterChain",
+	}},
+	// The authorization rules themselves: requestMatchers path constants paired
+	// with permitAll/authenticated, inside the authorizeHttpRequests lambda.
+	{Name: "spring_calls_security_rules", Args: []string{
+		"calls", "com.example.shop.config.SecurityConfig", "--method", "lambda$filterChain$1",
+	}},
+	// Blocking-in-reactive: a Mono-returning handler that calls Mono.block().
+	{Name: "spring_calls_blocking_reactive", Args: []string{
+		"calls", "com.example.shop.web.ReactiveController", "--method", "blocking",
+	}},
 
 	// ---------- xref: blocking vs reactive contrast ----------
 	// Blocking path: javax.sql.DataSource (InventoryService + DatabaseConfig).

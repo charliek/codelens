@@ -1,0 +1,18 @@
+{
+  "annotationFqn": "org.mapstruct.Mapper",
+  "totalCount": 1,
+  "usages": [
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.web.mapper.ProductMapper",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 2,
+      "packageName": "com.example.shop.web.mapper",
+      "simpleName": "ProductMapper",
+      "source": "PROJECT"
+    }
+  ]
+}
