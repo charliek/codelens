@@ -66,7 +66,10 @@ codelens methods search --annotation "$RM" "${proj[@]}" --json 2>/dev/null \
         | (.parameters.value // ""), (.parameters.path // "") ]
       | map(select(. != "" and . != "[]")) | (.[0] // "")' <<<"$m" | unbracket)
 
-    full="${BASE[$cls]:-}${mpath}"
+    # join class base + method path with exactly one slash (avoid // and a trailing /)
+    base="${BASE[$cls]:-}"
+    mpath="${mpath#/}"
+    full="${base%/}${mpath:+/}${mpath}"
     [ -z "$full" ] && full="(no path)"
 
     reactive=""
@@ -74,5 +77,8 @@ codelens methods search --annotation "$RM" "${proj[@]}" --json 2>/dev/null \
       *reactor.core.publisher.*|*org.reactivestreams.Publisher*) reactive=" [reactive]" ;;
     esac
 
-    printf '%-7s %-34s %-46s %s\n' "$verb" "$full" "${cls##*.}.$name" "${ret##*.}$reactive"
+    # simplify the return type for display: drop package prefixes, incl. inside generics
+    # (java.util.List<com.example.Product> -> List<Product>)
+    ret_short=$(printf '%s' "$ret" | sed 's/\([A-Za-z_][A-Za-z0-9_]*\.\)\+//g')
+    printf '%-7s %-34s %-46s %s\n' "$verb" "$full" "${cls##*.}.$name" "${ret_short}$reactive"
   done

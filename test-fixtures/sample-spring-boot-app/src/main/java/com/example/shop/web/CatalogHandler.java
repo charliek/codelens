@@ -23,7 +23,12 @@ public class CatalogHandler {
     }
 
     public Mono<ServerResponse> get(ServerRequest request) {
-        Long id = Long.valueOf(request.pathVariable("id"));
+        final long id;
+        try {
+            id = Long.parseLong(request.pathVariable("id"));
+        } catch (NumberFormatException ex) {
+            return ServerResponse.badRequest().bodyValue("Invalid catalog id");
+        }
         return catalogService.findProduct(id)
             .flatMap(product -> ServerResponse.ok().bodyValue(product))
             .switchIfEmpty(ServerResponse.notFound().build());

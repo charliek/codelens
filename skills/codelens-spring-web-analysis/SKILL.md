@@ -192,8 +192,12 @@ codelens methods search --annotation org.springframework.transaction.annotation.
 #   then check for SELF-INVOCATION (a @Transactional method called via `this` bypasses the proxy):
 codelens calls com.example.service.OrderService --json   # look for in-class calls to the @Transactional method
 
-# Security: method-level rules + the central filter chain (rules live in a lambda):
+# Security: method-level rules + the central filter chain (rules live in a lambda).
 codelens methods search --annotation org.springframework.security.access.prepost.PreAuthorize --json
+# The authorizeHttpRequests rules live in a synthetic lambda whose name (lambda$filterChain$N) is
+# compiler-generated — the numeric suffix depends on lambda order, so discover the real one first:
+codelens calls com.example.config.SecurityConfig --json | jq -r '.methods[].methodName'   # lists the lambdas
+# then read the lambda whose calls include requestMatchers/permitAll/authenticated:
 codelens calls com.example.config.SecurityConfig --method 'lambda$filterChain$1' --json \
   | jq -r '.methods[].calls[] | "\(.methodName)\t\([.constantArgs[]?|select(.kind=="STRING")|.value]|join(","))"'
 
