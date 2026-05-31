@@ -52,6 +52,7 @@
     "methods": [
       {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Context;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -69,6 +70,7 @@
       },
       {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Lratpack/exec/Promise;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -86,6 +88,7 @@
       },
       {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Ljava/lang/Object;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -103,6 +106,7 @@
       },
       {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Context;Ljava/lang/Object;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": true,
@@ -125,6 +129,7 @@
       },
       {
         "annotations": [],
+        "descriptor": "(Ljava/lang/Object;)Ljava/lang/Object;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": true,
@@ -142,6 +147,7 @@
       },
       {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Ljava/lang/Object;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,

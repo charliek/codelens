@@ -225,6 +225,26 @@ var springCases = []Case{
 		"calls", "com.example.shop.web.ReactiveController", "--method", "blocking",
 	}},
 
+	// ---------- calls --in-methods-* enclosing-method filters (#44) ----------
+	// Blocking-in-reactive as a single query: keep only call-sites inside the
+	// Mono-returning handlers (one/blocking/stock), excluding the Flux stream().
+	{Name: "spring_calls_in_methods_returning", Args: []string{
+		"calls", "com.example.shop.web.ReactiveController",
+		"--in-methods-returning", "reactor.core.publisher.Mono",
+	}},
+	// Annotation filter (meta-expanded): only the @GetMapping handlers (list/get),
+	// not the @PostMapping ones (create/importProduct).
+	{Name: "spring_calls_in_methods_annotated", Args: []string{
+		"calls", "com.example.shop.web.ProductController",
+		"--in-methods-annotated", "org.springframework.web.bind.annotation.GetMapping",
+	}},
+	// Composition: --method intersected with an enclosing-method filter scopes to
+	// the one matching overload/handler.
+	{Name: "spring_calls_method_plus_filter", Args: []string{
+		"calls", "com.example.shop.web.ReactiveController",
+		"--method", "blocking", "--in-methods-returning", "reactor.core.publisher.Mono",
+	}},
+
 	// ---------- xref: blocking vs reactive contrast ----------
 	// Blocking path: javax.sql.DataSource (InventoryService + DatabaseConfig).
 	{Name: "spring_xref_datasource", Args: []string{"xref", "javax.sql.DataSource"}},

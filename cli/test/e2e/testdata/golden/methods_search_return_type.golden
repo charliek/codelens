@@ -8,11 +8,15 @@
         "annotations": [
           {
             "parameters": {
-              "value": ""
+              "value": {
+                "kind": "STRING",
+                "value": ""
+              }
             },
             "type": "org.jetbrains.annotations.NotNull"
           }
         ],
+        "descriptor": "()Ljava/lang/String;",
         "isAbstract": false,
         "isFinal": true,
         "isStatic": false,
@@ -29,6 +33,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,

@@ -330,10 +330,12 @@ func (c *Client) SearchMethods(ctx context.Context, f SearchMethodsFilter) (json
 
 // GetCalls returns the invocations a class's method bodies make. When method
 // is non-empty, only that method is scanned and descriptor (when set)
-// disambiguates overloads by exact JVM descriptor. The FQN is a single
-// percent-encoded path segment (matching the sibling class endpoints);
-// method/descriptor are query parameters.
-func (c *Client) GetCalls(ctx context.Context, fqn, method, descriptor string) (json.RawMessage, error) {
+// disambiguates overloads by exact JVM descriptor. inMethodsReturning /
+// inMethodsAnnotated (when set) keep only call-sites inside enclosing methods
+// that return the given type or carry the given annotation, and compose with
+// method. The FQN is a single percent-encoded path segment (matching the
+// sibling class endpoints); the rest are query parameters.
+func (c *Client) GetCalls(ctx context.Context, fqn, method, descriptor, inMethodsReturning, inMethodsAnnotated string) (json.RawMessage, error) {
 	p := &params{}
 	if method != "" {
 		p.add("method", method)
@@ -342,6 +344,12 @@ func (c *Client) GetCalls(ctx context.Context, fqn, method, descriptor string) (
 		if descriptor != "" {
 			p.add("descriptor", descriptor)
 		}
+	}
+	if inMethodsReturning != "" {
+		p.add("inMethodsReturning", inMethodsReturning)
+	}
+	if inMethodsAnnotated != "" {
+		p.add("inMethodsAnnotated", inMethodsAnnotated)
 	}
 	return c.doGet(ctx, "/api/v1/calls/"+pythonQuote(fqn), p)
 }

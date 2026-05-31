@@ -1,0 +1,88 @@
+{
+  "fqn": "com.example.shop.web.ReactiveController",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+          "isInterface": false,
+          "lineNumber": 33,
+          "methodName": "findProduct",
+          "ownerType": "com.example.shop.service.ReactiveCatalogService"
+        }
+      ],
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "methodName": "one"
+    },
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+          "isInterface": false,
+          "lineNumber": 41,
+          "methodName": "findProduct",
+          "ownerType": "com.example.shop.service.ReactiveCatalogService"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 41,
+          "methodName": "block",
+          "ownerType": "reactor.core.publisher.Mono"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Object;)Lreactor/core/publisher/Mono;",
+          "isInterface": false,
+          "lineNumber": 42,
+          "methodName": "justOrEmpty",
+          "ownerType": "reactor.core.publisher.Mono"
+        }
+      ],
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "methodName": "blocking"
+    },
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "()J",
+          "isInterface": false,
+          "lineNumber": 49,
+          "methodName": "longValue",
+          "ownerType": "java.lang.Long"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(J)I",
+          "isInterface": false,
+          "lineNumber": 49,
+          "methodName": "stockLevel",
+          "ownerType": "com.example.shop.service.InventoryService"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(I)Ljava/lang/Integer;",
+          "isInterface": false,
+          "lineNumber": 50,
+          "methodName": "valueOf",
+          "ownerType": "java.lang.Integer"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Object;)Lreactor/core/publisher/Mono;",
+          "isInterface": false,
+          "lineNumber": 50,
+          "methodName": "just",
+          "ownerType": "reactor.core.publisher.Mono"
+        }
+      ],
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "methodName": "stock"
+    }
+  ],
+  "totalCalls": 8
+}
