@@ -220,6 +220,14 @@ codelens methods search --annotation org.springframework.web.bind.annotation.Get
 codelens methods search --class com.example.UserService
 ```
 
+> **Annotation attribute values are typed.** Wherever `classes show` / `methods search --json`
+> surface a class's or method's `annotations`, each entry in `parameters` is a typed value carrying
+> a `kind` discriminator (`STRING`/`BOOLEAN`/`INT`/…/`CLASS`/`ENUM`/`ANNOTATION`/`ARRAY`): arrays are
+> real arrays and enums, class literals, and nested annotations are tagged. Read them structurally —
+> a multi-value attribute is `.parameters.<attr>.items[].value`, an enum is
+> `{kind:"ENUM", value, enumType}`, a class literal is `{kind:"CLASS", value:"<dotted-fqn>"}` (no
+> `.class` suffix) — rather than parsing stringified text. Absent optional fields are omitted.
+
 ## Inheritance Analysis
 
 ### Find Implementations
@@ -307,12 +315,18 @@ Extract, straight from bytecode, every invocation a class's methods make — the
 view of "what does this code call":
 
 ```bash
-codelens calls <fully-qualified-name> [--method <name>] [--descriptor <jvm-descriptor>]
+codelens calls <fully-qualified-name> [--method <name>] [--descriptor <jvm-descriptor>] \
+  [--in-methods-returning <fqn>] [--in-methods-annotated <fqn>]
 ```
 
 Each call reports its `ownerType` (the callee's declaring type), `methodName`,
 `descriptor`, the `constantArgs` (LDC string/number/class literals passed near the call),
 and `lineNumber`. `--method` scopes to one method; `--descriptor` disambiguates overloads.
+`--in-methods-returning <fqn>` / `--in-methods-annotated <fqn>` keep only call-sites whose
+*enclosing* method returns the given type or carries the given annotation (meta-expanded) —
+ANDed when both are set, and they compose with `--method`. These are post-extraction filters
+over the enclosing method's declared signature, so they scope **direct** call-sites in matching
+methods, not `lambda$…` bodies or transitive callees.
 
 Lambdas and method references appear as call sites with `"invokeDynamic": true`: there
 `ownerType`/`methodName` name the functional interface (SAM) being implemented, while
@@ -331,6 +345,11 @@ codelens calls com.example.config.DbConfig --method dataSource
 # Pull out the calls to a particular API
 codelens calls com.example.UserService --method handle --json \
   | jq '.methods[].calls[] | select(.ownerType | startswith("java.sql"))'
+
+# Only call-sites inside methods that return a given type — e.g. blocking calls
+# sitting directly in reactive (Mono/Flux) handlers, without a manual intersection
+codelens calls com.example.web.ReactiveController \
+  --in-methods-returning reactor.core.publisher.Mono --json
 ```
 
 Known limit (Tier-1 scan): computed (non-constant) arguments don't appear in

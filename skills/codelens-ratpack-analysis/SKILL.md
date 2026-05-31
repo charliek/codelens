@@ -165,6 +165,11 @@ codelens xref com.example.model.Order --kind RETURN
 # Exactly what a class's method does with promises (operators, Blocking.get, fork):
 codelens calls com.example.UserHandler --method handle --json \
   | jq '.methods[].calls[] | select(.ownerType | test("ratpack.exec"))'
+
+# Or scope across ALL Promise-returning methods of a class at once (one query,
+# no manual methods-search × calls intersection):
+codelens calls com.example.OrderService --in-methods-returning ratpack.exec.Promise --json \
+  | jq '.methods[].calls[] | select(.ownerType | test("ratpack.exec"))'
 ```
 
 `xref` of `ratpack.exec.Promise` finds every method that returns or takes a `Promise<…>`;
@@ -173,6 +178,12 @@ only ever appears wrapped in a `Promise<…>`. `xref` of `ratpack.exec.Blocking`
 reference as a `CALL_RECEIVER` with the method (`get`/`on`) and line number — the real
 blocking call sites. Judge intensity by counting these and reading the chains in `source`.
 See `RATPACK-CONCEPTS.md` for the operator/blocking taxonomy.
+
+`calls --in-methods-returning ratpack.exec.Promise` scopes call-sites to a class's
+`Promise`-returning methods in one pass (and `--in-methods-annotated <fqn>` by annotation) — but
+only **direct** call-sites, by the enclosing method's declared signature. It does **not** reach the
+synthetic `lambda$execute$N` handler bodies where Ratpack hides most routing/Promise logic (read
+those with `--method 'lambda$…'`, as above) nor transitive callees.
 
 ## Guice modules and bindings
 

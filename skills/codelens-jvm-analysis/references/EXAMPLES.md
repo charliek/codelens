@@ -62,6 +62,11 @@ codelens calls com.example.UserService --method createUser --json \
 # Constant string/number/class args a @Bean/factory method passes to a builder
 codelens calls com.example.config.DbConfig --method dataSource --json \
   | jq '.methods[].calls[] | {ownerType, methodName, constantArgs}'
+
+# Scope to call-sites inside methods that return a type (or carry an annotation):
+# e.g. blocking calls sitting directly in reactive Mono/Flux handlers, in one query
+codelens calls com.example.web.ReactiveController \
+  --in-methods-returning reactor.core.publisher.Mono --json
 ```
 
 ## Scenario: Who references this type? (`xref`)
