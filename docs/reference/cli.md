@@ -719,11 +719,21 @@ codelens calls <fqn> [OPTIONS]
 |--------|-------------|
 | `--method`, `-m` | Only show calls made by this method |
 | `--descriptor` | JVM descriptor to disambiguate overloads (requires `--method`) |
+| `--in-methods-returning` | Only call-sites inside methods returning this type (FQN) |
+| `--in-methods-annotated` | Only call-sites inside methods annotated with this type (FQN) |
 | `--project`, `-p` | Project directory |
 | `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
 
 `--descriptor` only disambiguates a named method, so it must be used together
 with `--method`. Passing it alone is rejected.
+
+`--in-methods-returning` and `--in-methods-annotated` are post-extraction
+filters that keep only call-sites whose **enclosing** method matches — by its
+(erased) return type or by an annotation (meta-expanded, so `--in-methods-annotated
+…GetMapping` matches `@GetMapping` handlers). They are ANDed when both are set and
+compose with `--method`. They scope to **direct** call-sites in matching methods
+(by the enclosing method's declared signature); they do not reach `lambda$…` bodies
+or transitive callees.
 
 Without `--method`, methods that make no calls are omitted. With `--method`, a
 matching method is returned even when it makes no calls (one entry with an empty
@@ -741,6 +751,14 @@ codelens calls com.example.web.ProductController --method create
 # Disambiguate an overloaded method by descriptor
 codelens calls com.example.service.OrderService \
   --method process --descriptor "(Lcom/example/model/Order;)V"
+
+# Blocking-in-reactive in one query: call-sites inside Mono/Flux handlers
+codelens calls com.example.web.ReactiveController \
+  --in-methods-returning reactor.core.publisher.Mono
+
+# Call-sites inside @GetMapping handlers only
+codelens calls com.example.web.ProductController \
+  --in-methods-annotated org.springframework.web.bind.annotation.GetMapping
 ```
 
 **Example Output (JSON):**

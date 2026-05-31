@@ -6,6 +6,7 @@
       "classSource": "JDK",
       "method": {
         "annotations": [],
+        "descriptor": "()Ljava/lang/Object;",
         "isAbstract": true,
         "isFinal": false,
         "isStatic": false,

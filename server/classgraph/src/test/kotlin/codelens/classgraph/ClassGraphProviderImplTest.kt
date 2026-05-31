@@ -643,70 +643,10 @@ class ClassGraphProviderImplTest {
         assertTrue(incoming.isEmpty(), "Should have no incoming dependencies")
     }
 
-    // ============== Annotation Serialization Tests ==============
-
-    @Test
-    fun `formatAnnotationValue should handle primitive arrays`() {
-        // Access the private formatAnnotationValue method via reflection
-        val method =
-            ClassGraphProviderImpl::class.java.getDeclaredMethod(
-                "formatAnnotationValue",
-                Any::class.java,
-            )
-        method.isAccessible = true
-
-        // Test IntArray
-        val intArray = intArrayOf(1, 2, 3)
-        val intResult = method.invoke(provider, intArray) as String
-        assertEquals("[1, 2, 3]", intResult, "IntArray should be formatted correctly")
-
-        // Test LongArray
-        val longArray = longArrayOf(100L, 200L)
-        val longResult = method.invoke(provider, longArray) as String
-        assertEquals("[100, 200]", longResult, "LongArray should be formatted correctly")
-
-        // Test ByteArray
-        val byteArray = byteArrayOf(1, 2)
-        val byteResult = method.invoke(provider, byteArray) as String
-        assertEquals("[1, 2]", byteResult, "ByteArray should be formatted correctly")
-    }
-
-    @Test
-    fun `formatAnnotationValue should handle object arrays`() {
-        val method =
-            ClassGraphProviderImpl::class.java.getDeclaredMethod(
-                "formatAnnotationValue",
-                Any::class.java,
-            )
-        method.isAccessible = true
-
-        // Test String Array
-        val stringArray = arrayOf("a", "b", "c")
-        val stringResult = method.invoke(provider, stringArray) as String
-        assertEquals("[a, b, c]", stringResult, "String Array should be formatted correctly")
-
-        // Test null value
-        val nullResult = method.invoke(provider, null) as String
-        assertEquals("null", nullResult, "Null should be formatted as 'null'")
-
-        // Test simple value
-        val simpleResult = method.invoke(provider, "hello") as String
-        assertEquals("hello", simpleResult, "Simple string should be passed through")
-    }
-
-    @Test
-    fun `formatAnnotationValue should handle Class references`() {
-        val method =
-            ClassGraphProviderImpl::class.java.getDeclaredMethod(
-                "formatAnnotationValue",
-                Any::class.java,
-            )
-        method.isAccessible = true
-
-        val classRef = String::class.java
-        val result = method.invoke(provider, classRef) as String
-        assertEquals("java.lang.String", result, "Class reference should show full name")
-    }
+    // Annotation-value conversion (#41) is covered end-to-end by
+    // AnnotationValueConversionTest (fixture-backed, exercising the real
+    // ClassGraph wrapper types) — the old reflection tests against
+    // formatAnnotationValue exercised dead branches and were removed with it.
 
     // ============== Issue #002/#003: Superclass defaults to Object tests ==============
 

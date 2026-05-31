@@ -35,8 +35,11 @@ make this skill fast:
   `methods search --annotation …RequestMapping` finds **every** `@GetMapping`/`@PostMapping`/…
   handler regardless of verb, and `classes list --annotation …stereotype.Controller` finds every
   `@RestController`. You query the base annotation; the shortcuts are matched for free.
-- **Annotation attribute values are captured** — route paths (`value`/`path`) and verbs
-  (`method`) come back in each annotation's parameters.
+- **Annotation attribute values are captured as typed values.** Each attribute is a typed node
+  (`{kind, value|items|enumType|…}`): route paths (`value`/`path`) come back as an `ARRAY` of
+  `STRING` items and the verb (`method`) as an `ARRAY` of `ENUM` items, so you read a path as
+  `.parameters.value.items[0].value` and the verb as `.parameters.method.items[0].value` — no
+  bracket-string parsing.
 
 ## When to use
 
@@ -113,15 +116,17 @@ codelens classes list --annotation org.springframework.stereotype.Controller --j
 # every mapped handler method + its path/verb (meta @RequestMapping catches all the shortcuts):
 codelens methods search --annotation org.springframework.web.bind.annotation.RequestMapping --json
 
-# the class-level base path to prepend:
+# the class-level base path to prepend (value/path are @AliasFor aliases, each an ARRAY of STRING):
 codelens classes show com.example.web.OrderController --json \
-  | jq -r '.classInfo.annotations[] | select(.type|endswith("RequestMapping")) | .parameters.value'
+  | jq -r '.classInfo.annotations[] | select(.type|endswith("RequestMapping"))
+           | (.parameters.value.items[0].value // .parameters.path.items[0].value // "")'
 ```
 
-The path is in the annotation's `value` (or `path` — they are `@AliasFor` aliases, so check both);
-the verb is the specific annotation type (`GetMapping`→GET) or the meta `RequestMapping`'s `method`
-attribute. **Reverse lookup** ("what handles `GET /orders/{id}`") is the inventory filtered to that
-verb+path.
+The path is the first `STRING` item of the annotation's `value` (or `path` — they are `@AliasFor`
+aliases, so check both); a no-path `@RequestMapping` is an empty array (`items: []`). The verb is
+the specific annotation type (`GetMapping`→GET) or the first `ENUM` item of the meta
+`RequestMapping`'s `method` array (`.parameters.method.items[0].value` → `"GET"`). **Reverse
+lookup** ("what handles `GET /orders/{id}`") is the inventory filtered to that verb+path.
 
 **WebFlux functional routes** (`RouterFunction` beans) carry **no annotations** — recover them by
 reading the bean body, exactly like a Ratpack chain:
@@ -172,8 +177,11 @@ arguments of `Mono`/`Flux` factory calls, not just the operator chain.
 codelens methods search --return-type reactor.core.publisher.Mono --json
 codelens xref reactor.core.publisher.Flux
 
-# blocking call-sites inside a reactive handler (.block(), Thread.sleep, JDBC, RestTemplate):
-codelens calls com.example.web.ReactiveController --method blocking --json \
+# DIRECT blocking call-sites across ALL reactive handlers in a class, in ONE query (#44): scope
+# `calls` to the enclosing Mono/Flux methods (--in-methods-returning) — no manual methods×calls
+# intersection. Add --method to drill into one handler; --in-methods-annotated <ann> is the
+# annotation-scoped sibling (e.g. only @GetMapping handlers).
+codelens calls com.example.web.ReactiveController --in-methods-returning reactor.core.publisher.Mono --json \
   | jq '.methods[].calls[] | select(
         (.ownerType=="reactor.core.publisher.Mono" and (.methodName|test("^block")))
         or (.ownerType=="java.lang.Thread" and .methodName=="sleep")
@@ -181,8 +189,12 @@ codelens calls com.example.web.ReactiveController --method blocking --json \
         or (.ownerType=="org.springframework.web.client.RestTemplate"))'
 ```
 
-Note: `java.sql.*` / `javax.sql.*` stay `javax`/`java` across the Boot 2→3 boundary (they are not
-part of the Jakarta rename), so JDBC detection is version-independent — see SPRING-WEB-FQN.md.
+`--in-methods-returning`/`--in-methods-annotated` scope to **direct** call-sites in the matching
+handler bodies (by the enclosing method's declared signature) — they do **not** reach the
+eager-assembly arguments or the `lambda$…`/transitive callees described above, so they
+**complement**, not replace, the transitive trace. Note: `java.sql.*` / `javax.sql.*` stay
+`javax`/`java` across the Boot 2→3 boundary (not part of the Jakarta rename), so JDBC detection is
+version-independent — see SPRING-WEB-FQN.md.
 
 ## Step 5 — Cross-cutting concerns
 

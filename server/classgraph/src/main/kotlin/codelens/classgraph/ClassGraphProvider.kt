@@ -142,12 +142,22 @@ interface ClassGraphProvider {
      * @param methodName When non-null, only this method is scanned
      * @param descriptor When non-null, disambiguates overloads by exact JVM
      *   descriptor match (only meaningful together with [methodName])
+     * @param inMethodsReturning When non-null, keep only call-sites inside
+     *   enclosing methods whose (erased) return type matches this FQN
+     * @param inMethodsAnnotated When non-null, keep only call-sites inside
+     *   enclosing methods carrying this annotation (meta-expanded). ANDed with
+     *   [inMethodsReturning] when both are set. These post-extraction filters
+     *   scope to direct call-sites in matching methods, by the enclosing
+     *   method's declared signature — they do not reach `lambda$…` bodies or
+     *   transitive callees.
      * @return Per-method call lists, empty if the class bytes are unavailable
      */
     fun getCalls(
         fqn: String,
         methodName: String? = null,
         descriptor: String? = null,
+        inMethodsReturning: String? = null,
+        inMethodsAnnotated: String? = null,
     ): CallSiteList
 
     /**

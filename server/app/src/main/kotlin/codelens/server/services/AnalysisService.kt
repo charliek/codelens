@@ -263,7 +263,9 @@ class AnalysisService(
         fqn: String,
         methodName: String? = null,
         descriptor: String? = null,
-    ): CallSiteList = classGraphProvider.getCalls(fqn, methodName, descriptor)
+        inMethodsReturning: String? = null,
+        inMethodsAnnotated: String? = null,
+    ): CallSiteList = classGraphProvider.getCalls(fqn, methodName, descriptor, inMethodsReturning, inMethodsAnnotated)
 
     /**
      * Find every reference to a type across the scanned classes (inverse cross-reference).

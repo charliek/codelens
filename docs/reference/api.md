@@ -239,22 +239,57 @@ GET /api/v1/classes/com.example.web.ProductController
       {
         "type": "org.springframework.web.bind.annotation.RestController",
         "parameters": {}
+      },
+      {
+        "type": "org.springframework.web.bind.annotation.RequestMapping",
+        "parameters": {
+          "value": {
+            "kind": "ARRAY",
+            "items": [{ "kind": "STRING", "value": "/products" }]
+          }
+        }
       }
     ],
     "constructors": [],
     "methods": [
       {
-        "name": "create",
+        "name": "get",
+        "descriptor": "(Ljava/lang/Long;)Lcom/example/model/Product;",
         "visibility": "PUBLIC",
         "returnType": "com.example.model.Product",
         "parameters": [
           {
-            "name": "dto",
-            "type": "com.example.dto.ProductDto",
+            "name": "id",
+            "type": "java.lang.Long",
             "annotations": []
           }
         ],
-        "annotations": [],
+        "annotations": [
+          {
+            "type": "org.springframework.web.bind.annotation.GetMapping",
+            "parameters": {
+              "value": {
+                "kind": "ARRAY",
+                "items": [{ "kind": "STRING", "value": "/{id}" }]
+              }
+            }
+          },
+          {
+            "type": "org.springframework.web.bind.annotation.RequestMapping",
+            "parameters": {
+              "method": {
+                "kind": "ARRAY",
+                "items": [
+                  {
+                    "kind": "ENUM",
+                    "value": "GET",
+                    "enumType": "org.springframework.web.bind.annotation.RequestMethod"
+                  }
+                ]
+              }
+            }
+          }
+        ],
         "isStatic": false,
         "isAbstract": false,
         "isFinal": false,
@@ -274,6 +309,22 @@ GET /api/v1/classes/com.example.web.ProductController
   }
 }
 ```
+
+**Typed annotation attribute values.** Each entry in an annotation's `parameters` map is a typed
+value, not a stringified one. A `kind` discriminator tells you which field(s) to read:
+
+| `kind` | Fields | Meaning |
+|--------|--------|---------|
+| `STRING`/`BOOLEAN`/`BYTE`/`SHORT`/`INT`/`LONG`/`FLOAT`/`DOUBLE`/`CHAR` | `value` | a scalar, as text |
+| `CLASS` | `value` | a class literal — the dotted FQN, with **no** `.class` suffix |
+| `ENUM` | `value`, `enumType` | an enum constant (`value`) and its type (`enumType`) |
+| `ANNOTATION` | `annotation` | a nested annotation (same shape, recursively) |
+| `ARRAY` | `items` | an ordered list of values (an empty array is `items: []`) |
+
+So a route path is `parameters.value.items[0].value` (no bracket parsing) and the HTTP verb of the
+meta `@RequestMapping` is `parameters.method.items[0].value` (`"GET"`, with `kind: "ENUM"`). Absent
+optional fields are omitted, so each node stays sparse. Each method also carries its erased JVM
+`descriptor` (e.g. `(Ljava/lang/Long;)Lcom/example/model/Product;`), which disambiguates overloads.
 
 **Error Response (404):**
 ```json
@@ -558,8 +609,12 @@ Extract the invocations a class's method bodies make — raw bytecode call-site 
 |-----------|------|---------|-------------|
 | `method` | string | - | Only scan this method (others are omitted) |
 | `descriptor` | string | - | Exact JVM descriptor to disambiguate overloads (only honored together with `method`) |
+| `inMethodsReturning` | string | - | Keep only call-sites inside enclosing methods whose (erased) return type matches this FQN |
+| `inMethodsAnnotated` | string | - | Keep only call-sites inside enclosing methods carrying this annotation (meta-expanded) |
 
 Without `method`, methods that make no calls are omitted. With `method`, a matching method is returned even when it makes no calls (one entry with an empty `calls` list); an unknown method name yields no entries.
+
+`inMethodsReturning` and `inMethodsAnnotated` are post-extraction filters: they keep only call-sites whose **enclosing** method matches, ANDed when both are set, and compose with `method`. They scope to direct call-sites in matching methods (by the enclosing method's declared signature) — they do not reach `lambda$…` bodies or transitive callees. Example: `?inMethodsReturning=reactor.core.publisher.Mono` surfaces blocking calls sitting directly inside `Mono`-returning reactive handlers.
 
 **Example:**
 ```

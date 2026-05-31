@@ -8,14 +8,33 @@
         "annotations": [
           {
             "parameters": {
-              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
-              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+              "processors": {
+                "items": [
+                  {
+                    "kind": "CLASS",
+                    "value": "org.springframework.aot.hint.annotation.SimpleReflectiveProcessor"
+                  }
+                ],
+                "kind": "ARRAY"
+              },
+              "value": {
+                "items": [
+                  {
+                    "kind": "CLASS",
+                    "value": "org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor"
+                  }
+                ],
+                "kind": "ARRAY"
+              }
             },
             "type": "org.springframework.aot.hint.annotation.Reflective"
           },
           {
             "parameters": {
-              "value": "hasRole('ADMIN')"
+              "value": {
+                "kind": "STRING",
+                "value": "hasRole('ADMIN')"
+              }
             },
             "type": "org.springframework.security.access.prepost.PreAuthorize"
           },
@@ -25,30 +44,87 @@
           },
           {
             "parameters": {
-              "consumes": "[]",
-              "headers": "[]",
-              "name": "",
-              "params": "[]",
-              "path": "[]",
-              "produces": "[]",
-              "value": "[/import]"
+              "consumes": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "headers": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "name": {
+                "kind": "STRING",
+                "value": ""
+              },
+              "params": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "path": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "produces": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "value": {
+                "items": [
+                  {
+                    "kind": "STRING",
+                    "value": "/import"
+                  }
+                ],
+                "kind": "ARRAY"
+              }
             },
             "type": "org.springframework.web.bind.annotation.PostMapping"
           },
           {
             "parameters": {
-              "consumes": "[]",
-              "headers": "[]",
-              "method": "[org.springframework.web.bind.annotation.RequestMethod.POST]",
-              "name": "",
-              "params": "[]",
-              "path": "[]",
-              "produces": "[]",
-              "value": "[]"
+              "consumes": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "headers": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "method": {
+                "items": [
+                  {
+                    "enumType": "org.springframework.web.bind.annotation.RequestMethod",
+                    "kind": "ENUM",
+                    "value": "POST"
+                  }
+                ],
+                "kind": "ARRAY"
+              },
+              "name": {
+                "kind": "STRING",
+                "value": ""
+              },
+              "params": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "path": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "produces": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "value": {
+                "items": [],
+                "kind": "ARRAY"
+              }
             },
             "type": "org.springframework.web.bind.annotation.RequestMapping"
           }
         ],
+        "descriptor": "(Lcom/example/shop/dto/ProductDto;)Lcom/example/shop/model/Product;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -63,7 +139,10 @@
               },
               {
                 "parameters": {
-                  "required": "true"
+                  "required": {
+                    "kind": "BOOLEAN",
+                    "value": "true"
+                  }
                 },
                 "type": "org.springframework.web.bind.annotation.RequestBody"
               }

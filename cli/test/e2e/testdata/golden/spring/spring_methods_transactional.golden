@@ -8,29 +8,84 @@
         "annotations": [
           {
             "parameters": {
-              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
-              "value": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]"
+              "processors": {
+                "items": [
+                  {
+                    "kind": "CLASS",
+                    "value": "org.springframework.aot.hint.annotation.SimpleReflectiveProcessor"
+                  }
+                ],
+                "kind": "ARRAY"
+              },
+              "value": {
+                "items": [
+                  {
+                    "kind": "CLASS",
+                    "value": "org.springframework.aot.hint.annotation.SimpleReflectiveProcessor"
+                  }
+                ],
+                "kind": "ARRAY"
+              }
             },
             "type": "org.springframework.aot.hint.annotation.Reflective"
           },
           {
             "parameters": {
-              "isolation": "org.springframework.transaction.annotation.Isolation.DEFAULT",
-              "label": "[]",
-              "noRollbackFor": "[]",
-              "noRollbackForClassName": "[]",
-              "propagation": "org.springframework.transaction.annotation.Propagation.REQUIRED",
-              "readOnly": "false",
-              "rollbackFor": "[]",
-              "rollbackForClassName": "[]",
-              "timeout": "-1",
-              "timeoutString": "",
-              "transactionManager": "",
-              "value": ""
+              "isolation": {
+                "enumType": "org.springframework.transaction.annotation.Isolation",
+                "kind": "ENUM",
+                "value": "DEFAULT"
+              },
+              "label": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "noRollbackFor": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "noRollbackForClassName": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "propagation": {
+                "enumType": "org.springframework.transaction.annotation.Propagation",
+                "kind": "ENUM",
+                "value": "REQUIRED"
+              },
+              "readOnly": {
+                "kind": "BOOLEAN",
+                "value": "false"
+              },
+              "rollbackFor": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "rollbackForClassName": {
+                "items": [],
+                "kind": "ARRAY"
+              },
+              "timeout": {
+                "kind": "INT",
+                "value": "-1"
+              },
+              "timeoutString": {
+                "kind": "STRING",
+                "value": ""
+              },
+              "transactionManager": {
+                "kind": "STRING",
+                "value": ""
+              },
+              "value": {
+                "kind": "STRING",
+                "value": ""
+              }
             },
             "type": "org.springframework.transaction.annotation.Transactional"
           }
         ],
+        "descriptor": "(Ljava/lang/Long;D)Lcom/example/shop/model/Order;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,

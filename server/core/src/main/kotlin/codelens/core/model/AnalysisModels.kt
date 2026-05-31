@@ -1,5 +1,7 @@
 package codelens.core.model
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -49,8 +51,73 @@ data class ClassName(
 data class AnnotationInfo(
     /** Fully qualified name of the annotation type */
     val type: String,
-    /** Annotation parameters (name -> value as string) */
-    val parameters: Map<String, String> = emptyMap(),
+    /**
+     * Annotation attribute values, keyed by attribute name. Each value is a
+     * typed [AnnotationValue]: arrays are real arrays, and enums, class
+     * literals, and nested annotations are tagged via [AnnotationValue.kind] —
+     * so consumers read them structurally instead of parsing stringified Java
+     * values (e.g. a multi-path `@RequestMapping({"/a","/b"})` is an ARRAY of
+     * STRING items, not the bracket-string `"[/a, /b]"`).
+     */
+    val parameters: Map<String, AnnotationValue> = emptyMap(),
+)
+
+/**
+ * Discriminator for the kind of value an annotation attribute holds. Parallels
+ * [ConstantKind]; BYTE/SHORT/CHAR are included so Java `byte`/`short`/`char`
+ * annotation values are tagged rather than coerced to STRING.
+ *
+ * Enum names are part of the wire contract — consumers branch on the literal
+ * strings (e.g. a skill's `jq` checks `.kind == "ENUM"`), so they are locked by
+ * an enum-name stability test.
+ */
+@Serializable
+enum class AnnotationValueKind {
+    STRING,
+    BOOLEAN,
+    BYTE,
+    SHORT,
+    INT,
+    LONG,
+    FLOAT,
+    DOUBLE,
+    CHAR,
+    CLASS,
+    ENUM,
+    ANNOTATION,
+    ARRAY,
+}
+
+/**
+ * A typed annotation attribute value.
+ *
+ * Scalars carry their text in [value] (interpret it via [kind]); [ENUM][AnnotationValueKind.ENUM]
+ * additionally sets [enumType]; [CLASS][AnnotationValueKind.CLASS] puts the
+ * dotted FQN (no `.class` suffix) in [value]; [ANNOTATION][AnnotationValueKind.ANNOTATION]
+ * nests an [AnnotationInfo] in [annotation]; [ARRAY][AnnotationValueKind.ARRAY]
+ * holds its element values in [items] (an empty array yields `items = []`).
+ *
+ * The optional fields are `@EncodeDefault(NEVER)` so each node serializes
+ * sparsely — no `"value":null`/`"enumType":null`/`"items":null` noise — despite
+ * the server's `encodeDefaults = true` (matching the idiom on [CallSite]).
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class AnnotationValue(
+    /** What kind of value this is; tells the consumer which field(s) to read. */
+    val kind: AnnotationValueKind,
+    /** Scalar text, the ENUM constant name, or the CLASS dotted FQN (no `.class`). */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val value: String? = null,
+    /** ENUM only: the fully-qualified enum type. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val enumType: String? = null,
+    /** ANNOTATION only: the nested annotation. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val annotation: AnnotationInfo? = null,
+    /** ARRAY only: the element values, in order. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val items: List<AnnotationValue>? = null,
 )
 
 /**
@@ -99,6 +166,13 @@ data class ConstructorInfo(
 data class MethodInfo(
     /** Method name */
     val name: String,
+    /**
+     * The method's erased JVM type descriptor (e.g. `(Ljava/lang/String;)V`).
+     * Disambiguates overloads exactly — it matches the `(methodName, descriptor)`
+     * key on [MethodCalls]/[CallSite], so `calls` can scope to call-sites inside
+     * a specific overload.
+     */
+    val descriptor: String = "",
     /** Visibility modifier */
     val visibility: Visibility,
     /**

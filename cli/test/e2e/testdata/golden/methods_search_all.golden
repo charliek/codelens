@@ -6,6 +6,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "()V",
         "isAbstract": false,
         "isFinal": true,
         "isStatic": true,
@@ -24,11 +25,15 @@
         "annotations": [
           {
             "parameters": {
-              "value": ""
+              "value": {
+                "kind": "STRING",
+                "value": ""
+              }
             },
             "type": "org.jetbrains.annotations.NotNull"
           }
         ],
+        "descriptor": "()Ljava/lang/String;",
         "isAbstract": false,
         "isFinal": true,
         "isStatic": false,
@@ -45,6 +50,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "()V",
         "isAbstract": false,
         "isFinal": true,
         "isStatic": false,
@@ -61,6 +67,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(II)V",
         "isAbstract": false,
         "isFinal": true,
         "isStatic": true,
@@ -88,6 +95,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Chain;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -110,6 +118,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Lratpack/exec/Promise;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -132,6 +141,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -154,6 +164,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Context;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -176,6 +187,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/Object;Ljava/lang/String;)Lratpack/exec/Promise;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -203,6 +215,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Context;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -225,6 +238,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Lratpack/exec/Promise;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -247,6 +261,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Context;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -269,6 +284,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Context;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -291,6 +307,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;Ljava/lang/String;)V",
         "isAbstract": true,
         "isFinal": false,
         "isStatic": false,
@@ -318,6 +335,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Lratpack/handling/Context;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -340,6 +358,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Ljava/lang/Object;",
         "isAbstract": true,
         "isFinal": false,
         "isStatic": false,
@@ -362,6 +381,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/Object;)V",
         "isAbstract": true,
         "isFinal": false,
         "isStatic": false,
@@ -384,6 +404,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "()V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -413,6 +434,7 @@
             "type": "com.google.inject.Singleton"
           }
         ],
+        "descriptor": "()Lsample/handlers/NotificationService;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -442,6 +464,7 @@
             "type": "com.google.inject.Singleton"
           }
         ],
+        "descriptor": "()Lsample/handlers/UserService;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -458,6 +481,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/String;)Ljava/lang/Object;",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,
@@ -480,6 +504,7 @@
       "classSource": "PROJECT",
       "method": {
         "annotations": [],
+        "descriptor": "(Ljava/lang/Object;)V",
         "isAbstract": false,
         "isFinal": false,
         "isStatic": false,

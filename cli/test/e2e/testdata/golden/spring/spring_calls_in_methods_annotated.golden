@@ -1,0 +1,34 @@
+{
+  "fqn": "com.example.shop.web.ProductController",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljava/util/List;",
+          "isInterface": true,
+          "lineNumber": 32,
+          "methodName": "findAll",
+          "ownerType": "com.example.shop.service.ProductService"
+        }
+      ],
+      "descriptor": "()Ljava/util/List;",
+      "methodName": "list"
+    },
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Long;)Lcom/example/shop/model/Product;",
+          "isInterface": true,
+          "lineNumber": 37,
+          "methodName": "findById",
+          "ownerType": "com.example.shop.service.ProductService"
+        }
+      ],
+      "descriptor": "(Ljava/lang/Long;)Lcom/example/shop/model/Product;",
+      "methodName": "get"
+    }
+  ],
+  "totalCalls": 2
+}

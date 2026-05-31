@@ -137,6 +137,10 @@ class CallSiteExtractorTest {
 
     private val lambdaFqn = "codelens.classgraph.fixtures.LambdaSample"
 
+    private val filterSampleFqn = "codelens.classgraph.fixtures.CallsFilterSample"
+    private val filterMarkerFqn = "codelens.classgraph.fixtures.FilterMarker"
+    private val loadStringDescriptor = "(Ljava/lang/String;)Ljava/lang/String;"
+
     @Test
     fun `getCalls resolves a lambda to its synthetic implementation method`() {
         val calls =
@@ -208,5 +212,100 @@ class CallSiteExtractorTest {
                 .calls
                 .single { it.invokeDynamic }
         assertEquals(emptyList(), lambda.constantArgs)
+    }
+
+    // ============== #44: enclosing-method filters (overload-safe) ==============
+
+    @Test
+    fun `getCalls in-methods-returning keeps only the matching overload by descriptor`() {
+        // CallsFilterSample has two `load` overloads: load(String):String and
+        // load(int):Integer. Filtering by return type java.lang.String must keep
+        // ONLY load(String) — proving (name, descriptor) disambiguation and that
+        // ClassGraph's method descriptor matches the ASM extractor's descriptor.
+        val result =
+            provider.getCalls(
+                filterSampleFqn,
+                methodName = null,
+                descriptor = null,
+                inMethodsReturning = "java.lang.String",
+                inMethodsAnnotated = null,
+            )
+
+        val load = result.methods.single()
+        assertEquals("load", load.methodName)
+        assertEquals(loadStringDescriptor, load.descriptor)
+        assertTrue(
+            load.calls.any { it.methodName == "trim" },
+            "should keep the String.trim() call site from load(String); got ${load.calls}",
+        )
+    }
+
+    @Test
+    fun `getCalls in-methods-annotated keeps only the annotated overload`() {
+        val result =
+            provider.getCalls(
+                filterSampleFqn,
+                methodName = null,
+                descriptor = null,
+                inMethodsReturning = null,
+                inMethodsAnnotated = filterMarkerFqn,
+            )
+
+        val load = result.methods.single()
+        assertEquals("load", load.methodName)
+        assertEquals(loadStringDescriptor, load.descriptor)
+    }
+
+    @Test
+    fun `getCalls ANDs both filters and composes with an explicit method`() {
+        // Both filters select only load(String).
+        val both =
+            provider.getCalls(
+                filterSampleFqn,
+                methodName = null,
+                descriptor = null,
+                inMethodsReturning = "java.lang.String",
+                inMethodsAnnotated = filterMarkerFqn,
+            )
+        assertEquals(loadStringDescriptor, both.methods.single().descriptor)
+
+        // --method load (no descriptor → both overloads) intersected with the
+        // return-type filter keeps only the String-returning overload.
+        val scoped =
+            provider.getCalls(
+                filterSampleFqn,
+                methodName = "load",
+                descriptor = null,
+                inMethodsReturning = "java.lang.String",
+                inMethodsAnnotated = null,
+            )
+        assertEquals(1, scoped.methods.size, "the --method/filter intersection must drop load(int)")
+        assertEquals(loadStringDescriptor, scoped.methods.single().descriptor)
+    }
+
+    @Test
+    fun `getCalls filter matching no method yields an empty result`() {
+        val result =
+            provider.getCalls(
+                filterSampleFqn,
+                methodName = null,
+                descriptor = null,
+                inMethodsReturning = "java.util.UUID",
+                inMethodsAnnotated = null,
+            )
+        assertTrue(result.methods.isEmpty(), "no method returns UUID, so no call-sites survive; got ${result.methods}")
+    }
+
+    @Test
+    fun `getCalls filter on an unknown class yields an empty result`() {
+        val result =
+            provider.getCalls(
+                "does.not.Exist",
+                methodName = null,
+                descriptor = null,
+                inMethodsReturning = "java.lang.String",
+                inMethodsAnnotated = null,
+            )
+        assertTrue(result.methods.isEmpty())
     }
 }

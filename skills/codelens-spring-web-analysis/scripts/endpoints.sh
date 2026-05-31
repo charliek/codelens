@@ -11,9 +11,17 @@
 #
 # Requires: a running codelens server for the project, `codelens` on PATH, `jq`.
 #
-# Known limits (today, pre-#41 "structured annotation values"):
-#   - Annotation values are stringified ("[/a, /b]"); this script strips the
-#     brackets and uses the first path. Multi-path mappings show only the first.
+# Annotation values are typed (#41 "structured annotation values"): a mapping's
+# value/path is an ARRAY whose first STRING item is the (first) path, and the
+# verb is the meta @RequestMapping's `method` ARRAY whose first ENUM item's value
+# is the constant ("GET"). So paths read as `.parameters.value.items[0].value`
+# (no bracket parsing), and a no-path @RequestMapping is an empty array
+# (`items:[]`), i.e. `.items[0].value` is null → terminated in `// ""`.
+#
+# Known limits / deferred:
+#   - First path / first verb only. Multi-path (`@RequestMapping({"/a","/b"})`)
+#     and multi-verb mappings are intentionally shown as their first entry; the
+#     full cross-product is a deliberate non-goal here (not a regression).
 #   - WebFlux *functional* routes (RouterFunction beans) carry no annotations and
 #     are NOT listed here — recover them with `codelens calls <RouterBean>`
 #     (see the skill's WEBFLUX.md).
@@ -26,19 +34,16 @@ proj=()
 RM="org.springframework.web.bind.annotation.RequestMapping"
 CTRL="org.springframework.stereotype.Controller"   # meta-matches @RestController
 
-# "[/a, /b]" -> "/a, /b"; "[]" -> ""
-unbracket() { sed -e 's/^\[//' -e 's/\]$//'; }
-
-# 1) class FQN -> class-level base path (value/path are @AliasFor aliases).
+# 1) class FQN -> class-level base path (value/path are @AliasFor aliases, each
+#    an ARRAY of STRING; read the first item of whichever the author set).
 declare -A BASE
 while IFS= read -r cls; do
   [ -z "$cls" ] && continue
   BASE["$cls"]=$(codelens classes show "$cls" "${proj[@]}" --json 2>/dev/null \
     | jq -r --arg rm "$RM" '
         [ .classInfo.annotations[]? | select(.type==$rm)
-          | (.parameters.value // ""), (.parameters.path // "") ]
-        | map(select(. != "" and . != "[]")) | (.[0] // "")' \
-    | unbracket)
+          | (.parameters.value.items[0].value // .parameters.path.items[0].value // "") ]
+        | map(select(. != "")) | (.[0] // "")')
 done < <(codelens classes list --annotation "$CTRL" "${proj[@]}" --json 2>/dev/null | jq -r '.classes[]?.fqn')
 
 # 2) one row per mapped handler method.
@@ -46,25 +51,28 @@ printf '%-7s %-34s %-46s %s\n' VERB PATH HANDLER RETURNS
 codelens methods search --annotation "$RM" "${proj[@]}" --json 2>/dev/null \
 | jq -c '.methods[]?' \
 | while IFS= read -r m; do
-    cls=$(jq -r '.classFqn' <<<"$m")
-    name=$(jq -r '.method.name' <<<"$m")
-    ret=$(jq -r '.method.returnType' <<<"$m")
+    # Pull the row's identifying fields in one jq pass (tab-separated), rather
+    # than three separate jq spawns per method.
+    row=$(jq -r '[.classFqn, .method.name, .method.returnType] | @tsv' <<<"$m")
+    IFS=$'\t' read -r cls name ret <<<"$row"
 
-    # verb: prefer the specific @{Get,Post,...}Mapping; else the meta method attr.
+    # verb: prefer the specific @{Get,Post,...}Mapping; else the meta method
+    # ENUM value ("GET"), already the bare constant name.
     verb=$(jq -r '.method.annotations[]?.type
                   | capture("\\.(?<v>Get|Post|Put|Delete|Patch)Mapping$").v' <<<"$m" \
            | head -n1 | tr '[:lower:]' '[:upper:]')
     if [ -z "$verb" ]; then
-      verb=$(jq -r --arg rm "$RM" '.method.annotations[]? | select(.type==$rm) | (.parameters.method // "")' <<<"$m" \
-             | head -n1 | unbracket | sed 's/.*RequestMethod\.//; s/,.*//')
+      verb=$(jq -r --arg rm "$RM" '
+        [ .method.annotations[]? | select(.type==$rm) | .parameters.method.items[]?.value ]
+        | (.[0] // "")' <<<"$m")
       [ -z "$verb" ] && verb=ANY
     fi
 
-    # method path: first non-empty value/path on any *Mapping annotation.
+    # method path: first STRING item of value/path on any *Mapping annotation.
     mpath=$(jq -r '
       [ .method.annotations[]? | select(.type|test("Mapping$"))
-        | (.parameters.value // ""), (.parameters.path // "") ]
-      | map(select(. != "" and . != "[]")) | (.[0] // "")' <<<"$m" | unbracket)
+        | (.parameters.value.items[0].value // .parameters.path.items[0].value // "") ]
+      | map(select(. != "")) | (.[0] // "")' <<<"$m")
 
     # join class base + method path with exactly one slash (avoid // and a trailing /)
     base="${BASE[$cls]:-}"

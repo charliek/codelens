@@ -312,7 +312,7 @@ func TestMethods_SearchUsesCamelCaseQueryNames(t *testing.T) {
 func TestCalls_NoMethodHitsClassEndpoint(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
-	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", ""); err != nil {
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", "", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	// FQN is a single path segment (like the sibling class endpoints); no query.
@@ -324,7 +324,7 @@ func TestCalls_NoMethodHitsClassEndpoint(t *testing.T) {
 func TestCalls_FQNStaysSingleSegment(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
-	if _, err := c.GetCalls(ctx(), "com.example.Outer$Inner", "", ""); err != nil {
+	if _, err := c.GetCalls(ctx(), "com.example.Outer$Inner", "", "", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(cap.last().RawURL, "%24") {
@@ -340,7 +340,7 @@ func TestCalls_FQNStaysSingleSegment(t *testing.T) {
 func TestCalls_MethodIsQueryParam(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
-	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", ""); err != nil {
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", "", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	if cap.last().Path != "/api/v1/calls/com.example.UsersApi" {
@@ -355,18 +355,45 @@ func TestCalls_DescriptorOnlySentWithMethod(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
 	// descriptor without a method must be dropped (the whole-class view ignores it).
-	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", "(Lcom/example/api/Chain;)V"); err != nil {
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", "(Lcom/example/api/Chain;)V", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	if cap.last().RawURL != "/api/v1/calls/com.example.UsersApi" {
 		t.Errorf("descriptor must be dropped without a method; got %s", cap.last().RawURL)
 	}
 	// with a method, descriptor rides along as a query param.
-	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", "(Lcom/example/api/Chain;)V"); err != nil {
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "execute", "(Lcom/example/api/Chain;)V", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	if got := cap.last().Query.Get("descriptor"); got != "(Lcom/example/api/Chain;)V" {
 		t.Errorf("descriptor query = %q", got)
+	}
+}
+
+func TestCalls_InMethodsFiltersAreQueryParams(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	// The enclosing-method filters ride along as query params, independent of
+	// --method, and compose with each other.
+	if _, err := c.GetCalls(
+		ctx(), "com.example.UsersApi", "", "",
+		"reactor.core.publisher.Mono",
+		"org.springframework.web.bind.annotation.GetMapping",
+	); err != nil {
+		t.Fatal(err)
+	}
+	if got := cap.last().Query.Get("inMethodsReturning"); got != "reactor.core.publisher.Mono" {
+		t.Errorf("inMethodsReturning query = %q", got)
+	}
+	if got := cap.last().Query.Get("inMethodsAnnotated"); got != "org.springframework.web.bind.annotation.GetMapping" {
+		t.Errorf("inMethodsAnnotated query = %q", got)
+	}
+	// Absent when unset: no stray query string.
+	if _, err := c.GetCalls(ctx(), "com.example.UsersApi", "", "", "", ""); err != nil {
+		t.Fatal(err)
+	}
+	if cap.last().RawURL != "/api/v1/calls/com.example.UsersApi" {
+		t.Errorf("filters must be absent when unset; got %s", cap.last().RawURL)
 	}
 }
 
