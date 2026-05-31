@@ -61,6 +61,11 @@
             "annotations": [],
             "name": "arg0",
             "type": "com.example.shop.service.ProductService"
+          },
+          {
+            "annotations": [],
+            "name": "arg1",
+            "type": "com.example.shop.web.mapper.ProductMapper"
           }
         ],
         "visibility": "PUBLIC"
@@ -73,6 +78,14 @@
         "isStatic": false,
         "name": "productService",
         "type": "com.example.shop.service.ProductService",
+        "visibility": "PRIVATE"
+      },
+      {
+        "annotations": [],
+        "isFinal": true,
+        "isStatic": false,
+        "name": "productMapper",
+        "type": "com.example.shop.web.mapper.ProductMapper",
         "visibility": "PRIVATE"
       }
     ],
@@ -244,6 +257,10 @@
           {
             "annotations": [
               {
+                "parameters": {},
+                "type": "jakarta.validation.Valid"
+              },
+              {
                 "parameters": {
                   "required": "true"
                 },
@@ -251,7 +268,78 @@
               }
             ],
             "name": "arg0",
-            "type": "com.example.shop.dto.ProductDto"
+            "type": "@jakarta.validation.Valid com.example.shop.dto.ProductDto"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      },
+      {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "value": "hasRole('ADMIN')"
+            },
+            "type": "org.springframework.security.access.prepost.PreAuthorize"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/import]"
+            },
+            "type": "org.springframework.web.bind.annotation.PostMapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.POST]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "importProduct",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {},
+                "type": "jakarta.validation.Valid"
+              },
+              {
+                "parameters": {
+                  "required": "true"
+                },
+                "type": "org.springframework.web.bind.annotation.RequestBody"
+              }
+            ],
+            "name": "arg0",
+            "type": "@jakarta.validation.Valid com.example.shop.dto.ProductDto"
           }
         ],
         "returnType": "com.example.shop.model.Product",

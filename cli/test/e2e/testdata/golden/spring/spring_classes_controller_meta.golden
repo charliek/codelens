@@ -1,7 +1,13 @@
 {
-  "annotationFqn": "org.springframework.web.bind.annotation.RestController",
-  "totalCount": 4,
-  "usages": [
+  "appliedFilter": {
+    "extendsClass": null,
+    "hasAnnotation": "org.springframework.stereotype.Controller",
+    "implementsInterface": null,
+    "namePattern": null,
+    "packagePattern": null,
+    "source": "PROJECT"
+  },
+  "classes": [
     {
       "fieldCount": 1,
       "fqn": "com.example.shop.web.CustomerController",
@@ -50,5 +56,9 @@
       "simpleName": "ReactiveController",
       "source": "PROJECT"
     }
-  ]
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 4,
+  "totalPages": 1
 }

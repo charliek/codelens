@@ -94,7 +94,7 @@
       "fromSimpleName": "OrderService",
       "fromSource": "PROJECT",
       "kind": "CALL_RECEIVER",
-      "lineNumber": 31,
+      "lineNumber": 33,
       "member": "placeOrder"
     },
     {

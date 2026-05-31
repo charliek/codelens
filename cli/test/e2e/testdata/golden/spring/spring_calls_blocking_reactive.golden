@@ -1,0 +1,36 @@
+{
+  "fqn": "com.example.shop.web.ReactiveController",
+  "methods": [
+    {
+      "calls": [
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+          "isInterface": false,
+          "lineNumber": 41,
+          "methodName": "findProduct",
+          "ownerType": "com.example.shop.service.ReactiveCatalogService"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "()Ljava/lang/Object;",
+          "isInterface": false,
+          "lineNumber": 41,
+          "methodName": "block",
+          "ownerType": "reactor.core.publisher.Mono"
+        },
+        {
+          "constantArgs": [],
+          "descriptor": "(Ljava/lang/Object;)Lreactor/core/publisher/Mono;",
+          "isInterface": false,
+          "lineNumber": 42,
+          "methodName": "justOrEmpty",
+          "ownerType": "reactor.core.publisher.Mono"
+        }
+      ],
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "methodName": "blocking"
+    }
+  ],
+  "totalCalls": 3
+}

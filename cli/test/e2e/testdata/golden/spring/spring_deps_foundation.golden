@@ -1,15 +1,17 @@
 {
-  "count": 8,
+  "count": 11,
   "foundationClasses": [
     {
-      "dependentCount": 6,
+      "dependentCount": 8,
       "dependents": [
         "com.example.shop.repository.ProductRepository",
         "com.example.shop.service.ProductService",
         "com.example.shop.service.ProductServiceImpl",
         "com.example.shop.service.ReactiveCatalogService",
         "com.example.shop.web.ProductController",
-        "com.example.shop.web.ReactiveController"
+        "com.example.shop.web.ReactiveController",
+        "com.example.shop.web.mapper.ProductMapper",
+        "com.example.shop.web.mapper.ProductMapperImpl"
       ],
       "fqn": "com.example.shop.model.Product",
       "packageName": "com.example.shop.model",
@@ -67,6 +69,17 @@
     {
       "dependentCount": 3,
       "dependents": [
+        "com.example.shop.web.ProductController",
+        "com.example.shop.web.mapper.ProductMapper",
+        "com.example.shop.web.mapper.ProductMapperImpl"
+      ],
+      "fqn": "com.example.shop.dto.ProductDto",
+      "packageName": "com.example.shop.dto",
+      "simpleName": "ProductDto"
+    },
+    {
+      "dependentCount": 3,
+      "dependents": [
         "com.example.shop.repository.OrderRepository",
         "com.example.shop.service.OrderService",
         "com.example.shop.web.OrderController"
@@ -94,6 +107,26 @@
       "fqn": "com.example.shop.service.OrderService",
       "packageName": "com.example.shop.service",
       "simpleName": "OrderService"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "com.example.shop.web.CatalogHandler",
+        "com.example.shop.web.ReactiveController"
+      ],
+      "fqn": "com.example.shop.service.ReactiveCatalogService",
+      "packageName": "com.example.shop.service",
+      "simpleName": "ReactiveCatalogService"
+    },
+    {
+      "dependentCount": 2,
+      "dependents": [
+        "com.example.shop.web.ProductController",
+        "com.example.shop.web.mapper.ProductMapperImpl"
+      ],
+      "fqn": "com.example.shop.web.mapper.ProductMapper",
+      "packageName": "com.example.shop.web.mapper",
+      "simpleName": "ProductMapper"
     }
   ]
 }

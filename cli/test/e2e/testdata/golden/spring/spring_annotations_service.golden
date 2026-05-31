@@ -57,7 +57,7 @@
       "isAnnotation": false,
       "isEnum": false,
       "isInterface": false,
-      "methodCount": 2,
+      "methodCount": 3,
       "packageName": "com.example.shop.service",
       "simpleName": "OrderService",
       "source": "PROJECT"

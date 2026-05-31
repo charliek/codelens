@@ -1,5 +1,5 @@
 {
-  "edgeCount": 36,
+  "edgeCount": 47,
   "edges": [
     {
       "source": "com.example.shop.model.Order",
@@ -112,6 +112,16 @@
       "type": "FIELD_TYPE"
     },
     {
+      "source": "com.example.shop.web.CatalogHandler",
+      "target": "com.example.shop.service.ReactiveCatalogService",
+      "type": "FIELD_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.CatalogRouter",
+      "target": "com.example.shop.web.CatalogHandler",
+      "type": "METHOD_PARAMETER"
+    },
+    {
       "source": "com.example.shop.web.CustomerController",
       "target": "com.example.shop.model.Customer",
       "type": "METHOD_RETURN_TYPE"
@@ -125,6 +135,16 @@
       "source": "com.example.shop.web.CustomerController",
       "target": "com.example.shop.web.BaseController",
       "type": "EXTENDS"
+    },
+    {
+      "source": "com.example.shop.web.GlobalExceptionHandler",
+      "target": "com.example.shop.exception.NotFoundException",
+      "type": "METHOD_PARAMETER"
+    },
+    {
+      "source": "com.example.shop.web.GlobalExceptionHandler",
+      "target": "com.example.shop.exception.ValidationException",
+      "type": "METHOD_PARAMETER"
     },
     {
       "source": "com.example.shop.web.OrderController",
@@ -167,9 +187,19 @@
       "type": "EXTENDS"
     },
     {
+      "source": "com.example.shop.web.ProductController",
+      "target": "com.example.shop.web.mapper.ProductMapper",
+      "type": "FIELD_TYPE"
+    },
+    {
       "source": "com.example.shop.web.ReactiveController",
       "target": "com.example.shop.model.Product",
       "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.ReactiveController",
+      "target": "com.example.shop.service.InventoryService",
+      "type": "FIELD_TYPE"
     },
     {
       "source": "com.example.shop.web.ReactiveController",
@@ -180,9 +210,34 @@
       "source": "com.example.shop.web.ReactiveController",
       "target": "com.example.shop.web.BaseController",
       "type": "EXTENDS"
+    },
+    {
+      "source": "com.example.shop.web.mapper.ProductMapper",
+      "target": "com.example.shop.dto.ProductDto",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.mapper.ProductMapper",
+      "target": "com.example.shop.model.Product",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.mapper.ProductMapperImpl",
+      "target": "com.example.shop.dto.ProductDto",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.mapper.ProductMapperImpl",
+      "target": "com.example.shop.model.Product",
+      "type": "METHOD_RETURN_TYPE"
+    },
+    {
+      "source": "com.example.shop.web.mapper.ProductMapperImpl",
+      "target": "com.example.shop.web.mapper.ProductMapper",
+      "type": "IMPLEMENTS"
     }
   ],
-  "nodeCount": 26,
+  "nodeCount": 33,
   "nodes": [
     {
       "fqn": "com.example.shop.Application",
@@ -199,11 +254,25 @@
       "simpleName": "AppConfig"
     },
     {
+      "fqn": "com.example.shop.config.AppProperties",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop.config",
+      "simpleName": "AppProperties"
+    },
+    {
       "fqn": "com.example.shop.config.DatabaseConfig",
       "inDegree": 0,
       "outDegree": 0,
       "packageName": "com.example.shop.config",
       "simpleName": "DatabaseConfig"
+    },
+    {
+      "fqn": "com.example.shop.config.SecurityConfig",
+      "inDegree": 0,
+      "outDegree": 0,
+      "packageName": "com.example.shop.config",
+      "simpleName": "SecurityConfig"
     },
     {
       "fqn": "com.example.shop.dto.OrderDto",
@@ -214,21 +283,21 @@
     },
     {
       "fqn": "com.example.shop.dto.ProductDto",
-      "inDegree": 1,
+      "inDegree": 3,
       "outDegree": 0,
       "packageName": "com.example.shop.dto",
       "simpleName": "ProductDto"
     },
     {
       "fqn": "com.example.shop.exception.NotFoundException",
-      "inDegree": 0,
+      "inDegree": 1,
       "outDegree": 0,
       "packageName": "com.example.shop.exception",
       "simpleName": "NotFoundException"
     },
     {
       "fqn": "com.example.shop.exception.ValidationException",
-      "inDegree": 0,
+      "inDegree": 1,
       "outDegree": 0,
       "packageName": "com.example.shop.exception",
       "simpleName": "ValidationException"
@@ -249,7 +318,7 @@
     },
     {
       "fqn": "com.example.shop.model.Product",
-      "inDegree": 6,
+      "inDegree": 8,
       "outDegree": 0,
       "packageName": "com.example.shop.model",
       "simpleName": "Product"
@@ -291,7 +360,7 @@
     },
     {
       "fqn": "com.example.shop.service.InventoryService",
-      "inDegree": 0,
+      "inDegree": 1,
       "outDegree": 0,
       "packageName": "com.example.shop.service",
       "simpleName": "InventoryService"
@@ -326,7 +395,7 @@
     },
     {
       "fqn": "com.example.shop.service.ReactiveCatalogService",
-      "inDegree": 1,
+      "inDegree": 2,
       "outDegree": 2,
       "packageName": "com.example.shop.service",
       "simpleName": "ReactiveCatalogService"
@@ -339,11 +408,32 @@
       "simpleName": "BaseController"
     },
     {
+      "fqn": "com.example.shop.web.CatalogHandler",
+      "inDegree": 1,
+      "outDegree": 1,
+      "packageName": "com.example.shop.web",
+      "simpleName": "CatalogHandler"
+    },
+    {
+      "fqn": "com.example.shop.web.CatalogRouter",
+      "inDegree": 0,
+      "outDegree": 1,
+      "packageName": "com.example.shop.web",
+      "simpleName": "CatalogRouter"
+    },
+    {
       "fqn": "com.example.shop.web.CustomerController",
       "inDegree": 0,
       "outDegree": 3,
       "packageName": "com.example.shop.web",
       "simpleName": "CustomerController"
+    },
+    {
+      "fqn": "com.example.shop.web.GlobalExceptionHandler",
+      "inDegree": 0,
+      "outDegree": 2,
+      "packageName": "com.example.shop.web",
+      "simpleName": "GlobalExceptionHandler"
     },
     {
       "fqn": "com.example.shop.web.OrderController",
@@ -355,16 +445,30 @@
     {
       "fqn": "com.example.shop.web.ProductController",
       "inDegree": 0,
-      "outDegree": 4,
+      "outDegree": 5,
       "packageName": "com.example.shop.web",
       "simpleName": "ProductController"
     },
     {
       "fqn": "com.example.shop.web.ReactiveController",
       "inDegree": 0,
-      "outDegree": 3,
+      "outDegree": 4,
       "packageName": "com.example.shop.web",
       "simpleName": "ReactiveController"
+    },
+    {
+      "fqn": "com.example.shop.web.mapper.ProductMapper",
+      "inDegree": 2,
+      "outDegree": 2,
+      "packageName": "com.example.shop.web.mapper",
+      "simpleName": "ProductMapper"
+    },
+    {
+      "fqn": "com.example.shop.web.mapper.ProductMapperImpl",
+      "inDegree": 0,
+      "outDegree": 3,
+      "packageName": "com.example.shop.web.mapper",
+      "simpleName": "ProductMapperImpl"
     }
   ]
 }

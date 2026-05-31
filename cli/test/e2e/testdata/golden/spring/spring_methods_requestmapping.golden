@@ -1,0 +1,772 @@
+{
+  "methods": [
+    {
+      "classFqn": "com.example.shop.web.CustomerController",
+      "classSimpleName": "CustomerController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "get",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "com.example.shop.model.Customer",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.CustomerController",
+      "classSimpleName": "CustomerController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "list",
+        "parameters": [],
+        "returnType": "java.util.List\u003ccom.example.shop.model.Customer\u003e",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.OrderController",
+      "classSimpleName": "OrderController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/count]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "count",
+        "parameters": [],
+        "returnType": "long",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.OrderController",
+      "classSimpleName": "OrderController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.PostMapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.POST]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "place",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "required": "true"
+                },
+                "type": "org.springframework.web.bind.annotation.RequestBody"
+              }
+            ],
+            "name": "arg0",
+            "type": "com.example.shop.dto.OrderDto"
+          }
+        ],
+        "returnType": "com.example.shop.model.Order",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.PostMapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.POST]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "create",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {},
+                "type": "jakarta.validation.Valid"
+              },
+              {
+                "parameters": {
+                  "required": "true"
+                },
+                "type": "org.springframework.web.bind.annotation.RequestBody"
+              }
+            ],
+            "name": "arg0",
+            "type": "@jakarta.validation.Valid com.example.shop.dto.ProductDto"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "get",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "value": "hasRole('ADMIN')"
+            },
+            "type": "org.springframework.security.access.prepost.PreAuthorize"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/import]"
+            },
+            "type": "org.springframework.web.bind.annotation.PostMapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.POST]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "importProduct",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {},
+                "type": "jakarta.validation.Valid"
+              },
+              {
+                "parameters": {
+                  "required": "true"
+                },
+                "type": "org.springframework.web.bind.annotation.RequestBody"
+              }
+            ],
+            "name": "arg0",
+            "type": "@jakarta.validation.Valid com.example.shop.dto.ProductDto"
+          }
+        ],
+        "returnType": "com.example.shop.model.Product",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "list",
+        "parameters": [],
+        "returnType": "java.util.List\u003ccom.example.shop.model.Product\u003e",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}/blocking]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "blocking",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "reactor.core.publisher.Mono\u003ccom.example.shop.model.Product\u003e",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "one",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "reactor.core.publisher.Mono\u003ccom.example.shop.model.Product\u003e",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[/{id}/stock]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "stock",
+        "parameters": [
+          {
+            "annotations": [
+              {
+                "parameters": {
+                  "name": "",
+                  "required": "true",
+                  "value": ""
+                },
+                "type": "org.springframework.web.bind.annotation.PathVariable"
+              }
+            ],
+            "name": "arg0",
+            "type": "java.lang.Long"
+          }
+        ],
+        "returnType": "reactor.core.publisher.Mono\u003cjava.lang.Integer\u003e",
+        "visibility": "PUBLIC"
+      }
+    },
+    {
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "classSource": "PROJECT",
+      "method": {
+        "annotations": [
+          {
+            "parameters": {
+              "processors": "[org.springframework.aot.hint.annotation.SimpleReflectiveProcessor.class]",
+              "value": "[org.springframework.web.bind.annotation.ControllerMappingReflectiveProcessor.class]"
+            },
+            "type": "org.springframework.aot.hint.annotation.Reflective"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.GetMapping"
+          },
+          {
+            "parameters": {},
+            "type": "org.springframework.web.bind.annotation.Mapping"
+          },
+          {
+            "parameters": {
+              "consumes": "[]",
+              "headers": "[]",
+              "method": "[org.springframework.web.bind.annotation.RequestMethod.GET]",
+              "name": "",
+              "params": "[]",
+              "path": "[]",
+              "produces": "[]",
+              "value": "[]"
+            },
+            "type": "org.springframework.web.bind.annotation.RequestMapping"
+          }
+        ],
+        "isAbstract": false,
+        "isFinal": false,
+        "isStatic": false,
+        "isSynthetic": false,
+        "name": "stream",
+        "parameters": [],
+        "returnType": "reactor.core.publisher.Flux\u003ccom.example.shop.model.Product\u003e",
+        "visibility": "PUBLIC"
+      }
+    }
+  ],
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 12,
+  "totalPages": 1
+}

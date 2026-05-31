@@ -55,10 +55,22 @@
       "packageName": "com.example.shop.service",
       "simpleName": "ProductService",
       "source": "PROJECT"
+    },
+    {
+      "fieldCount": 0,
+      "fqn": "com.example.shop.web.mapper.ProductMapper",
+      "isAbstract": true,
+      "isAnnotation": false,
+      "isEnum": false,
+      "isInterface": true,
+      "methodCount": 2,
+      "packageName": "com.example.shop.web.mapper",
+      "simpleName": "ProductMapper",
+      "source": "PROJECT"
     }
   ],
   "page": 0,
   "pageSize": 50,
-  "totalCount": 4,
+  "totalCount": 5,
   "totalPages": 1
 }
