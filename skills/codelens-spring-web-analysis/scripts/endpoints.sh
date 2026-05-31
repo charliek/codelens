@@ -51,9 +51,10 @@ printf '%-7s %-34s %-46s %s\n' VERB PATH HANDLER RETURNS
 codelens methods search --annotation "$RM" "${proj[@]}" --json 2>/dev/null \
 | jq -c '.methods[]?' \
 | while IFS= read -r m; do
-    cls=$(jq -r '.classFqn' <<<"$m")
-    name=$(jq -r '.method.name' <<<"$m")
-    ret=$(jq -r '.method.returnType' <<<"$m")
+    # Pull the row's identifying fields in one jq pass (tab-separated), rather
+    # than three separate jq spawns per method.
+    row=$(jq -r '[.classFqn, .method.name, .method.returnType] | @tsv' <<<"$m")
+    IFS=$'\t' read -r cls name ret <<<"$row"
 
     # verb: prefer the specific @{Get,Post,...}Mapping; else the meta method
     # ENUM value ("GET"), already the bare constant name.

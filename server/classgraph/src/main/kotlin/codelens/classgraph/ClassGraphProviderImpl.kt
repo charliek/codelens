@@ -559,16 +559,11 @@ class ClassGraphProviderImpl : ClassGraphProvider {
      * Converts an annotation, mapping each attribute value to a typed
      * [AnnotationValue].
      */
-    private fun convertAnnotation(ann: CGAnnotationInfo): AnnotationInfo {
-        val params = mutableMapOf<String, AnnotationValue>()
-        ann.parameterValues.forEach { param ->
-            params[param.name] = toAnnotationValue(param.value)
-        }
-        return AnnotationInfo(
+    private fun convertAnnotation(ann: CGAnnotationInfo): AnnotationInfo =
+        AnnotationInfo(
             type = ann.name,
-            parameters = params,
+            parameters = ann.parameterValues.associate { it.name to toAnnotationValue(it.value) },
         )
-    }
 
     /**
      * Converts a ClassGraph annotation attribute value into a typed

@@ -4,6 +4,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -205,10 +206,10 @@ class SerializationRoundtripTest {
         // @EncodeDefault(NEVER) keeps each node sparse even though this Json (like
         // the server's) sets encodeDefaults = true: absent optional fields are
         // omitted, not serialized as null.
-        assertTrue(!encoded.contains("\"value\":null"), "value should be omitted when null, got: $encoded")
-        assertTrue(!encoded.contains("\"items\":null"), "items should be omitted when null, got: $encoded")
-        assertTrue(!encoded.contains("\"enumType\":null"), "enumType should be omitted when null, got: $encoded")
-        assertTrue(!encoded.contains("\"annotation\":null"), "annotation should be omitted when null, got: $encoded")
+        assertFalse(encoded.contains("\"value\":null"), "value should be omitted when null, got: $encoded")
+        assertFalse(encoded.contains("\"items\":null"), "items should be omitted when null, got: $encoded")
+        assertFalse(encoded.contains("\"enumType\":null"), "enumType should be omitted when null, got: $encoded")
+        assertFalse(encoded.contains("\"annotation\":null"), "annotation should be omitted when null, got: $encoded")
         // The literal kind strings a consumer's jq branches on.
         assertContainsAll(encoded, "\"kind\":\"ARRAY\"", "\"kind\":\"ENUM\"", "\"kind\":\"CLASS\"", "\"kind\":\"STRING\"")
 
