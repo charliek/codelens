@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.0.5
+
+Features:
+- Cobra command groups in `codelens --help`: subcommands now render under
+  three category headings (Server lifecycle, Code analysis, Kotlin tooling)
+  instead of a flat list. `docs/reference/cli.md` updated to match (#40).
+
+Release process:
+- Adopt the `cc-plugins:release-workflows` convention. `scripts/release/update-version.sh`
+  bumps both `version.txt` and `.claude-plugin/plugin.json` locally before the tag,
+  with grep/jq-verify so silent set-version.sh no-ops fail loudly. `RELEASING.md`
+  documents the per-repo policy + break-glass recovery. New
+  `sanity-check-app.yml` verifies the release-bot App can reach the
+  homebrew-tap before any release tries to push to it. (#47)
+- Retire `HOMEBREW_TAP_TOKEN` PAT. GoReleaser's brews step now uses a
+  release-bot App token minted at workflow time (scoped to
+  `charliek/homebrew-tap` via `actions/create-github-app-token`'s
+  `owner` + `repositories` inputs, with `permission-contents: write`
+  defense-in-depth). Same App identity as roost, strix, and prox. The
+  legacy secret has been deleted from the secret store.
+- Server-side `Verify version files match tag` step in `release.yaml`
+  catches any drift between the tagged commit's `version.txt` /
+  `plugin.json` and the tag, before artifacts ship. Replaces the
+  deleted `sync-version` job's contract.
+- Branch protection ruleset on `main` now lists the release-bot App
+  and admin role in `bypass_actors`.
+
 ## v0.0.4
 
 Features:
