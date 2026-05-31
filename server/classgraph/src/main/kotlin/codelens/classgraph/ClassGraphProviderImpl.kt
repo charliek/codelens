@@ -318,12 +318,13 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                     method.annotations
                         .filter { it.type == annotationFqn }
                         .forEach {
-                            usages += usage(
-                                AnnotationUsageTarget.METHOD,
-                                it,
-                                method = method.name,
-                                descriptor = method.descriptor.ifBlank { null },
-                            )
+                            usages +=
+                                usage(
+                                    AnnotationUsageTarget.METHOD,
+                                    it,
+                                    method = method.name,
+                                    descriptor = method.descriptor.ifBlank { null },
+                                )
                         }
                 }
                 // Constructors surface as CONSTRUCTOR with name `<init>`; ConstructorInfo
@@ -333,12 +334,13 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                     ctor.annotations
                         .filter { it.type == annotationFqn }
                         .forEach {
-                            usages += usage(
-                                AnnotationUsageTarget.CONSTRUCTOR,
-                                it,
-                                method = INIT,
-                                descriptor = constructorSignature(ctor),
-                            )
+                            usages +=
+                                usage(
+                                    AnnotationUsageTarget.CONSTRUCTOR,
+                                    it,
+                                    method = INIT,
+                                    descriptor = constructorSignature(ctor),
+                                )
                         }
                 }
             }
@@ -357,15 +359,16 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                         param.annotations
                             .filter { it.type == annotationFqn }
                             .forEach {
-                                usages += usage(
-                                    AnnotationUsageTarget.PARAMETER,
-                                    it,
-                                    method = method.name,
-                                    descriptor = method.descriptor.ifBlank { null },
-                                    parameterName = param.name,
-                                    parameterIndex = index,
-                                    parameterType = param.type,
-                                )
+                                usages +=
+                                    usage(
+                                        AnnotationUsageTarget.PARAMETER,
+                                        it,
+                                        method = method.name,
+                                        descriptor = method.descriptor.ifBlank { null },
+                                        parameterName = param.name,
+                                        parameterIndex = index,
+                                        parameterType = param.type,
+                                    )
                             }
                     }
                 }
@@ -374,15 +377,16 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                         param.annotations
                             .filter { it.type == annotationFqn }
                             .forEach {
-                                usages += usage(
-                                    AnnotationUsageTarget.PARAMETER,
-                                    it,
-                                    method = INIT,
-                                    descriptor = constructorSignature(ctor),
-                                    parameterName = param.name,
-                                    parameterIndex = index,
-                                    parameterType = param.type,
-                                )
+                                usages +=
+                                    usage(
+                                        AnnotationUsageTarget.PARAMETER,
+                                        it,
+                                        method = INIT,
+                                        descriptor = constructorSignature(ctor),
+                                        parameterName = param.name,
+                                        parameterIndex = index,
+                                        parameterType = param.type,
+                                    )
                             }
                     }
                 }

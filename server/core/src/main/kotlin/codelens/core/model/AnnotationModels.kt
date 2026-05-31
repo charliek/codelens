@@ -56,10 +56,10 @@ enum class AnnotationUsageTarget {
  * The member-identity fields are sparse (`@EncodeDefault(NEVER)`) — only those
  * relevant to [target] are populated (matching the idiom on [AnnotationValue] /
  * [CallSite]):
- *   - METHOD:      [method] + [descriptor] (the erased JVM descriptor)
+ *   - METHOD: [method] + [descriptor] (the erased JVM descriptor)
  *   - CONSTRUCTOR: [method] = `<init>` + [descriptor] (a derived `(type,…)`
  *     parameter-type signature, since constructors carry no JVM descriptor)
- *   - FIELD:       [field]
+ *   - FIELD: [field]
  *   - PARAMETER:   the enclosing [method] (+ [descriptor]) plus [parameterName],
  *     [parameterIndex], [parameterType]
  *   - CLASS:       none of the member fields

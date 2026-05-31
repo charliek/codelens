@@ -82,7 +82,14 @@ class AnnotationUsagesRouteTest {
 
     private fun ApplicationTestBuilder.installRoutes(service: AnalysisService) {
         application {
-            install(ContentNegotiation) { json(Json { encodeDefaults = true; ignoreUnknownKeys = true }) }
+            install(ContentNegotiation) {
+                json(
+                    Json {
+                        encodeDefaults = true
+                        ignoreUnknownKeys = true
+                    },
+                )
+            }
             routing { analysisRoutes(service) }
         }
     }
@@ -175,9 +182,10 @@ class AnnotationUsagesRouteTest {
         val service = newService(tempDir)
         installRoutes(service)
         try {
-            val page0 = json.decodeFromString<AnnotationUsagesResponse>(
-                client.get("/api/v1/annotations/usages/com.x.A?size=2").bodyAsText(),
-            )
+            val page0 =
+                json.decodeFromString<AnnotationUsagesResponse>(
+                    client.get("/api/v1/annotations/usages/com.x.A?size=2").bodyAsText(),
+                )
             assertEquals(4, page0.totalCount)
             assertEquals(2, page0.totalPages)
             assertEquals(2, page0.pageSize)
@@ -185,9 +193,10 @@ class AnnotationUsagesRouteTest {
             assertEquals(2, page0.usages.size)
             assertEquals(AnnotationUsageTarget.CLASS, page0.usages.first().target)
 
-            val page1 = json.decodeFromString<AnnotationUsagesResponse>(
-                client.get("/api/v1/annotations/usages/com.x.A?size=2&page=1").bodyAsText(),
-            )
+            val page1 =
+                json.decodeFromString<AnnotationUsagesResponse>(
+                    client.get("/api/v1/annotations/usages/com.x.A?size=2&page=1").bodyAsText(),
+                )
             assertEquals(1, page1.page)
             assertEquals(2, page1.usages.size)
             assertEquals("com.b.B", page1.usages.last().classFqn)

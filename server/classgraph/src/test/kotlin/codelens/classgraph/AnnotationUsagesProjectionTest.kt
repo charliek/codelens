@@ -111,7 +111,13 @@ class AnnotationUsagesProjectionTest {
             result.map { it.annotation.parameters["value"]?.value }.toSet(),
         )
         // The constructor param is attached to `<init>`, the method param to the method.
-        assertEquals("ctorParam", result.single { it.method == "<init>" }.annotation.parameters["value"]?.value)
+        assertEquals(
+            "ctorParam",
+            result
+                .single { it.method == "<init>" }
+                .annotation.parameters["value"]
+                ?.value,
+        )
     }
 
     @Test
