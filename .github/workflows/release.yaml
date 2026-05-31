@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+# Serialize re-runs against the same tag — better to wait than to abort
+# half-uploaded artifacts.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Build and Release
@@ -33,11 +39,28 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: Set version from tag
-        # Ephemeral rewrite so the build tree (server JAR + embedded Go version)
-        # matches the tag. The committed, installer-facing version is reconciled on
-        # main by the sync-version job below.
-        run: scripts/set-version.sh "${GITHUB_REF_NAME#v}"
+      # Tag/manifest invariant — the local-bump flow's safety net.
+      # Replaces the deleted sync-version job's contract: if the tagged
+      # commit's version.txt or .claude-plugin/plugin.json doesn't match
+      # the tag, fail the release before any artifacts ship. The maintainer
+      # re-runs /release-workflows:release against a corrected tag rather
+      # than shipping mismatched bytes.
+      - name: Verify version files match tag
+        run: |
+          set -euo pipefail
+          expect="${GITHUB_REF_NAME#v}"
+          got_txt="$(cat version.txt)"
+          got_json="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' .claude-plugin/plugin.json | sed -E 's/.*"([^"]+)"$/\1/')"
+          fail=0
+          if [ "${got_txt}" != "${expect}" ]; then
+            echo "::error::version.txt=${got_txt} != tag=${expect}"
+            fail=1
+          fi
+          if [ "${got_json}" != "${expect}" ]; then
+            echo "::error::plugin.json version=${got_json} != tag=${expect}"
+            fail=1
+          fi
+          [ "${fail}" -eq 0 ] || { echo "Re-run /release-workflows:release after correcting."; exit 1; }
 
       - name: Build server JAR
         run: ./gradlew :server:app:shadowJar
@@ -50,48 +73,46 @@ jobs:
         working-directory: cli
         run: go test ./...
 
+      # Mint a release-bot App token scoped to charliek/homebrew-tap for
+      # GoReleaser's `brews:` step (formula push). The App must be
+      # installed on homebrew-tap (verify via sanity-check-app.yml).
+      # Replaces the legacy HOMEBREW_TAP_TOKEN PAT — GoReleaser is
+      # token-source-agnostic; it just uses HOMEBREW_TAP_TOKEN from the
+      # env for git authentication.
+      - name: Mint a homebrew-tap App token
+        id: tap
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id:      ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_APP_KEY }}
+          owner:        charliek
+          repositories: homebrew-tap
+          # Defense-in-depth: explicit permission floor on the minted
+          # token so a future widening of the App's installation perms
+          # doesn't silently broaden what this token can do. GoReleaser
+          # only needs contents:write on the tap (to push the formula).
+          permission-contents: write
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           version: latest
-          # --skip=validate tolerates the intentional version.txt rewrite above
-          # (GoReleaser otherwise aborts on a "dirty" tree).
-          args: release --clean --skip=validate
+          # No --skip=validate: the local-bump flow keeps the tree clean
+          # (version.txt and plugin.json are bumped before the tag, so the
+          # workflow doesn't rewrite tracked files; `go generate` writes to
+          # cli/internal/version/version.txt which is gitignored).
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          # GoReleaser reads HOMEBREW_TAP_TOKEN from this env var (see
+          # .goreleaser.yaml: brews[].repository.token). Feed it the
+          # App-minted token instead of a PAT.
+          HOMEBREW_TAP_TOKEN: ${{ steps.tap.outputs.token }}
 
-  sync-version:
-    name: Commit version to main
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout main
-        uses: actions/checkout@v6
-        with:
-          ref: main
-          # Don't leave the token in git config; the push step below uses an
-          # explicit tokenized URL instead.
-          persist-credentials: false
-
-      - name: Set version from tag
-        run: scripts/set-version.sh "${GITHUB_REF_NAME#v}"
-
-      - name: Commit and push if the version files drifted
-        # Keeps the committed version.txt and .claude-plugin/plugin.json in lockstep
-        # with the released tag (Claude Code reads plugin.json from main, not from a
-        # build artifact). Idempotent: a no-op when they already match, e.g. when the
-        # bump was made by hand before tagging. The GITHUB_TOKEN push does not
-        # re-trigger build.yml (GitHub blocks recursive workflow runs).
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -z "$(git status --porcelain version.txt .claude-plugin/plugin.json)" ]; then
-            echo "version files already match ${GITHUB_REF_NAME}; nothing to commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add version.txt .claude-plugin/plugin.json
-          git commit -m "chore: set version ${GITHUB_REF_NAME}"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+# The earlier sync-version job that ran scripts/set-version.sh in CI and
+# pushed the bumped version.txt + .claude-plugin/plugin.json back to main
+# is removed. Version-file bumping is now LOCAL via
+# scripts/release/update-version.sh (the cc-plugins:release-workflows
+# convention's source-tree-bump-local rule). The release skill runs
+# update-version.sh before tagging, so main always has both files at the
+# released tag's version before the workflow even fires.
