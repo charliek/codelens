@@ -54,9 +54,10 @@ stack discriminator in `SPRING-WEB-FQN.md` §7.
 - `@ResponseStatus` maps a handler/exception to an HTTP status (`value`↔`code` alias).
 - `org.springframework.web.server.ResponseStatusException` thrown directly carries a status.
 
-Surface: `methods search --annotation …ExceptionHandler` (method-level) +
-`annotations usages …RestControllerAdvice` (class-level). Resolve "which handler catches type T" by
-reading each `@ExceptionHandler`'s `value`/`exception` attribute or its parameter type.
+Surface: `annotations usages …ExceptionHandler --scope method` returns each handler method **and** the
+exception type(s) it maps inline — the `value` attribute is a CLASS array (fall back to the parameter
+type when `value` is empty). Pair with `annotations usages …RestControllerAdvice --scope class` for the
+advice classes.
 
 ## Cross-cutting
 

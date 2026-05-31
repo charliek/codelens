@@ -100,7 +100,18 @@ var allCases = []Case{
 	{Name: "classes_dependencies", Args: []string{"classes", "dependencies", "sample.handlers.BlockingHandler"}},
 
 	// ---------- annotations ----------
+	// Default scope is `all`. javax @Singleton is on the handler classes (CLASS target).
 	{Name: "annotations_usages_singleton", Args: []string{"annotations", "usages", "javax.inject.Singleton"}},
+	// Member scope (#43): @Inject sits on the handler constructors (CONSTRUCTOR target,
+	// `<init>` + a derived parameter-type signature).
+	{Name: "annotations_usages_inject_all", Args: []string{
+		"annotations", "usages", "javax.inject.Inject", "--scope", "all",
+	}},
+	// METHOD target: Guice @Singleton (com.google.inject) sits on the AppModule
+	// @Provides factory methods — distinct from the javax @Singleton classes above.
+	{Name: "annotations_usages_guice_singleton_method", Args: []string{
+		"annotations", "usages", "com.google.inject.Singleton", "--scope", "method",
+	}},
 
 	// ---------- methods (continued) ----------
 	// Search by return type (project methods returning String).
@@ -182,6 +193,34 @@ var springCases = []Case{
 	// MapStruct DTO<->entity mappers (class-level @Mapper on the interface).
 	{Name: "spring_annotations_mapper", Args: []string{
 		"annotations", "usages", "org.mapstruct.Mapper",
+	}},
+
+	// ---------- annotations usages: member scopes + typed attributes (#43) ----------
+	// @GetMapping handler methods with their path (the `value` ARRAY of STRING).
+	{Name: "spring_annotations_getmapping_method", Args: []string{
+		"annotations", "usages", "org.springframework.web.bind.annotation.GetMapping", "--scope", "method",
+	}},
+	// Meta-expansion + multi-target: the class-level @RequestMapping("/products") base
+	// path PLUS every handler method's synthesized @RequestMapping (HTTP verb via the
+	// `method` ENUM array). Locks the meta-annotation contract end-to-end.
+	{Name: "spring_annotations_requestmapping_all", Args: []string{
+		"annotations", "usages", "org.springframework.web.bind.annotation.RequestMapping", "--scope", "all",
+	}},
+	// @Value field with its property-placeholder key (typed STRING attribute).
+	{Name: "spring_annotations_value_field", Args: []string{
+		"annotations", "usages", "org.springframework.beans.factory.annotation.Value", "--scope", "field",
+	}},
+	// @PreAuthorize method with its SpEL expression.
+	{Name: "spring_annotations_preauthorize_method", Args: []string{
+		"annotations", "usages", "org.springframework.security.access.prepost.PreAuthorize", "--scope", "method",
+	}},
+	// @ExceptionHandler methods with the exception type they handle (CLASS-literal attribute).
+	{Name: "spring_annotations_exceptionhandler_method", Args: []string{
+		"annotations", "usages", "org.springframework.web.bind.annotation.ExceptionHandler", "--scope", "method",
+	}},
+	// @PathVariable on a handler method parameter (PARAMETER target with index/name/type).
+	{Name: "spring_annotations_pathvariable_param", Args: []string{
+		"annotations", "usages", "org.springframework.web.bind.annotation.PathVariable", "--scope", "param",
 	}},
 
 	// ---------- methods ----------

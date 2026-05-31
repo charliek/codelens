@@ -498,7 +498,8 @@ GET /api/v1/dependencies/com.example.web.ProductController
 
 ### GET /api/v1/annotations/usages/{fqn}
 
-Find all classes using a specific annotation.
+Find every place an annotation is applied — across class, method, constructor, field, and parameter
+targets — with the matched annotation's typed attribute values inline.
 
 **Path Parameters:**
 
@@ -510,32 +511,57 @@ Find all classes using a specific annotation.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `scope` | string | `all` | Declaration sites to scan: `class`, `method`, `field`, `param`, or `all` |
 | `includeLibraries` | boolean | `false` | Include library classes |
+| `page` | int | `0` | Page number (0-based) |
+| `size` | int | `50` | Page size |
+
+Each usage has a `target` (`CLASS` / `METHOD` / `CONSTRUCTOR` / `FIELD` / `PARAMETER`), sparse member
+identity (only the fields relevant to the target), and the matched `annotation` whose `parameters` are
+typed annotation values — the same discriminated shape (`kind` + `value` / `items` / `enumType` /
+nested `annotation`) returned by `GET /api/v1/classes/{fqn}` (see that endpoint for the full
+value-kind reference).
+
+- `scope=method` also returns constructors (`target=CONSTRUCTOR`, `method` = `<init>`, with a derived
+  `(type,…)` parameter-type `descriptor` since constructors have no JVM descriptor); methods carry the
+  erased JVM `descriptor`.
+- Matching is **meta-expanded**: querying `…RequestMapping` matches `@GetMapping` methods and returns the
+  synthesized `@RequestMapping` instance (e.g. `method=[GET]`). Source-retained annotations are not in
+  bytecode and never appear.
+- An unknown `scope`, or `page < 0` / `size < 1`, returns **400 Bad Request**.
 
 **Example:**
 ```
-GET /api/v1/annotations/usages/org.springframework.stereotype.Service
+GET /api/v1/annotations/usages/org.springframework.web.bind.annotation.GetMapping?scope=method
 ```
 
 **Response:**
 ```json
 {
-  "annotationFqn": "org.springframework.stereotype.Service",
+  "annotationFqn": "org.springframework.web.bind.annotation.GetMapping",
   "usages": [
     {
-      "fqn": "com.example.service.ProductServiceImpl",
-      "simpleName": "ProductServiceImpl",
-      "packageName": "com.example.service",
+      "target": "METHOD",
+      "classFqn": "com.example.web.ProductController",
+      "classSimpleName": "ProductController",
+      "packageName": "com.example.web",
       "source": "PROJECT",
-      "isInterface": false,
-      "isAbstract": false,
-      "isEnum": false,
-      "isAnnotation": false,
-      "methodCount": 4,
-      "fieldCount": 2
+      "method": "get",
+      "descriptor": "(Ljava/lang/Long;)Lcom/example/model/Product;",
+      "annotation": {
+        "type": "org.springframework.web.bind.annotation.GetMapping",
+        "parameters": {
+          "value": { "kind": "ARRAY", "items": [ { "kind": "STRING", "value": "/{id}" } ] }
+        }
+      }
     }
   ],
-  "totalCount": 6
+  "totalCount": 1,
+  "page": 0,
+  "pageSize": 50,
+  "totalPages": 1,
+  "countsByTarget": { "METHOD": 1 },
+  "appliedFilter": { "includeLibraries": false, "scope": "METHOD" }
 }
 ```
 

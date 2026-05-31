@@ -136,7 +136,7 @@ reading the bean body, exactly like a Ratpack chain:
 codelens methods search --return-type org.springframework.web.reactive.function.server.RouterFunction --json
 # read the routes: pair each RequestPredicates.GET("/path") with the adjacent handler ref:
 codelens calls com.example.web.CatalogRouter --method catalogRoutes --json \
-  | jq -r '.methods[].calls[] | select(.methodName|test("^(GET|POST|PUT|DELETE|PATCH)$") or .invokeDynamic)
+  | jq -r '.methods[].calls[] | select((.methodName|test("^(GET|POST|PUT|DELETE|PATCH)$")) or (.invokeDynamic // false))
            | "\(.methodName)\t\(.implMethodName // "")\t\([.constantArgs[]?|select(.kind=="STRING")|.value]|join(","))"'
 ```
 
@@ -198,26 +198,36 @@ version-independent — see SPRING-WEB-FQN.md.
 
 ## Step 5 — Cross-cutting concerns
 
+`annotations usages <fqn> --scope method|field|param|class|all` (#43) returns every site
+carrying the annotation **with its typed attribute values inline** — so a single call answers
+"where is X used, and with what config." `--scope method` also covers constructors (each row has a
+`target`; filter with `select(.target=="METHOD")` if you want methods only). Matching is meta-expanded.
+
 ```bash
-# Transactions (method-level, so search methods; annotations usages is class-only today):
-codelens methods search --annotation org.springframework.transaction.annotation.Transactional --json
+# Transactions: every @Transactional method (--scope method also surfaces class-level @Transactional):
+codelens annotations usages org.springframework.transaction.annotation.Transactional --scope method --json
 #   then check for SELF-INVOCATION (a @Transactional method called via `this` bypasses the proxy):
 codelens calls com.example.service.OrderService --json   # look for in-class calls to the @Transactional method
 
-# Security: method-level rules + the central filter chain (rules live in a lambda).
-codelens methods search --annotation org.springframework.security.access.prepost.PreAuthorize --json
-# The authorizeHttpRequests rules live in a synthetic lambda whose name (lambda$filterChain$N) is
-# compiler-generated — the numeric suffix depends on lambda order, so discover the real one first:
+# Security: every @PreAuthorize method WITH its SpEL expression, in one call:
+codelens annotations usages org.springframework.security.access.prepost.PreAuthorize --scope method --json \
+  | jq -r '.usages[] | "\(.classSimpleName).\(.method)\t\(.annotation.parameters.value.value)"'
+# plus the central filter chain (rules live in a synthetic lambda$filterChain$N — discover it first):
 codelens calls com.example.config.SecurityConfig --json | jq -r '.methods[].methodName'   # lists the lambdas
-# then read the lambda whose calls include requestMatchers/permitAll/authenticated:
 codelens calls com.example.config.SecurityConfig --method 'lambda$filterChain$1' --json \
   | jq -r '.methods[].calls[] | "\(.methodName)\t\([.constantArgs[]?|select(.kind=="STRING")|.value]|join(","))"'
 
-# Exception handling, config binding, DTO mapping:
-codelens annotations usages org.springframework.web.bind.annotation.RestControllerAdvice
-codelens methods search --annotation org.springframework.web.bind.annotation.ExceptionHandler --json
-codelens annotations usages org.springframework.boot.context.properties.ConfigurationProperties
-codelens annotations usages org.mapstruct.Mapper   # then `source`/`calls` on the *Impl for field mapping
+# Exception handling: every @ExceptionHandler method AND the exception type(s) it maps (a CLASS array):
+codelens annotations usages org.springframework.web.bind.annotation.ExceptionHandler --scope method --json \
+  | jq -r '.usages[] | "\(.classSimpleName).\(.method)\t\([.annotation.parameters.value.items[]?.value]|join(","))"'
+
+# Config binding: @ConfigurationProperties classes (prefix) + @Value fields with their property key, inline:
+codelens annotations usages org.springframework.boot.context.properties.ConfigurationProperties --scope class --json
+codelens annotations usages org.springframework.beans.factory.annotation.Value --scope field --json \
+  | jq -r '.usages[] | "\(.classSimpleName).\(.field)\t\(.annotation.parameters.value.value)"'
+
+# DTO mapping: MapStruct @Mapper interfaces; then `source`/`calls` on the *Impl for field mapping:
+codelens annotations usages org.mapstruct.Mapper --scope class
 ```
 
 **Boundary:** CodeLens sees *bytecode*. Effective property values live in `application.yml`/

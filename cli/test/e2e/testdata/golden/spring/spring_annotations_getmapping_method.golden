@@ -1,0 +1,424 @@
+{
+  "annotationFqn": "org.springframework.web.bind.annotation.GetMapping",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "METHOD"
+  },
+  "countsByTarget": {
+    "METHOD": 9
+  },
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 9,
+  "totalPages": 1,
+  "usages": [
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [
+              {
+                "kind": "STRING",
+                "value": "/{id}"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.CustomerController",
+      "classSimpleName": "CustomerController",
+      "descriptor": "(Ljava/lang/Long;)Lcom/example/shop/model/Customer;",
+      "method": "get",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.CustomerController",
+      "classSimpleName": "CustomerController",
+      "descriptor": "()Ljava/util/List;",
+      "method": "list",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [
+              {
+                "kind": "STRING",
+                "value": "/count"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.OrderController",
+      "classSimpleName": "OrderController",
+      "descriptor": "()J",
+      "method": "count",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [
+              {
+                "kind": "STRING",
+                "value": "/{id}"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "descriptor": "(Ljava/lang/Long;)Lcom/example/shop/model/Product;",
+      "method": "get",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "descriptor": "()Ljava/util/List;",
+      "method": "list",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [
+              {
+                "kind": "STRING",
+                "value": "/{id}/blocking"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "method": "blocking",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [
+              {
+                "kind": "STRING",
+                "value": "/{id}"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "method": "one",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [
+              {
+                "kind": "STRING",
+                "value": "/{id}/stock"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "method": "stock",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "consumes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "headers": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "params": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "path": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "produces": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "value": {
+            "items": [],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.GetMapping"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "descriptor": "()Lreactor/core/publisher/Flux;",
+      "method": "stream",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    }
+  ]
+}

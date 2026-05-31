@@ -256,11 +256,41 @@ func TestClasses_Dependencies(t *testing.T) {
 func TestClasses_AnnotationUsages(t *testing.T) {
 	c, cap, done := newTestClient(t)
 	defer done()
-	if _, err := c.GetAnnotationUsages(ctx(), "javax.inject.Singleton", false); err != nil {
+	if _, err := c.GetAnnotationUsages(ctx(), "javax.inject.Singleton",
+		AnnotationUsagesFilter{Scope: "method", IncludeLibraries: true, Page: 1, Size: 10}); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(cap.last().Path, "/api/v1/annotations/usages/") {
-		t.Errorf("path = %s", cap.last().Path)
+	got := cap.last()
+	if !strings.HasPrefix(got.Path, "/api/v1/annotations/usages/") {
+		t.Errorf("path = %s", got.Path)
+	}
+	q := got.Query
+	if q.Get("scope") != "method" {
+		t.Errorf("scope = %q, want method", q.Get("scope"))
+	}
+	if q.Get("page") != "1" || q.Get("size") != "10" {
+		t.Errorf("pagination = page %q size %q", q.Get("page"), q.Get("size"))
+	}
+	if q.Get("includeLibraries") != "true" {
+		t.Errorf("includeLibraries = %q, want true", q.Get("includeLibraries"))
+	}
+}
+
+func TestClasses_AnnotationUsagesDefaultsOmitScope(t *testing.T) {
+	c, cap, done := newTestClient(t)
+	defer done()
+	// An empty Scope (a direct API caller) must NOT send a scope param; the server
+	// then defaults to ALL. The CLI command always sets a scope, so this only
+	// exercises the omit path.
+	if _, err := c.GetAnnotationUsages(ctx(), "javax.inject.Singleton", AnnotationUsagesFilter{}); err != nil {
+		t.Fatal(err)
+	}
+	q := cap.last().Query
+	if q.Has("scope") {
+		t.Errorf("scope should be omitted when empty, got %q", q.Get("scope"))
+	}
+	if q.Get("page") != "0" || q.Get("size") != "50" {
+		t.Errorf("default pagination wrong: page=%q size=%q", q.Get("page"), q.Get("size"))
 	}
 }
 

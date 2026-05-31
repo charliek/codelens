@@ -254,6 +254,81 @@ class SerializationRoundtripTest {
     }
 
     @Test
+    fun `AnnotationUsagesResponse round-trips with mixed targets and encodes member fields sparsely`() {
+        val original =
+            AnnotationUsagesResponse(
+                annotationFqn = "com.example.Tag",
+                usages =
+                    listOf(
+                        // A marker-style CLASS usage: no member fields, empty parameters.
+                        AnnotationUsage(
+                            target = AnnotationUsageTarget.CLASS,
+                            classFqn = "com.example.Foo",
+                            classSimpleName = "Foo",
+                            packageName = "com.example",
+                            source = ClassSource.PROJECT,
+                            annotation = AnnotationInfo(type = "com.example.Tag"),
+                        ),
+                        AnnotationUsage(
+                            target = AnnotationUsageTarget.PARAMETER,
+                            classFqn = "com.example.Foo",
+                            classSimpleName = "Foo",
+                            packageName = "com.example",
+                            source = ClassSource.PROJECT,
+                            method = "handle",
+                            descriptor = "(Ljava/lang/String;)V",
+                            parameterName = "id",
+                            parameterIndex = 0,
+                            parameterType = "java.lang.String",
+                            annotation =
+                                AnnotationInfo(
+                                    type = "com.example.Tag",
+                                    parameters = mapOf("value" to AnnotationValue(AnnotationValueKind.STRING, value = "x")),
+                                ),
+                        ),
+                    ),
+                totalCount = 2,
+                page = 0,
+                pageSize = 50,
+                totalPages = 1,
+                countsByTarget = mapOf("CLASS" to 1, "PARAMETER" to 1),
+                appliedFilter = AnnotationUsagesFilterSummary(includeLibraries = false, scope = AnnotationScope.ALL),
+            )
+
+        val encoded = json.encodeToString(original)
+        // The sparse member fields are omitted when null (despite encodeDefaults = true),
+        // so the CLASS usage doesn't carry empty method/field/parameter keys.
+        assertFalse(encoded.contains("\"method\":null"), "member fields should be omitted when null, got: $encoded")
+        assertFalse(encoded.contains("\"field\":null"), "member fields should be omitted when null, got: $encoded")
+        assertFalse(encoded.contains("\"parameterIndex\":null"), "member fields should be omitted when null, got: $encoded")
+        assertContainsAll(encoded, "\"target\":\"CLASS\"", "\"target\":\"PARAMETER\"", "\"countsByTarget\"", "\"appliedFilter\"")
+
+        val decoded = json.decodeFromString<AnnotationUsagesResponse>(encoded)
+        assertEquals(original, decoded)
+    }
+
+    @Test
+    fun `AnnotationScope enum names are stable`() {
+        assertEquals("CLASS", AnnotationScope.CLASS.name)
+        assertEquals("METHOD", AnnotationScope.METHOD.name)
+        assertEquals("FIELD", AnnotationScope.FIELD.name)
+        assertEquals("PARAM", AnnotationScope.PARAM.name)
+        assertEquals("ALL", AnnotationScope.ALL.name)
+        assertEquals(5, AnnotationScope.entries.size)
+    }
+
+    @Test
+    fun `AnnotationUsageTarget enum names and declaration order are stable`() {
+        // Names are wire contract (countsByTarget keys, a consumer's jq select on
+        // `.target`); declaration order is the route's sort order (target.ordinal).
+        assertEquals(
+            listOf("CLASS", "METHOD", "CONSTRUCTOR", "FIELD", "PARAMETER"),
+            AnnotationUsageTarget.entries.map { it.name },
+        )
+        assertEquals(5, AnnotationUsageTarget.entries.size)
+    }
+
+    @Test
     fun `ignoreUnknownKeys allows future fields without breaking decode`() {
         // Simulates a future server sending extra fields. Clients on this
         // version must still decode the known fields cleanly.

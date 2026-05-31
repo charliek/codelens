@@ -1,0 +1,42 @@
+{
+  "annotationFqn": "com.google.inject.Singleton",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "METHOD"
+  },
+  "countsByTarget": {
+    "METHOD": 2
+  },
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 2,
+  "totalPages": 1,
+  "usages": [
+    {
+      "annotation": {
+        "parameters": {},
+        "type": "com.google.inject.Singleton"
+      },
+      "classFqn": "sample.modules.AppModule",
+      "classSimpleName": "AppModule",
+      "descriptor": "()Lsample/handlers/NotificationService;",
+      "method": "provideNotificationService",
+      "packageName": "sample.modules",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {},
+        "type": "com.google.inject.Singleton"
+      },
+      "classFqn": "sample.modules.AppModule",
+      "classSimpleName": "AppModule",
+      "descriptor": "()Lsample/handlers/UserService;",
+      "method": "provideUserService",
+      "packageName": "sample.modules",
+      "source": "PROJECT",
+      "target": "METHOD"
+    }
+  ]
+}

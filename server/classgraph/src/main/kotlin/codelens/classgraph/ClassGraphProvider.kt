@@ -94,16 +94,23 @@ interface ClassGraphProvider {
     ): Pair<List<DependencyInfo>, List<DependencyInfo>>
 
     /**
-     * Find all classes using a specific annotation.
+     * Find every place a specific annotation is applied, as an in-memory
+     * projection over the already-converted class graph (annotation attribute
+     * values are typed at scan time). Matching is against the meta-expanded
+     * annotation list ClassGraph stores, so a meta-annotation (e.g.
+     * `@RequestMapping`) also matches the synthesized instance on a `@GetMapping`
+     * method, carrying the aliased attributes.
      *
      * @param annotationFqn Fully qualified name of the annotation
+     * @param scope Which declaration sites to scan (class/method/field/param/all)
      * @param includeLibraries Include library classes in results
-     * @return List of classes using the annotation
+     * @return Unsorted usages — the route applies the deterministic sort + pagination
      */
     fun getAnnotationUsages(
         annotationFqn: String,
+        scope: AnnotationScope = AnnotationScope.ALL,
         includeLibraries: Boolean = false,
-    ): List<ClassSummary>
+    ): List<AnnotationUsage>
 
     /**
      * Search methods across all classes.

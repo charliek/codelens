@@ -20,7 +20,7 @@ The tool serves the **data** layer as a small set of general primitives:
 | Primitive | Command | Answers |
 |-----------|---------|---------|
 | Implementations | `codelens classes implementations <fqn>` | who implements/extends a type |
-| Annotations | `codelens annotations usages <fqn>` | who is annotated with X |
+| Annotations | `codelens annotations usages <fqn> [--scope class/method/field/param/all]` | where X is used (class/method/field/param) and its typed attribute values |
 | Calls (forward) | `codelens calls <fqn> [--method m]` | what invocations a method makes (with constant args) |
 | Cross-reference (inverse) | `codelens xref <typeFqn>` | everything that references a type |
 | Dependency graph | `codelens deps` / `deps foundation` | project structure and the most depended-on classes |

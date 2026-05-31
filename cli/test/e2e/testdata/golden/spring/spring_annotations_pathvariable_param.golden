@@ -1,0 +1,161 @@
+{
+  "annotationFqn": "org.springframework.web.bind.annotation.PathVariable",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "PARAM"
+  },
+  "countsByTarget": {
+    "PARAMETER": 5
+  },
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 5,
+  "totalPages": 1,
+  "usages": [
+    {
+      "annotation": {
+        "parameters": {
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "required": {
+            "kind": "BOOLEAN",
+            "value": "true"
+          },
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.PathVariable"
+      },
+      "classFqn": "com.example.shop.web.CustomerController",
+      "classSimpleName": "CustomerController",
+      "descriptor": "(Ljava/lang/Long;)Lcom/example/shop/model/Customer;",
+      "method": "get",
+      "packageName": "com.example.shop.web",
+      "parameterIndex": 0,
+      "parameterName": "arg0",
+      "parameterType": "java.lang.Long",
+      "source": "PROJECT",
+      "target": "PARAMETER"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "required": {
+            "kind": "BOOLEAN",
+            "value": "true"
+          },
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.PathVariable"
+      },
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "descriptor": "(Ljava/lang/Long;)Lcom/example/shop/model/Product;",
+      "method": "get",
+      "packageName": "com.example.shop.web",
+      "parameterIndex": 0,
+      "parameterName": "arg0",
+      "parameterType": "java.lang.Long",
+      "source": "PROJECT",
+      "target": "PARAMETER"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "required": {
+            "kind": "BOOLEAN",
+            "value": "true"
+          },
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.PathVariable"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "method": "blocking",
+      "packageName": "com.example.shop.web",
+      "parameterIndex": 0,
+      "parameterName": "arg0",
+      "parameterType": "java.lang.Long",
+      "source": "PROJECT",
+      "target": "PARAMETER"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "required": {
+            "kind": "BOOLEAN",
+            "value": "true"
+          },
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.PathVariable"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "method": "one",
+      "packageName": "com.example.shop.web",
+      "parameterIndex": 0,
+      "parameterName": "arg0",
+      "parameterType": "java.lang.Long",
+      "source": "PROJECT",
+      "target": "PARAMETER"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "name": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "required": {
+            "kind": "BOOLEAN",
+            "value": "true"
+          },
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.PathVariable"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
+      "descriptor": "(Ljava/lang/Long;)Lreactor/core/publisher/Mono;",
+      "method": "stock",
+      "packageName": "com.example.shop.web",
+      "parameterIndex": 0,
+      "parameterName": "arg0",
+      "parameterType": "java.lang.Long",
+      "source": "PROJECT",
+      "target": "PARAMETER"
+    }
+  ]
+}

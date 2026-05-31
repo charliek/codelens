@@ -1,0 +1,33 @@
+{
+  "annotationFqn": "org.springframework.beans.factory.annotation.Value",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "FIELD"
+  },
+  "countsByTarget": {
+    "FIELD": 1
+  },
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 1,
+  "totalPages": 1,
+  "usages": [
+    {
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": "${shop.page-size:25}"
+          }
+        },
+        "type": "org.springframework.beans.factory.annotation.Value"
+      },
+      "classFqn": "com.example.shop.config.AppConfig",
+      "classSimpleName": "AppConfig",
+      "field": "defaultPageSize",
+      "packageName": "com.example.shop.config",
+      "source": "PROJECT",
+      "target": "FIELD"
+    }
+  ]
+}

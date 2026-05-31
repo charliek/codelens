@@ -1,71 +1,68 @@
 {
-  "annotationFqn": "javax.inject.Singleton",
+  "annotationFqn": "javax.inject.Inject",
   "appliedFilter": {
     "includeLibraries": false,
     "scope": "ALL"
   },
   "countsByTarget": {
-    "CLASS": 5
+    "CONSTRUCTOR": 4
   },
   "page": 0,
   "pageSize": 50,
-  "totalCount": 5,
+  "totalCount": 4,
   "totalPages": 1,
   "usages": [
     {
       "annotation": {
         "parameters": {},
-        "type": "javax.inject.Singleton"
+        "type": "javax.inject.Inject"
       },
       "classFqn": "sample.api.UsersApi",
       "classSimpleName": "UsersApi",
+      "descriptor": "(sample.handlers.SimpleHandler, sample.handlers.BlockingHandler)",
+      "method": "\u003cinit\u003e",
       "packageName": "sample.api",
       "source": "PROJECT",
-      "target": "CLASS"
+      "target": "CONSTRUCTOR"
     },
     {
       "annotation": {
         "parameters": {},
-        "type": "javax.inject.Singleton"
+        "type": "javax.inject.Inject"
       },
       "classFqn": "sample.handlers.AsyncHandler",
       "classSimpleName": "AsyncHandler",
+      "descriptor": "(sample.handlers.UserService, sample.handlers.NotificationService)",
+      "method": "\u003cinit\u003e",
       "packageName": "sample.handlers",
       "source": "PROJECT",
-      "target": "CLASS"
+      "target": "CONSTRUCTOR"
     },
     {
       "annotation": {
         "parameters": {},
-        "type": "javax.inject.Singleton"
+        "type": "javax.inject.Inject"
       },
       "classFqn": "sample.handlers.BadHandler",
       "classSimpleName": "BadHandler",
+      "descriptor": "(java.sql.Connection)",
+      "method": "\u003cinit\u003e",
       "packageName": "sample.handlers",
       "source": "PROJECT",
-      "target": "CLASS"
+      "target": "CONSTRUCTOR"
     },
     {
       "annotation": {
         "parameters": {},
-        "type": "javax.inject.Singleton"
+        "type": "javax.inject.Inject"
       },
       "classFqn": "sample.handlers.BlockingHandler",
       "classSimpleName": "BlockingHandler",
+      "descriptor": "(sample.handlers.UserService)",
+      "method": "\u003cinit\u003e",
       "packageName": "sample.handlers",
       "source": "PROJECT",
-      "target": "CLASS"
-    },
-    {
-      "annotation": {
-        "parameters": {},
-        "type": "javax.inject.Singleton"
-      },
-      "classFqn": "sample.handlers.SimpleHandler",
-      "classSimpleName": "SimpleHandler",
-      "packageName": "sample.handlers",
-      "source": "PROJECT",
-      "target": "CLASS"
+      "target": "CONSTRUCTOR"
     }
   ]
 }

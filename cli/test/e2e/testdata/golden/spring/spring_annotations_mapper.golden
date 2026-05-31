@@ -1,18 +1,144 @@
 {
   "annotationFqn": "org.mapstruct.Mapper",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "ALL"
+  },
+  "countsByTarget": {
+    "CLASS": 1
+  },
+  "page": 0,
+  "pageSize": 50,
   "totalCount": 1,
+  "totalPages": 1,
   "usages": [
     {
-      "fieldCount": 0,
-      "fqn": "com.example.shop.web.mapper.ProductMapper",
-      "isAbstract": true,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": true,
-      "methodCount": 2,
+      "annotation": {
+        "parameters": {
+          "builder": {
+            "annotation": {
+              "parameters": {
+                "buildMethod": {
+                  "kind": "STRING",
+                  "value": "build"
+                },
+                "disableBuilder": {
+                  "kind": "BOOLEAN",
+                  "value": "false"
+                }
+              },
+              "type": "org.mapstruct.Builder"
+            },
+            "kind": "ANNOTATION"
+          },
+          "collectionMappingStrategy": {
+            "enumType": "org.mapstruct.CollectionMappingStrategy",
+            "kind": "ENUM",
+            "value": "ACCESSOR_ONLY"
+          },
+          "componentModel": {
+            "kind": "STRING",
+            "value": "spring"
+          },
+          "config": {
+            "kind": "CLASS",
+            "value": "void"
+          },
+          "disableSubMappingMethodsGeneration": {
+            "kind": "BOOLEAN",
+            "value": "false"
+          },
+          "implementationName": {
+            "kind": "STRING",
+            "value": "\u003cCLASS_NAME\u003eImpl"
+          },
+          "implementationPackage": {
+            "kind": "STRING",
+            "value": "\u003cPACKAGE_NAME\u003e"
+          },
+          "imports": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "injectionStrategy": {
+            "enumType": "org.mapstruct.InjectionStrategy",
+            "kind": "ENUM",
+            "value": "FIELD"
+          },
+          "mappingControl": {
+            "kind": "CLASS",
+            "value": "org.mapstruct.control.MappingControl"
+          },
+          "mappingInheritanceStrategy": {
+            "enumType": "org.mapstruct.MappingInheritanceStrategy",
+            "kind": "ENUM",
+            "value": "EXPLICIT"
+          },
+          "nullValueCheckStrategy": {
+            "enumType": "org.mapstruct.NullValueCheckStrategy",
+            "kind": "ENUM",
+            "value": "ON_IMPLICIT_CONVERSION"
+          },
+          "nullValueIterableMappingStrategy": {
+            "enumType": "org.mapstruct.NullValueMappingStrategy",
+            "kind": "ENUM",
+            "value": "RETURN_NULL"
+          },
+          "nullValueMapMappingStrategy": {
+            "enumType": "org.mapstruct.NullValueMappingStrategy",
+            "kind": "ENUM",
+            "value": "RETURN_NULL"
+          },
+          "nullValueMappingStrategy": {
+            "enumType": "org.mapstruct.NullValueMappingStrategy",
+            "kind": "ENUM",
+            "value": "RETURN_NULL"
+          },
+          "nullValuePropertyMappingStrategy": {
+            "enumType": "org.mapstruct.NullValuePropertyMappingStrategy",
+            "kind": "ENUM",
+            "value": "SET_TO_NULL"
+          },
+          "subclassExhaustiveStrategy": {
+            "enumType": "org.mapstruct.SubclassExhaustiveStrategy",
+            "kind": "ENUM",
+            "value": "COMPILE_ERROR"
+          },
+          "suppressTimestampInGenerated": {
+            "kind": "BOOLEAN",
+            "value": "false"
+          },
+          "typeConversionPolicy": {
+            "enumType": "org.mapstruct.ReportingPolicy",
+            "kind": "ENUM",
+            "value": "IGNORE"
+          },
+          "unexpectedValueMappingException": {
+            "kind": "CLASS",
+            "value": "java.lang.IllegalArgumentException"
+          },
+          "unmappedSourcePolicy": {
+            "enumType": "org.mapstruct.ReportingPolicy",
+            "kind": "ENUM",
+            "value": "IGNORE"
+          },
+          "unmappedTargetPolicy": {
+            "enumType": "org.mapstruct.ReportingPolicy",
+            "kind": "ENUM",
+            "value": "WARN"
+          },
+          "uses": {
+            "items": [],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.mapstruct.Mapper"
+      },
+      "classFqn": "com.example.shop.web.mapper.ProductMapper",
+      "classSimpleName": "ProductMapper",
       "packageName": "com.example.shop.web.mapper",
-      "simpleName": "ProductMapper",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     }
   ]
 }

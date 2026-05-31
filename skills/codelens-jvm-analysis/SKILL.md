@@ -294,19 +294,38 @@ codelens classes dependencies com.example.UserService --json | jq '.incoming'
 
 ## Annotation Usages
 
-Find all classes using a specific annotation:
+Find every place an annotation is applied — across class, method, constructor, field, and parameter
+targets — **with the matched annotation's typed attribute values inline**:
 
 ```bash
-codelens annotations usages <annotation-fqn>
+codelens annotations usages <annotation-fqn> [--scope class|method|field|param|all] [--page N --size N] [--include-libraries]
 ```
+
+`--scope` selects the declaration sites; the default is `all`. Each usage carries a `target`
+(`CLASS`/`METHOD`/`CONSTRUCTOR`/`FIELD`/`PARAMETER`), the member identity, and the matched
+`annotation` (typed `parameters`, same shape as on `classes show`). `--scope method` also surfaces
+constructors (as `<init>`, `target=CONSTRUCTOR`); for parameters you also get `parameterIndex` /
+`parameterName` / `parameterType`. The response is paginated (`totalCount` + `countsByTarget` cover the
+full result). Invalid scope or bad pagination is a usage error (exit 2).
+
+**Meta-expansion:** matching is meta-expanded, like `methods search --annotation` — querying a
+meta-annotation (e.g. `org.springframework.web.bind.annotation.RequestMapping`) also matches
+`@GetMapping`/`@PostMapping` methods and returns the *synthesized* instance's attributes (e.g.
+`method=[GET]`). Note: source-retained annotations (`@Override`, Lombok, etc.) aren't in bytecode and
+never appear; and querying a meta-annotation under `--scope class` can also surface annotation-*type*
+declarations (library types, excluded unless `--include-libraries`).
 
 **Examples:**
 ```bash
-# Find all @Singleton classes
+# Every @Singleton site (classes, provider methods, …) with attributes inline (default --scope all):
 codelens annotations usages javax.inject.Singleton
 
-# Find all @Path resources
-codelens annotations usages javax.ws.rs.Path
+# Every @Path resource method and its path value:
+codelens annotations usages javax.ws.rs.Path --scope method --json \
+  | jq -r '.usages[] | "\(.classSimpleName).\(.method)\t\(.annotation.parameters.value.value)"'
+
+# Every field carrying a config annotation, with its key:
+codelens annotations usages org.springframework.beans.factory.annotation.Value --scope field --json
 ```
 
 ## Call Sites (forward)

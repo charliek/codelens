@@ -221,10 +221,45 @@ func TestFoundation(t *testing.T) {
 }
 
 func TestAnnotationUsages(t *testing.T) {
-	const fixture = `{"annotationFqn":"javax.inject.Singleton","totalCount":1,"usages":[
-		{"fqn":"sample.api.UsersApi","simpleName":"UsersApi","packageName":"sample.api","source":"PROJECT","methodCount":7,"fieldCount":2,"isInterface":false,"isAnnotation":false,"isEnum":false,"isAbstract":false}]}`
+	// Exercises every target + the typed-value formatter: a nested ARRAY/ENUM and a
+	// nested ANNOTATION on the method, a quoted SpEL string on the field, and two
+	// marker (empty-parameters) usages (the CLASS and the PARAMETER).
+	const fixture = `{"annotationFqn":"com.example.Demo","totalCount":4,"page":0,"pageSize":50,"totalPages":1,
+		"countsByTarget":{"CLASS":1,"METHOD":1,"FIELD":1,"PARAMETER":1},
+		"appliedFilter":{"includeLibraries":false,"scope":"all"},
+		"usages":[
+			{"target":"CLASS","classFqn":"com.example.Foo","classSimpleName":"Foo","packageName":"com.example","source":"PROJECT",
+				"annotation":{"type":"com.example.Demo","parameters":{}}},
+			{"target":"METHOD","classFqn":"com.example.Foo","classSimpleName":"Foo","packageName":"com.example","source":"PROJECT",
+				"method":"get","descriptor":"(J)Lcom/example/Product;",
+				"annotation":{"type":"com.example.Demo","parameters":{
+					"value":{"kind":"ARRAY","items":[{"kind":"STRING","value":"/{id}"}]},
+					"method":{"kind":"ARRAY","items":[{"kind":"ENUM","value":"GET","enumType":"x.RequestMethod"}]},
+					"meta":{"kind":"ANNOTATION","annotation":{"type":"com.example.Meta","parameters":{"n":{"kind":"INT","value":"7"}}}}}}},
+			{"target":"FIELD","classFqn":"com.example.Cfg","classSimpleName":"Cfg","packageName":"com.example","source":"PROJECT",
+				"field":"pageSize",
+				"annotation":{"type":"com.example.Demo","parameters":{"value":{"kind":"STRING","value":"${shop.page-size:25}"}}}},
+			{"target":"PARAMETER","classFqn":"com.example.Foo","classSimpleName":"Foo","packageName":"com.example","source":"PROJECT",
+				"method":"get","descriptor":"(J)Lcom/example/Product;","parameterName":"id","parameterIndex":0,"parameterType":"java.lang.Long",
+				"annotation":{"type":"com.example.Demo","parameters":{}}}]}`
 	got := render(t, AnnotationUsages, fixture)
-	mustContainAll(t, got, "Usages of @javax.inject.Singleton (1)", "UsersApi", "sample.api")
+	mustNotLookLikeJSON(t, got)
+	mustContainAll(t, got,
+		"Usages of @com.example.Demo (4 total, scope=all)",
+		"CLASS=1 METHOD=1 FIELD=1 PARAMETER=1",
+		"Target", "Class", "Member", "Attributes",
+		"get",
+		"method=[GET]", `value=["/{id}"]`, "meta=@Meta(n=7)",
+		"pageSize", `value="${shop.page-size:25}"`,
+		"id: Long",
+	)
+}
+
+func TestAnnotationUsagesEmpty(t *testing.T) {
+	const fixture = `{"annotationFqn":"com.example.None","totalCount":0,"page":0,"pageSize":50,"totalPages":1,
+		"countsByTarget":{},"appliedFilter":{"includeLibraries":false,"scope":"all"},"usages":[]}`
+	got := render(t, AnnotationUsages, fixture)
+	mustContainAll(t, got, "Usages of @com.example.None (0 total, scope=all)", "No usages found.")
 }
 
 func TestSourceShow(t *testing.T) {

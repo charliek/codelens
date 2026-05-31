@@ -1,0 +1,62 @@
+{
+  "annotationFqn": "org.springframework.web.bind.annotation.ExceptionHandler",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "METHOD"
+  },
+  "countsByTarget": {
+    "METHOD": 2
+  },
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 2,
+  "totalPages": 1,
+  "usages": [
+    {
+      "annotation": {
+        "parameters": {
+          "value": {
+            "items": [
+              {
+                "kind": "CLASS",
+                "value": "com.example.shop.exception.NotFoundException"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.ExceptionHandler"
+      },
+      "classFqn": "com.example.shop.web.GlobalExceptionHandler",
+      "classSimpleName": "GlobalExceptionHandler",
+      "descriptor": "(Lcom/example/shop/exception/NotFoundException;)Ljava/lang/String;",
+      "method": "handleNotFound",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    },
+    {
+      "annotation": {
+        "parameters": {
+          "value": {
+            "items": [
+              {
+                "kind": "CLASS",
+                "value": "com.example.shop.exception.ValidationException"
+              }
+            ],
+            "kind": "ARRAY"
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.ExceptionHandler"
+      },
+      "classFqn": "com.example.shop.web.GlobalExceptionHandler",
+      "classSimpleName": "GlobalExceptionHandler",
+      "descriptor": "(Lcom/example/shop/exception/ValidationException;)Ljava/lang/String;",
+      "method": "handleValidation",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    }
+  ]
+}

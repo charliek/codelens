@@ -244,12 +244,13 @@ class AnalysisService(
     ): Pair<List<DependencyInfo>, List<DependencyInfo>> = classGraphProvider.getDependencies(fqn, includeLibraries)
 
     /**
-     * Find all classes using a specific annotation.
+     * Find every place a specific annotation is applied (class/method/field/param).
      */
     fun getAnnotationUsages(
         annotationFqn: String,
+        scope: AnnotationScope = AnnotationScope.ALL,
         includeLibraries: Boolean = false,
-    ): List<ClassSummary> = classGraphProvider.getAnnotationUsages(annotationFqn, includeLibraries)
+    ): List<AnnotationUsage> = classGraphProvider.getAnnotationUsages(annotationFqn, scope, includeLibraries)
 
     /**
      * Search methods across all classes.

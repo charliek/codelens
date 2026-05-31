@@ -591,7 +591,8 @@ Commands for analyzing annotation usage are under `codelens annotations`.
 
 #### codelens annotations usages
 
-Find all classes using a specific annotation.
+Find every place an annotation is applied — across class, method, constructor, field, and parameter
+targets — with the matched annotation's typed attribute values inline.
 
 ```bash
 codelens annotations usages <annotation-fqn> [OPTIONS]
@@ -607,29 +608,47 @@ codelens annotations usages <annotation-fqn> [OPTIONS]
 
 | Option | Description |
 |--------|-------------|
+| `--scope` | Declaration sites to scan: `class`, `method`, `field`, `param`, or `all` (default: `all`) |
 | `--include-libraries`, `-L` | Include library classes |
+| `--page` | Page number (0-based, default: 0) |
+| `--size` | Page size (default: 50) |
 | `--project`, `-p` | Project directory |
 | `--json` / `--table` | Force JSON / table output (default: auto by TTY) |
+
+Each usage carries a `target` (`CLASS` / `METHOD` / `CONSTRUCTOR` / `FIELD` / `PARAMETER`), the member
+identity, and the matched `annotation` with its typed `parameters`. **`--scope method` also surfaces
+constructors** (as `<init>`, `target=CONSTRUCTOR`) — filter the JSON with `select(.target=="METHOD")` if
+you want methods only. Matching is **meta-expanded**: querying a meta-annotation (e.g. `…RequestMapping`)
+also matches `@GetMapping`/`@PostMapping` methods and returns the synthesized instance's attributes
+(e.g. the HTTP verb). Source-retained annotations (`@Override`, Lombok) aren't in bytecode and never
+appear. The response is paginated and includes a `countsByTarget` breakdown over the full result.
 
 **Examples:**
 
 ```bash
-# Find all classes annotated with @Service
+# Everywhere @Service is used (default scope: all)
 codelens annotations usages org.springframework.stereotype.Service
 
-# Find all @Singleton classes
-codelens annotations usages javax.inject.Singleton
+# Every @GetMapping method with its path
+codelens annotations usages org.springframework.web.bind.annotation.GetMapping --scope method
+
+# Every @Value field with its property key
+codelens annotations usages org.springframework.beans.factory.annotation.Value --scope field
+
+# Every @PreAuthorize method with its SpEL expression, extracted with jq
+codelens annotations usages org.springframework.security.access.prepost.PreAuthorize --scope method --json \
+  | jq -r '.usages[] | "\(.classSimpleName).\(.method)\t\(.annotation.parameters.value.value)"'
 ```
 
 **Example Output:**
 
 ```
-Usages of @org.springframework.stereotype.Service (3)
+Usages of @org.springframework.web.bind.annotation.GetMapping (2 total, scope=method)
+METHOD=2
 
-Class               Package              Source
-ProductServiceImpl  com.example.service  PROJECT
-OrderService        com.example.service  PROJECT
-CustomerService     com.example.service  PROJECT
+Target  Class              Member  Attributes
+METHOD  ProductController  get     value=["/{id}"]
+METHOD  ProductController  list    -
 ```
 
 ---
