@@ -176,6 +176,25 @@ class AnnotationUsagesRouteTest {
     }
 
     @Test
+    fun `a large page index returns an empty page, not a 500`(
+        @TempDir tempDir: Path,
+    ) = testApplication {
+        val service = newService(tempDir)
+        installRoutes(service)
+        try {
+            // page * size overflows Int (43000000 * 50 > Int.MAX); the slice math must
+            // be overflow-safe and yield an empty page rather than a negative sublist bound.
+            val resp = client.get("/api/v1/annotations/usages/com.x.A?page=43000000&size=50")
+            assertEquals(HttpStatusCode.OK, resp.status)
+            val body = json.decodeFromString<AnnotationUsagesResponse>(resp.bodyAsText())
+            assertEquals(4, body.totalCount)
+            assertEquals(0, body.usages.size)
+        } finally {
+            service.shutdown()
+        }
+    }
+
+    @Test
     fun `pagination slices the sorted result`(
         @TempDir tempDir: Path,
     ) = testApplication {

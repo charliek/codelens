@@ -39,6 +39,11 @@ func newAnnotationsUsagesCmd() *cobra.Command {
 			if err := validateAnnotationScope(f.Scope); err != nil {
 				return err
 			}
+			// Fail fast on bad pagination (the server also 400s), so an explicit
+			// --size 0 / negative isn't silently coerced to the default.
+			if f.Page < 0 || f.Size < 1 {
+				return clierrors.New(clierrors.InvalidUsage, "--page must be >= 0 and --size must be >= 1")
+			}
 			return withRenderedServer(cmd, func(ctx context.Context, c *client.Client) (any, error) {
 				return c.GetAnnotationUsages(ctx, args[0], f)
 			}, render.AnnotationUsages)

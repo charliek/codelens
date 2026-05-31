@@ -269,7 +269,10 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
 
             val all = analysisService.getAnnotationUsages(fqn, scope, includeLibraries)
             // Breakdown over the full scoped result (before pagination), like xref's countsByKind.
-            val countsByTarget = all.groupingBy { it.target.name }.eachCount()
+            // Emit keys in target-declaration order so the raw JSON object is byte-stable (the
+            // usages array is deliberately sorted; keep its sibling map deterministic too).
+            val rawCounts = all.groupingBy { it.target }.eachCount()
+            val countsByTarget = AnnotationUsageTarget.entries.filter { it in rawCounts }.associate { it.name to rawCounts.getValue(it) }
 
             // Total order so pagination and golden output are stable: ConcurrentHashMap
             // iteration is unordered, and meta-expansion can yield repeated (site, fqn)
@@ -290,10 +293,17 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 )
 
             val totalCount = sorted.size
-            val totalPages = if (totalCount == 0) 1 else (totalCount + size - 1) / size
-            val startIndex = page * size
-            val endIndex = minOf(startIndex + size, totalCount)
-            val pageSlice = if (startIndex < totalCount) sorted.subList(startIndex, endIndex) else emptyList()
+            // Long math so a large page index can't overflow Int into a negative sublist bound
+            // (page >= 0 and size >= 1 are already validated above).
+            val totalPages = if (totalCount == 0) 1 else ((totalCount.toLong() + size - 1) / size).toInt()
+            val startIndex = page.toLong() * size
+            val pageSlice =
+                if (startIndex < totalCount) {
+                    val from = startIndex.toInt()
+                    sorted.subList(from, minOf(startIndex + size, totalCount.toLong()).toInt())
+                } else {
+                    emptyList()
+                }
 
             call.respond(
                 AnnotationUsagesResponse(
