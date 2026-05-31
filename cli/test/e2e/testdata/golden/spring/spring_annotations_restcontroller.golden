@@ -1,54 +1,80 @@
 {
   "annotationFqn": "org.springframework.web.bind.annotation.RestController",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "ALL"
+  },
+  "countsByTarget": {
+    "CLASS": 4
+  },
+  "page": 0,
+  "pageSize": 50,
   "totalCount": 4,
+  "totalPages": 1,
   "usages": [
     {
-      "fieldCount": 1,
-      "fqn": "com.example.shop.web.CustomerController",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 2,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.RestController"
+      },
+      "classFqn": "com.example.shop.web.CustomerController",
+      "classSimpleName": "CustomerController",
       "packageName": "com.example.shop.web",
-      "simpleName": "CustomerController",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 1,
-      "fqn": "com.example.shop.web.OrderController",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 2,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.RestController"
+      },
+      "classFqn": "com.example.shop.web.OrderController",
+      "classSimpleName": "OrderController",
       "packageName": "com.example.shop.web",
-      "simpleName": "OrderController",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 2,
-      "fqn": "com.example.shop.web.ProductController",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 4,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.RestController"
+      },
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
       "packageName": "com.example.shop.web",
-      "simpleName": "ProductController",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 2,
-      "fqn": "com.example.shop.web.ReactiveController",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 4,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.web.bind.annotation.RestController"
+      },
+      "classFqn": "com.example.shop.web.ReactiveController",
+      "classSimpleName": "ReactiveController",
       "packageName": "com.example.shop.web",
-      "simpleName": "ReactiveController",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     }
   ]
 }

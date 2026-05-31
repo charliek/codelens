@@ -278,6 +278,9 @@ func TestE2ETableSmoke(t *testing.T) {
 		{"methods_search", []string{"methods", "search", "--name", "handle"}, "handle"},
 		{"calls", []string{"calls", "sample.api.UsersApi", "--method", "execute"}, "Chain"},
 		{"xref", []string{"xref", "sample.handlers.UserService"}, "AsyncHandler"},
+		// @Inject sits on the handler constructors, so the new annotations renderer
+		// must decode and show the CONSTRUCTOR target (proves the unified shape).
+		{"annotations_usages", []string{"annotations", "usages", "javax.inject.Inject", "--scope", "all"}, "CONSTRUCTOR"},
 		{"deps_foundation", []string{"deps", "foundation"}, "UserService"},
 		{"deps_graph", []string{"deps", "graph"}, "nodes"},
 		{"source_show", []string{"source", "show", "sample.handlers.SimpleHandler"}, "class SimpleHandler"},

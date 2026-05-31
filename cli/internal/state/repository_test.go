@@ -39,8 +39,7 @@ func TestSaveAndFind(t *testing.T) {
 	}
 	if found == nil {
 		t.Fatal("Find returned nil after Save")
-	}
-	if found.PID != 1234 {
+	} else if found.PID != 1234 {
 		t.Errorf("pid = %d", found.PID)
 	}
 }

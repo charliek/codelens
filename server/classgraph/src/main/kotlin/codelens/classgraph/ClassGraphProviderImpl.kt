@@ -16,6 +16,9 @@ import io.github.classgraph.MethodInfo as CGMethodInfo
 import io.github.classgraph.MethodParameterInfo as CGMethodParameterInfo
 import io.github.classgraph.ScanResult as CGScanResult
 
+/** JVM name for a constructor; used as the `method` of CONSTRUCTOR-target annotation usages. */
+private const val INIT = "<init>"
+
 /**
  * Implementation of ClassGraphProvider using the ClassGraph library.
  */
@@ -266,16 +269,130 @@ class ClassGraphProviderImpl : ClassGraphProvider {
 
     override fun getAnnotationUsages(
         annotationFqn: String,
+        scope: AnnotationScope,
         includeLibraries: Boolean,
-    ): List<ClassSummary> =
-        classes.values
-            .asSequence()
-            .filter { classInfo ->
-                (includeLibraries || classInfo.source == ClassSource.PROJECT) &&
-                    classInfo.annotations.any { it.type == annotationFqn }
-            }.map { it.toSummary() }
-            .sortedBy { it.fqn }
-            .toList()
+    ): List<AnnotationUsage> {
+        val usages = mutableListOf<AnnotationUsage>()
+        val wantClass = scope == AnnotationScope.CLASS || scope == AnnotationScope.ALL
+        val wantMethod = scope == AnnotationScope.METHOD || scope == AnnotationScope.ALL
+        val wantField = scope == AnnotationScope.FIELD || scope == AnnotationScope.ALL
+        val wantParam = scope == AnnotationScope.PARAM || scope == AnnotationScope.ALL
+
+        for (classInfo in classes.values) {
+            if (!includeLibraries && classInfo.source != ClassSource.PROJECT) continue
+            val name = classInfo.name
+
+            fun usage(
+                target: AnnotationUsageTarget,
+                annotation: AnnotationInfo,
+                method: String? = null,
+                descriptor: String? = null,
+                field: String? = null,
+                parameterName: String? = null,
+                parameterIndex: Int? = null,
+                parameterType: String? = null,
+            ) = AnnotationUsage(
+                target = target,
+                classFqn = name.fqn,
+                classSimpleName = name.simpleName,
+                packageName = name.packageName,
+                source = classInfo.source,
+                method = method,
+                descriptor = descriptor,
+                field = field,
+                parameterName = parameterName,
+                parameterIndex = parameterIndex,
+                parameterType = parameterType,
+                annotation = annotation,
+            )
+
+            if (wantClass) {
+                classInfo.annotations
+                    .filter { it.type == annotationFqn }
+                    .forEach { usages += usage(AnnotationUsageTarget.CLASS, it) }
+            }
+
+            if (wantMethod) {
+                // Skip synthetic members so the projection matches `methods search`.
+                classInfo.methods.asSequence().filterNot { it.isSynthetic }.forEach { method ->
+                    method.annotations
+                        .filter { it.type == annotationFqn }
+                        .forEach {
+                            usages += usage(
+                                AnnotationUsageTarget.METHOD,
+                                it,
+                                method = method.name,
+                                descriptor = method.descriptor.ifBlank { null },
+                            )
+                        }
+                }
+                // Constructors surface as CONSTRUCTOR with name `<init>`; ConstructorInfo
+                // has no JVM descriptor, so derive a `(type,…)` parameter-type signature
+                // (disambiguates overloads in output and keeps the sort total).
+                classInfo.constructors.asSequence().filterNot { it.isSynthetic }.forEach { ctor ->
+                    ctor.annotations
+                        .filter { it.type == annotationFqn }
+                        .forEach {
+                            usages += usage(
+                                AnnotationUsageTarget.CONSTRUCTOR,
+                                it,
+                                method = INIT,
+                                descriptor = constructorSignature(ctor),
+                            )
+                        }
+                }
+            }
+
+            if (wantField) {
+                classInfo.fields.forEach { field ->
+                    field.annotations
+                        .filter { it.type == annotationFqn }
+                        .forEach { usages += usage(AnnotationUsageTarget.FIELD, it, field = field.name) }
+                }
+            }
+
+            if (wantParam) {
+                classInfo.methods.asSequence().filterNot { it.isSynthetic }.forEach { method ->
+                    method.parameters.forEachIndexed { index, param ->
+                        param.annotations
+                            .filter { it.type == annotationFqn }
+                            .forEach {
+                                usages += usage(
+                                    AnnotationUsageTarget.PARAMETER,
+                                    it,
+                                    method = method.name,
+                                    descriptor = method.descriptor.ifBlank { null },
+                                    parameterName = param.name,
+                                    parameterIndex = index,
+                                    parameterType = param.type,
+                                )
+                            }
+                    }
+                }
+                classInfo.constructors.asSequence().filterNot { it.isSynthetic }.forEach { ctor ->
+                    ctor.parameters.forEachIndexed { index, param ->
+                        param.annotations
+                            .filter { it.type == annotationFqn }
+                            .forEach {
+                                usages += usage(
+                                    AnnotationUsageTarget.PARAMETER,
+                                    it,
+                                    method = INIT,
+                                    descriptor = constructorSignature(ctor),
+                                    parameterName = param.name,
+                                    parameterIndex = index,
+                                    parameterType = param.type,
+                                )
+                            }
+                    }
+                }
+            }
+        }
+        return usages
+    }
+
+    /** A `(type,…)` parameter-type signature standing in for a constructor's absent JVM descriptor. */
+    private fun constructorSignature(ctor: ConstructorInfo): String = ctor.parameters.joinToString(prefix = "(", postfix = ")") { it.type }
 
     override fun searchMethods(filter: MethodFilter): List<MethodSearchResult> {
         val results = mutableListOf<MethodSearchResult>()

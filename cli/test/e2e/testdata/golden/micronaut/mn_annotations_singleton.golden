@@ -1,66 +1,71 @@
 {
   "annotationFqn": "jakarta.inject.Singleton",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "ALL"
+  },
+  "countsByTarget": {
+    "CLASS": 5
+  },
+  "page": 0,
+  "pageSize": 50,
   "totalCount": 5,
+  "totalPages": 1,
   "usages": [
     {
-      "fieldCount": 4,
-      "fqn": "us.charliek.flyway.FlywayR2dbcMigrator",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 3,
+      "annotation": {
+        "parameters": {},
+        "type": "jakarta.inject.Singleton"
+      },
+      "classFqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "classSimpleName": "FlywayR2dbcMigrator",
       "packageName": "us.charliek.flyway",
-      "simpleName": "FlywayR2dbcMigrator",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 7,
-      "fqn": "us.charliek.flyway.configuration.FlywayR2dbcConfigurationProperties",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 14,
+      "annotation": {
+        "parameters": {},
+        "type": "jakarta.inject.Singleton"
+      },
+      "classFqn": "us.charliek.flyway.configuration.FlywayR2dbcConfigurationProperties",
+      "classSimpleName": "FlywayR2dbcConfigurationProperties",
       "packageName": "us.charliek.flyway.configuration",
-      "simpleName": "FlywayR2dbcConfigurationProperties",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 2,
-      "fqn": "us.charliek.flyway.configuration.FlywayR2dbcConnectionResolver",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 1,
+      "annotation": {
+        "parameters": {},
+        "type": "jakarta.inject.Singleton"
+      },
+      "classFqn": "us.charliek.flyway.configuration.FlywayR2dbcConnectionResolver",
+      "classSimpleName": "FlywayR2dbcConnectionResolver",
       "packageName": "us.charliek.flyway.configuration",
-      "simpleName": "FlywayR2dbcConnectionResolver",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 1,
-      "fqn": "us.charliek.flyway.converter.ConverterRegistry",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 2,
+      "annotation": {
+        "parameters": {},
+        "type": "jakarta.inject.Singleton"
+      },
+      "classFqn": "us.charliek.flyway.converter.ConverterRegistry",
+      "classSimpleName": "ConverterRegistry",
       "packageName": "us.charliek.flyway.converter",
-      "simpleName": "ConverterRegistry",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 2,
-      "fqn": "us.charliek.flyway.converter.PostgresqlConverter",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 2,
+      "annotation": {
+        "parameters": {},
+        "type": "jakarta.inject.Singleton"
+      },
+      "classFqn": "us.charliek.flyway.converter.PostgresqlConverter",
+      "classSimpleName": "PostgresqlConverter",
       "packageName": "us.charliek.flyway.converter",
-      "simpleName": "PostgresqlConverter",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     }
   ]
 }

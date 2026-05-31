@@ -271,9 +271,27 @@ func (c *Client) GetDependencies(ctx context.Context, fqn string, includeLibrari
 	return c.doGet(ctx, "/api/v1/dependencies/"+pythonQuote(fqn), p)
 }
 
-func (c *Client) GetAnnotationUsages(ctx context.Context, fqn string, includeLibraries bool) (json.RawMessage, error) {
+// AnnotationUsagesFilter mirrors the query parameters of the annotations-usages
+// endpoint: which declaration sites to scan plus pagination.
+type AnnotationUsagesFilter struct {
+	Scope            string
+	IncludeLibraries bool
+	Page             int
+	Size             int
+}
+
+func (c *Client) GetAnnotationUsages(ctx context.Context, fqn string, f AnnotationUsagesFilter) (json.RawMessage, error) {
 	p := &params{}
-	if includeLibraries {
+	size := f.Size
+	if size == 0 {
+		size = 50
+	}
+	p.add("page", strconv.Itoa(f.Page))
+	p.add("size", strconv.Itoa(size))
+	if f.Scope != "" {
+		p.add("scope", f.Scope)
+	}
+	if f.IncludeLibraries {
 		p.add("includeLibraries", "true")
 	}
 	return c.doGet(ctx, "/api/v1/annotations/usages/"+pythonQuote(fqn), p)

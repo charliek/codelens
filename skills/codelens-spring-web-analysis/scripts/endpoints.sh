@@ -18,6 +18,15 @@
 # (no bracket parsing), and a no-path @RequestMapping is an empty array
 # (`items:[]`), i.e. `.items[0].value` is null → terminated in `// ""`.
 #
+# Base paths come from `annotations usages @RequestMapping --scope class` (#43):
+# one call returns every class-level @RequestMapping with its typed value inline,
+# replacing the old per-controller `classes show` loop. Method rows still come from
+# `methods search` because the per-method path lives on the specific @GetMapping
+# (its `value`), which Spring aliases onto @RequestMapping at runtime via @AliasFor
+# — ClassGraph's meta-expansion does NOT apply that alias, so the meta @RequestMapping
+# carries the verb (`method`) but not the path. methods search exposes the method's
+# full annotation list, so we read the path off the @{Verb}Mapping directly.
+#
 # Known limits / deferred:
 #   - First path / first verb only. Multi-path (`@RequestMapping({"/a","/b"})`)
 #     and multi-verb mappings are intentionally shown as their first entry; the
@@ -32,19 +41,19 @@ proj=()
 [ -n "$PROJECT" ] && proj=(--project "$PROJECT")
 
 RM="org.springframework.web.bind.annotation.RequestMapping"
-CTRL="org.springframework.stereotype.Controller"   # meta-matches @RestController
 
-# 1) class FQN -> class-level base path (value/path are @AliasFor aliases, each
-#    an ARRAY of STRING; read the first item of whichever the author set).
+# 1) class FQN -> class-level base path, in ONE call: `annotations usages
+#    @RequestMapping --scope class` returns each class-level @RequestMapping with
+#    its typed value/path arrays inline (value/path are @AliasFor aliases; take the
+#    first item of whichever the author set).
 declare -A BASE
-while IFS= read -r cls; do
-  [ -z "$cls" ] && continue
-  BASE["$cls"]=$(codelens classes show "$cls" "${proj[@]}" --json 2>/dev/null \
-    | jq -r --arg rm "$RM" '
-        [ .classInfo.annotations[]? | select(.type==$rm)
-          | (.parameters.value.items[0].value // .parameters.path.items[0].value // "") ]
-        | map(select(. != "")) | (.[0] // "")')
-done < <(codelens classes list --annotation "$CTRL" "${proj[@]}" --json 2>/dev/null | jq -r '.classes[]?.fqn')
+while IFS=$'\t' read -r cls base; do
+  [ -n "$cls" ] && BASE["$cls"]="$base"
+done < <(codelens annotations usages "$RM" --scope class "${proj[@]}" --json 2>/dev/null \
+  | jq -r '.usages[]?
+      | [ .classFqn,
+          (.annotation.parameters.value.items[0].value // .annotation.parameters.path.items[0].value // "") ]
+      | @tsv')
 
 # 2) one row per mapped handler method.
 printf '%-7s %-34s %-46s %s\n' VERB PATH HANDLER RETURNS

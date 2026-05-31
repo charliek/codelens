@@ -196,6 +196,12 @@ codelens classes implementations com.google.inject.Module
 codelens methods search --annotation com.google.inject.Provides
 codelens calls com.example.AppModule --method configure         # bind(...).to(...) calls
 
+# Constructor / field / method injection sites in one call (#43). @Inject usually sits on the
+# constructor (target=CONSTRUCTOR, <init> + a derived param-type signature); --scope all also
+# catches field/method injection. Pair with @Singleton-scoped @Provides methods (--scope method).
+codelens annotations usages javax.inject.Inject --scope all
+codelens annotations usages com.google.inject.Singleton --scope method   # @Provides @Singleton factories
+
 # Where a given type is bound / who depends on it:
 codelens xref com.example.UserRepository
 ```

@@ -206,16 +206,3 @@ data class MethodSearchResponse(
     /** Total pages */
     val totalPages: Int,
 )
-
-/**
- * Response for annotation usages endpoint.
- */
-@Serializable
-data class AnnotationUsagesResponse(
-    /** The annotation being queried */
-    val annotationFqn: String,
-    /** Classes using this annotation */
-    val usages: List<ClassSummary>,
-    /** Total count */
-    val totalCount: Int,
-)

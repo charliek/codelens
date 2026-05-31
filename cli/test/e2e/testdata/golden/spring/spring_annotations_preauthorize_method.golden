@@ -1,0 +1,34 @@
+{
+  "annotationFqn": "org.springframework.security.access.prepost.PreAuthorize",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "METHOD"
+  },
+  "countsByTarget": {
+    "METHOD": 1
+  },
+  "page": 0,
+  "pageSize": 50,
+  "totalCount": 1,
+  "totalPages": 1,
+  "usages": [
+    {
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": "hasRole('ADMIN')"
+          }
+        },
+        "type": "org.springframework.security.access.prepost.PreAuthorize"
+      },
+      "classFqn": "com.example.shop.web.ProductController",
+      "classSimpleName": "ProductController",
+      "descriptor": "(Lcom/example/shop/dto/ProductDto;)Lcom/example/shop/model/Product;",
+      "method": "importProduct",
+      "packageName": "com.example.shop.web",
+      "source": "PROJECT",
+      "target": "METHOD"
+    }
+  ]
+}

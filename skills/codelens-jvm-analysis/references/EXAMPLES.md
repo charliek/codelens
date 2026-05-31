@@ -40,11 +40,12 @@ com.example.repository.JdbcUserRepository
 **Goal:** Find all REST endpoints
 
 ```bash
-# Classes with JAX-RS @Path (or your framework's controller annotation)
-codelens annotations usages javax.ws.rs.Path
+# @Path resource methods with their path value, in one call (--scope method; default is all):
+codelens annotations usages javax.ws.rs.Path --scope method --json \
+  | jq -r '.usages[] | "\(.classSimpleName).\(.method)\t\(.annotation.parameters.value.value)"'
 
-# Methods carrying @GET
-codelens methods search --annotation javax.ws.rs.GET
+# Methods carrying @GET:
+codelens annotations usages javax.ws.rs.GET --scope method
 ```
 
 ## Scenario: What does this method actually do? (`calls`)

@@ -1,90 +1,128 @@
 {
   "annotationFqn": "org.springframework.stereotype.Service",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "ALL"
+  },
+  "countsByTarget": {
+    "CLASS": 7
+  },
+  "page": 0,
+  "pageSize": 50,
   "totalCount": 7,
+  "totalPages": 1,
   "usages": [
     {
-      "fieldCount": 3,
-      "fqn": "com.example.shop.report.ReportGenerator",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 1,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.stereotype.Service"
+      },
+      "classFqn": "com.example.shop.report.ReportGenerator",
+      "classSimpleName": "ReportGenerator",
       "packageName": "com.example.shop.report",
-      "simpleName": "ReportGenerator",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 2,
-      "fqn": "com.example.shop.service.CustomerService",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 4,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.stereotype.Service"
+      },
+      "classFqn": "com.example.shop.service.CustomerService",
+      "classSimpleName": "CustomerService",
       "packageName": "com.example.shop.service",
-      "simpleName": "CustomerService",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 1,
-      "fqn": "com.example.shop.service.InventoryService",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 1,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.stereotype.Service"
+      },
+      "classFqn": "com.example.shop.service.InventoryService",
+      "classSimpleName": "InventoryService",
       "packageName": "com.example.shop.service",
-      "simpleName": "InventoryService",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 0,
-      "fqn": "com.example.shop.service.NotificationService",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 1,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.stereotype.Service"
+      },
+      "classFqn": "com.example.shop.service.NotificationService",
+      "classSimpleName": "NotificationService",
       "packageName": "com.example.shop.service",
-      "simpleName": "NotificationService",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 4,
-      "fqn": "com.example.shop.service.OrderService",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 3,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.stereotype.Service"
+      },
+      "classFqn": "com.example.shop.service.OrderService",
+      "classSimpleName": "OrderService",
       "packageName": "com.example.shop.service",
-      "simpleName": "OrderService",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 2,
-      "fqn": "com.example.shop.service.ProductServiceImpl",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 4,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.stereotype.Service"
+      },
+      "classFqn": "com.example.shop.service.ProductServiceImpl",
+      "classSimpleName": "ProductServiceImpl",
       "packageName": "com.example.shop.service",
-      "simpleName": "ProductServiceImpl",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     },
     {
-      "fieldCount": 1,
-      "fqn": "com.example.shop.service.ReactiveCatalogService",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 2,
+      "annotation": {
+        "parameters": {
+          "value": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "org.springframework.stereotype.Service"
+      },
+      "classFqn": "com.example.shop.service.ReactiveCatalogService",
+      "classSimpleName": "ReactiveCatalogService",
       "packageName": "com.example.shop.service",
-      "simpleName": "ReactiveCatalogService",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     }
   ]
 }

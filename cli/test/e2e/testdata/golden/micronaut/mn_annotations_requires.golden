@@ -1,18 +1,125 @@
 {
   "annotationFqn": "io.micronaut.context.annotation.Requires",
+  "appliedFilter": {
+    "includeLibraries": false,
+    "scope": "ALL"
+  },
+  "countsByTarget": {
+    "CLASS": 1
+  },
+  "page": 0,
+  "pageSize": 50,
   "totalCount": 1,
+  "totalPages": 1,
   "usages": [
     {
-      "fieldCount": 4,
-      "fqn": "us.charliek.flyway.FlywayR2dbcMigrator",
-      "isAbstract": false,
-      "isAnnotation": false,
-      "isEnum": false,
-      "isInterface": false,
-      "methodCount": 3,
+      "annotation": {
+        "parameters": {
+          "bean": {
+            "kind": "CLASS",
+            "value": "void"
+          },
+          "beanProperty": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "beans": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "classes": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "condition": {
+            "kind": "CLASS",
+            "value": "io.micronaut.context.condition.TrueCondition"
+          },
+          "configuration": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "defaultValue": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "entities": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "env": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "missing": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "missingBeans": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "missingClasses": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "missingConfigurations": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "missingProperty": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "notEnv": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "notEquals": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "notOs": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "os": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "pattern": {
+            "kind": "STRING",
+            "value": ""
+          },
+          "property": {
+            "kind": "STRING",
+            "value": "flyway-r2dbc.enabled"
+          },
+          "resources": {
+            "items": [],
+            "kind": "ARRAY"
+          },
+          "sdk": {
+            "enumType": "io.micronaut.context.annotation.Requires$Sdk",
+            "kind": "ENUM",
+            "value": "MICRONAUT"
+          },
+          "value": {
+            "kind": "STRING",
+            "value": "true"
+          },
+          "version": {
+            "kind": "STRING",
+            "value": ""
+          }
+        },
+        "type": "io.micronaut.context.annotation.Requires"
+      },
+      "classFqn": "us.charliek.flyway.FlywayR2dbcMigrator",
+      "classSimpleName": "FlywayR2dbcMigrator",
       "packageName": "us.charliek.flyway",
-      "simpleName": "FlywayR2dbcMigrator",
-      "source": "PROJECT"
+      "source": "PROJECT",
+      "target": "CLASS"
     }
   ]
 }

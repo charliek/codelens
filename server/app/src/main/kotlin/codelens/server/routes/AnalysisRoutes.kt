@@ -219,23 +219,96 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
 
         /**
          * GET /api/v1/annotations/usages/{fqn}
-         * Find all classes using a specific annotation.
+         * Find every place an annotation is applied, with the matched annotation's
+         * typed attribute values inline.
          *
          * Query parameters:
+         * - scope: Which declaration sites to scan — CLASS, METHOD, FIELD, PARAM, or
+         *   ALL (default). METHOD also surfaces constructors (target=CONSTRUCTOR,
+         *   `<init>`). Matching is meta-expanded (e.g. `@RequestMapping` matches
+         *   `@GetMapping` methods, returning the synthesized instance's attributes).
          * - includeLibraries: Include library classes (default: false)
+         * - page / size: Pagination over the (scoped, sorted) usages
          */
         get("/annotations/usages/{fqn...}") {
             val fqn = getFqnOrRespond(errorMessage = "Annotation FQN is required") ?: return@get
-
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
+            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
+            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
+            if (page < 0 || size < 1) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(
+                        code = 400,
+                        type = "BadRequest",
+                        message = "page must be >= 0 and size must be >= 1 (got page=$page, size=$size)",
+                    ),
+                )
+                return@get
+            }
 
-            val usages = analysisService.getAnnotationUsages(fqn, includeLibraries)
+            val scopeParam = call.request.queryParameters["scope"]?.takeUnless { it.isBlank() }
+            val scope =
+                if (scopeParam != null) {
+                    try {
+                        AnnotationScope.valueOf(scopeParam.uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(
+                                code = 400,
+                                type = "BadRequest",
+                                message = "Invalid annotation scope: $scopeParam. Valid values: ${AnnotationScope.entries.joinToString()}",
+                            ),
+                        )
+                        return@get
+                    }
+                } else {
+                    AnnotationScope.ALL
+                }
+
+            val all = analysisService.getAnnotationUsages(fqn, scope, includeLibraries)
+            // Breakdown over the full scoped result (before pagination), like xref's countsByKind.
+            val countsByTarget = all.groupingBy { it.target.name }.eachCount()
+
+            // Total order so pagination and golden output are stable: ConcurrentHashMap
+            // iteration is unordered, and meta-expansion can yield repeated (site, fqn)
+            // matches — the trailing annotation keys break any remaining ties.
+            val sorted =
+                all.sortedWith(
+                    compareBy(
+                        { it.classFqn },
+                        { it.target.ordinal },
+                        { it.method ?: "" },
+                        { it.descriptor ?: "" },
+                        { it.field ?: "" },
+                        { it.parameterIndex ?: -1 },
+                        { it.parameterName ?: "" },
+                        { it.annotation.type },
+                        { it.annotation.parameters.toString() },
+                    ),
+                )
+
+            val totalCount = sorted.size
+            val totalPages = if (totalCount == 0) 1 else (totalCount + size - 1) / size
+            val startIndex = page * size
+            val endIndex = minOf(startIndex + size, totalCount)
+            val pageSlice = if (startIndex < totalCount) sorted.subList(startIndex, endIndex) else emptyList()
 
             call.respond(
                 AnnotationUsagesResponse(
                     annotationFqn = fqn,
-                    usages = usages,
-                    totalCount = usages.size,
+                    usages = pageSlice,
+                    totalCount = totalCount,
+                    page = page,
+                    pageSize = size,
+                    totalPages = totalPages,
+                    countsByTarget = countsByTarget,
+                    appliedFilter =
+                        AnnotationUsagesFilterSummary(
+                            includeLibraries = includeLibraries,
+                            scope = scope,
+                        ),
                 ),
             )
         }

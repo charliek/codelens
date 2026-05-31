@@ -87,8 +87,9 @@ internal open class EmptyClassGraphProvider : ClassGraphProvider {
 
     override fun getAnnotationUsages(
         annotationFqn: String,
+        scope: AnnotationScope,
         includeLibraries: Boolean,
-    ): List<ClassSummary> = emptyList()
+    ): List<AnnotationUsage> = emptyList()
 
     override fun searchMethods(filter: MethodFilter): List<MethodSearchResult> = emptyList()
 
