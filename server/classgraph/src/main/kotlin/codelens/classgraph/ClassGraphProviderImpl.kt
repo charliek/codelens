@@ -1,6 +1,8 @@
 package codelens.classgraph
 
 import codelens.core.model.*
+import io.github.classgraph.AnnotationClassRef
+import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -303,13 +305,9 @@ class ClassGraphProviderImpl : ClassGraphProvider {
                     }
                 }
 
-                // Return type filter. Match on the erased base type: widening
-                // returnType to its generic form for display must not silently
-                // broaden this filter into type arguments (to find a type used as a
-                // type argument, use `xref`).
+                // Return type filter (erased-base match; see returnTypeMatchesFilter).
                 filter.returnType?.let { returnType ->
-                    val methodReturnType = extractTypeFqn(method.returnType)
-                    if (methodReturnType != returnType && methodReturnType?.contains(returnType) != true) {
+                    if (!returnTypeMatchesFilter(method.returnType, returnType)) {
                         matches = false
                     }
                 }
@@ -343,7 +341,47 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         fqn: String,
         methodName: String?,
         descriptor: String?,
-    ): CallSiteList = CallSiteExtractor(this).extract(fqn, methodName, descriptor)
+        inMethodsReturning: String?,
+        inMethodsAnnotated: String?,
+    ): CallSiteList {
+        val result = CallSiteExtractor(this).extract(fqn, methodName, descriptor)
+        if (inMethodsReturning == null && inMethodsAnnotated == null) return result
+
+        // Post-extraction filter (O(methods × calls)): keep only call-sites whose
+        // enclosing method's declared signature matches. This scopes to DIRECT
+        // call-sites in matching methods — it does not reach synthetic `lambda$…`
+        // bodies (their return type/annotations are the lambda's) nor transitive
+        // callees; that stays a transitive concern (#42).
+        //
+        // If classes[fqn] is absent (class not analyzed) the matching set is empty,
+        // so the result is empty — consistent with "the filter matched nothing".
+        val enclosingMethods = classes[fqn]?.methods.orEmpty()
+        val matchingPairs =
+            enclosingMethods
+                .filter { method ->
+                    (inMethodsReturning == null || returnTypeMatchesFilter(method.returnType, inMethodsReturning)) &&
+                        // Annotation match is meta-expanded by ClassGraph (e.g. a
+                        // @GetMapping method also carries @RequestMapping).
+                        (inMethodsAnnotated == null || method.annotations.any { it.type == inMethodsAnnotated })
+                }.mapTo(mutableSetOf()) { it.name to it.descriptor }
+
+        return result.copy(methods = result.methods.filter { (it.methodName to it.descriptor) in matchingPairs })
+    }
+
+    /**
+     * Erased-base return-type match, shared by `methods search --return-type` and
+     * `calls --in-methods-returning`. Matches on the erased base type: widening
+     * [returnType] to its generic form for display must not silently broaden the
+     * filter into type arguments (to find a type used as a type argument, use
+     * `xref`).
+     */
+    private fun returnTypeMatchesFilter(
+        returnType: String,
+        filterFqn: String,
+    ): Boolean {
+        val base = extractTypeFqn(returnType)
+        return base == filterFqn || base?.contains(filterFqn) == true
+    }
 
     override fun getReferencesToType(
         typeFqn: String,
@@ -518,12 +556,13 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         }
 
     /**
-     * Converts an annotation.
+     * Converts an annotation, mapping each attribute value to a typed
+     * [AnnotationValue].
      */
     private fun convertAnnotation(ann: CGAnnotationInfo): AnnotationInfo {
-        val params = mutableMapOf<String, String>()
+        val params = mutableMapOf<String, AnnotationValue>()
         ann.parameterValues.forEach { param ->
-            params[param.name] = formatAnnotationValue(param.value)
+            params[param.name] = toAnnotationValue(param.value)
         }
         return AnnotationInfo(
             type = ann.name,
@@ -532,25 +571,55 @@ class ClassGraphProviderImpl : ClassGraphProvider {
     }
 
     /**
-     * Formats an annotation parameter value to a human-readable string.
-     * Handles arrays properly instead of showing Java object references.
+     * Converts a ClassGraph annotation attribute value into a typed
+     * [AnnotationValue].
+     *
+     * Under `enableAllInfo()` (no `loadClass()`), ClassGraph hands back wrapper
+     * objects, never live `Enum`/`Class`: [AnnotationEnumValue] for enums,
+     * [AnnotationClassRef] for class literals, [CGAnnotationInfo] for nested
+     * annotations, and `Object[]`/primitive arrays for arrays. Branch order is
+     * load-bearing: the wrapper checks must precede the scalar checks, and the
+     * primitive-array checks must precede `is Array<*>` (else they fall through
+     * and corrupt the value).
      */
-    private fun formatAnnotationValue(value: Any?): String =
+    private fun toAnnotationValue(value: Any?): AnnotationValue =
         when (value) {
-            null -> "null"
-            is BooleanArray -> value.contentToString()
-            is ByteArray -> value.contentToString()
-            is CharArray -> value.contentToString()
-            is ShortArray -> value.contentToString()
-            is IntArray -> value.contentToString()
-            is LongArray -> value.contentToString()
-            is FloatArray -> value.contentToString()
-            is DoubleArray -> value.contentToString()
-            is Array<*> -> value.map { formatAnnotationValue(it) }.toString()
-            is Enum<*> -> "${value.javaClass.name}.${value.name}"
-            is Class<*> -> value.name
-            else -> value.toString()
+            is AnnotationEnumValue ->
+                AnnotationValue(AnnotationValueKind.ENUM, value = value.valueName, enumType = value.className)
+            is AnnotationClassRef ->
+                // getName() is the dotted FQN with no `.class` suffix or brackets.
+                AnnotationValue(AnnotationValueKind.CLASS, value = value.name)
+            is CGAnnotationInfo ->
+                AnnotationValue(AnnotationValueKind.ANNOTATION, annotation = convertAnnotation(value))
+            is BooleanArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.BOOLEAN, it) })
+            is ByteArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.BYTE, it) })
+            is CharArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.CHAR, it) })
+            is ShortArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.SHORT, it) })
+            is IntArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.INT, it) })
+            is LongArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.LONG, it) })
+            is FloatArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.FLOAT, it) })
+            is DoubleArray -> arrayValue(value.map { scalarValue(AnnotationValueKind.DOUBLE, it) })
+            is Array<*> -> arrayValue(value.map { toAnnotationValue(it) })
+            is String -> scalarValue(AnnotationValueKind.STRING, value)
+            is Boolean -> scalarValue(AnnotationValueKind.BOOLEAN, value)
+            is Byte -> scalarValue(AnnotationValueKind.BYTE, value)
+            is Short -> scalarValue(AnnotationValueKind.SHORT, value)
+            is Int -> scalarValue(AnnotationValueKind.INT, value)
+            is Long -> scalarValue(AnnotationValueKind.LONG, value)
+            is Float -> scalarValue(AnnotationValueKind.FLOAT, value)
+            is Double -> scalarValue(AnnotationValueKind.DOUBLE, value)
+            is Char -> scalarValue(AnnotationValueKind.CHAR, value)
+            // Defensive: annotation values are exhaustively typed above; anything
+            // else stringifies rather than throwing.
+            else -> AnnotationValue(AnnotationValueKind.STRING, value = value?.toString())
         }
+
+    private fun scalarValue(
+        kind: AnnotationValueKind,
+        raw: Any,
+    ): AnnotationValue = AnnotationValue(kind, value = raw.toString())
+
+    private fun arrayValue(items: List<AnnotationValue>): AnnotationValue = AnnotationValue(AnnotationValueKind.ARRAY, items = items)
 
     /**
      * Converts a constructor.
@@ -572,6 +641,9 @@ class ClassGraphProviderImpl : ClassGraphProvider {
         val resultType = method.typeSignatureOrTypeDescriptor?.resultType
         return MethodInfo(
             name = method.name,
+            // Erased JVM descriptor — matches the ASM descriptor on MethodCalls,
+            // letting `calls --in-methods-*` disambiguate overloads exactly.
+            descriptor = method.typeDescriptorStr,
             visibility = getMethodVisibility(method),
             returnType = resultType?.toString() ?: "void",
             parameters = method.parameterInfo.mapIndexed { index, param -> convertParameter(index, param) },

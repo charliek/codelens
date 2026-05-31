@@ -100,6 +100,8 @@ internal open class EmptyClassGraphProvider : ClassGraphProvider {
         fqn: String,
         methodName: String?,
         descriptor: String?,
+        inMethodsReturning: String?,
+        inMethodsAnnotated: String?,
     ): CallSiteList = CallSiteList(fqn, emptyList())
 
     override fun getReferencesToType(

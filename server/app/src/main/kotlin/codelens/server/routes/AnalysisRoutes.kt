@@ -309,10 +309,17 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
          * - method: Only scan this method (others are omitted)
          * - descriptor: Exact JVM descriptor to disambiguate overloads
          *   (only honored together with `method`)
+         * - inMethodsReturning: Keep only call-sites inside enclosing methods
+         *   whose (erased) return type matches this FQN
+         * - inMethodsAnnotated: Keep only call-sites inside enclosing methods
+         *   carrying this annotation (meta-expanded); ANDed with
+         *   `inMethodsReturning` when both are set. Both compose with `method`.
          *
          * Without `method`, methods that make no calls are omitted. With it, a
          * matching method is returned even when it makes no calls (one entry,
-         * empty `calls`); an unknown method yields no entries.
+         * empty `calls`); an unknown method yields no entries. The two
+         * `inMethods*` filters scope to direct call-sites in matching methods by
+         * the enclosing method's declared signature (not `lambda$…`/transitive).
          */
         get("/calls/{fqn...}") {
             val fqn = getFqnOrRespond() ?: return@get
@@ -327,7 +334,9 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 } else {
                     null
                 }
-            respondCalls(analysisService.getCalls(fqn, method, descriptor))
+            val inMethodsReturning = call.request.queryParameters["inMethodsReturning"]?.takeUnless { it.isBlank() }
+            val inMethodsAnnotated = call.request.queryParameters["inMethodsAnnotated"]?.takeUnless { it.isBlank() }
+            respondCalls(analysisService.getCalls(fqn, method, descriptor, inMethodsReturning, inMethodsAnnotated))
         }
 
         /**

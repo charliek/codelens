@@ -135,11 +135,18 @@ class SerializationRoundtripTest {
                 isInterface = false,
                 superclass = "java.lang.Object",
                 interfaces = listOf("java.lang.Runnable"),
-                annotations = listOf(AnnotationInfo(type = "javax.inject.Singleton")),
+                annotations =
+                    listOf(
+                        AnnotationInfo(
+                            type = "javax.inject.Named",
+                            parameters = mapOf("value" to AnnotationValue(AnnotationValueKind.STRING, value = "userService")),
+                        ),
+                    ),
                 methods =
                     listOf(
                         MethodInfo(
                             name = "run",
+                            descriptor = "(Ljava/lang/String;)V",
                             visibility = Visibility.PUBLIC,
                             returnType = "void",
                             parameters =
@@ -160,6 +167,56 @@ class SerializationRoundtripTest {
     }
 
     @Test
+    fun `AnnotationInfo with typed attribute values round-trips and encodes sparsely`() {
+        // Mirrors a real @RequestMapping: value/path are String arrays, method is
+        // an enum array, plus a class literal and a nested annotation.
+        val original =
+            AnnotationInfo(
+                type = "org.springframework.web.bind.annotation.RequestMapping",
+                parameters =
+                    mapOf(
+                        "value" to
+                            AnnotationValue(
+                                AnnotationValueKind.ARRAY,
+                                items = listOf(AnnotationValue(AnnotationValueKind.STRING, value = "/products/{id}")),
+                            ),
+                        "method" to
+                            AnnotationValue(
+                                AnnotationValueKind.ARRAY,
+                                items =
+                                    listOf(
+                                        AnnotationValue(
+                                            AnnotationValueKind.ENUM,
+                                            value = "GET",
+                                            enumType = "org.springframework.web.bind.annotation.RequestMethod",
+                                        ),
+                                    ),
+                            ),
+                        "clazz" to AnnotationValue(AnnotationValueKind.CLASS, value = "java.lang.String"),
+                        "nested" to
+                            AnnotationValue(
+                                AnnotationValueKind.ANNOTATION,
+                                annotation = AnnotationInfo(type = "com.example.Meta"),
+                            ),
+                    ),
+            )
+
+        val encoded = json.encodeToString(original)
+        // @EncodeDefault(NEVER) keeps each node sparse even though this Json (like
+        // the server's) sets encodeDefaults = true: absent optional fields are
+        // omitted, not serialized as null.
+        assertTrue(!encoded.contains("\"value\":null"), "value should be omitted when null, got: $encoded")
+        assertTrue(!encoded.contains("\"items\":null"), "items should be omitted when null, got: $encoded")
+        assertTrue(!encoded.contains("\"enumType\":null"), "enumType should be omitted when null, got: $encoded")
+        assertTrue(!encoded.contains("\"annotation\":null"), "annotation should be omitted when null, got: $encoded")
+        // The literal kind strings a consumer's jq branches on.
+        assertContainsAll(encoded, "\"kind\":\"ARRAY\"", "\"kind\":\"ENUM\"", "\"kind\":\"CLASS\"", "\"kind\":\"STRING\"")
+
+        val decoded = json.decodeFromString<AnnotationInfo>(encoded)
+        assertEquals(original, decoded)
+    }
+
+    @Test
     fun `Visibility enum names are stable`() {
         assertEquals("PUBLIC", Visibility.PUBLIC.name)
         assertEquals("PROTECTED", Visibility.PROTECTED.name)
@@ -172,6 +229,27 @@ class SerializationRoundtripTest {
         assertEquals("PROJECT", ClassSource.PROJECT.name)
         assertEquals("LIBRARY", ClassSource.LIBRARY.name)
         assertEquals("JDK", ClassSource.JDK.name)
+    }
+
+    @Test
+    fun `AnnotationValueKind enum names are stable`() {
+        // Wire contract: consumers (a skill's jq) branch on these literal strings
+        // (e.g. `.kind == "ENUM"`, `.kind == "ARRAY"`); renaming any would
+        // silently break structured annotation-value extraction.
+        assertEquals("STRING", AnnotationValueKind.STRING.name)
+        assertEquals("BOOLEAN", AnnotationValueKind.BOOLEAN.name)
+        assertEquals("BYTE", AnnotationValueKind.BYTE.name)
+        assertEquals("SHORT", AnnotationValueKind.SHORT.name)
+        assertEquals("INT", AnnotationValueKind.INT.name)
+        assertEquals("LONG", AnnotationValueKind.LONG.name)
+        assertEquals("FLOAT", AnnotationValueKind.FLOAT.name)
+        assertEquals("DOUBLE", AnnotationValueKind.DOUBLE.name)
+        assertEquals("CHAR", AnnotationValueKind.CHAR.name)
+        assertEquals("CLASS", AnnotationValueKind.CLASS.name)
+        assertEquals("ENUM", AnnotationValueKind.ENUM.name)
+        assertEquals("ANNOTATION", AnnotationValueKind.ANNOTATION.name)
+        assertEquals("ARRAY", AnnotationValueKind.ARRAY.name)
+        assertEquals(13, AnnotationValueKind.entries.size)
     }
 
     @Test
