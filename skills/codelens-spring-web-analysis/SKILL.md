@@ -136,7 +136,7 @@ reading the bean body, exactly like a Ratpack chain:
 codelens methods search --return-type org.springframework.web.reactive.function.server.RouterFunction --json
 # read the routes: pair each RequestPredicates.GET("/path") with the adjacent handler ref:
 codelens calls com.example.web.CatalogRouter --method catalogRoutes --json \
-  | jq -r '.methods[].calls[] | select(.methodName|test("^(GET|POST|PUT|DELETE|PATCH)$") or .invokeDynamic)
+  | jq -r '.methods[].calls[] | select((.methodName|test("^(GET|POST|PUT|DELETE|PATCH)$")) or (.invokeDynamic // false))
            | "\(.methodName)\t\(.implMethodName // "")\t\([.constantArgs[]?|select(.kind=="STRING")|.value]|join(","))"'
 ```
 

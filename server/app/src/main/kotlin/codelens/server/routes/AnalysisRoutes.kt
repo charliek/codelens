@@ -30,6 +30,50 @@ private suspend fun RoutingContext.getFqnOrRespond(
 }
 
 /**
+ * Parses and validates the shared `page`/`size` query parameters. Responds 400 and
+ * returns null on out-of-range input — so `size=0` can't divide-by-zero and a
+ * negative page can't produce a bad slice. Callers use `?: return@get`.
+ */
+private suspend fun RoutingContext.pageParamsOrRespond(): Pair<Int, Int>? {
+    val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
+    val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
+    if (page < 0 || size < 1) {
+        call.respond(
+            HttpStatusCode.BadRequest,
+            ErrorResponse(
+                code = 400,
+                type = "BadRequest",
+                message = "page must be >= 0 and size must be >= 1 (got page=$page, size=$size)",
+            ),
+        )
+        return null
+    }
+    return page to size
+}
+
+/**
+ * Overflow-safe page slice over an already-sorted list, returning the page's items
+ * and the total page count. The index math is done in Long so a large [page] can't
+ * overflow Int into a negative `subList` bound (assumes [page] >= 0 and [pageSize]
+ * >= 1, as enforced by [pageParamsOrRespond]).
+ */
+private fun <T> List<T>.pageOf(
+    page: Int,
+    pageSize: Int,
+): Pair<List<T>, Int> {
+    val total = this.size
+    val totalPages = if (total == 0) 1 else ((total.toLong() + pageSize - 1) / pageSize).toInt()
+    val start = page.toLong() * pageSize
+    val slice =
+        if (start < total) {
+            subList(start.toInt(), minOf(start + pageSize, total.toLong()).toInt())
+        } else {
+            emptyList()
+        }
+    return slice to totalPages
+}
+
+/**
  * Routes for bytecode analysis endpoints.
  */
 fun Route.analysisRoutes(analysisService: AnalysisService) {
@@ -77,8 +121,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
             val implementsInterface = call.request.queryParameters["implements"]
             val onlyInterfaces = call.request.queryParameters["interfaces"]?.toBoolean() ?: false
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
-            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
-            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
+            val (page, size) = pageParamsOrRespond() ?: return@get
 
             val filter =
                 ClassFilter(
@@ -93,17 +136,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
 
             val allClasses = analysisService.listClasses(filter)
             val totalCount = allClasses.size
-            val totalPages = if (totalCount == 0) 1 else (totalCount + size - 1) / size
-
-            // Apply pagination
-            val startIndex = page * size
-            val endIndex = minOf(startIndex + size, totalCount)
-            val pagedClasses =
-                if (startIndex < totalCount) {
-                    allClasses.subList(startIndex, endIndex)
-                } else {
-                    emptyList()
-                }
+            val (pagedClasses, totalPages) = allClasses.pageOf(page, size)
 
             val response =
                 ClassListResponse(
@@ -233,19 +266,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
         get("/annotations/usages/{fqn...}") {
             val fqn = getFqnOrRespond(errorMessage = "Annotation FQN is required") ?: return@get
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
-            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
-            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
-            if (page < 0 || size < 1) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        code = 400,
-                        type = "BadRequest",
-                        message = "page must be >= 0 and size must be >= 1 (got page=$page, size=$size)",
-                    ),
-                )
-                return@get
-            }
+            val (page, size) = pageParamsOrRespond() ?: return@get
 
             val scopeParam = call.request.queryParameters["scope"]?.takeUnless { it.isBlank() }
             val scope =
@@ -293,17 +314,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 )
 
             val totalCount = sorted.size
-            // Long math so a large page index can't overflow Int into a negative sublist bound
-            // (page >= 0 and size >= 1 are already validated above).
-            val totalPages = if (totalCount == 0) 1 else ((totalCount.toLong() + size - 1) / size).toInt()
-            val startIndex = page.toLong() * size
-            val pageSlice =
-                if (startIndex < totalCount) {
-                    val from = startIndex.toInt()
-                    sorted.subList(from, minOf(startIndex + size, totalCount.toLong()).toInt())
-                } else {
-                    emptyList()
-                }
+            val (pageSlice, totalPages) = sorted.pageOf(page, size)
 
             call.respond(
                 AnnotationUsagesResponse(
@@ -344,8 +355,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
             val inClass = call.request.queryParameters["inClass"]
             val inPackage = call.request.queryParameters["inPackage"]
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
-            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
-            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
+            val (page, size) = pageParamsOrRespond() ?: return@get
 
             val filter =
                 MethodFilter(
@@ -359,17 +369,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
 
             val allMethods = analysisService.searchMethods(filter)
             val totalCount = allMethods.size
-            val totalPages = if (totalCount == 0) 1 else (totalCount + size - 1) / size
-
-            // Apply pagination
-            val startIndex = page * size
-            val endIndex = minOf(startIndex + size, totalCount)
-            val pagedMethods =
-                if (startIndex < totalCount) {
-                    allMethods.subList(startIndex, endIndex)
-                } else {
-                    emptyList()
-                }
+            val (pagedMethods, totalPages) = allMethods.pageOf(page, size)
 
             call.respond(
                 MethodSearchResponse(
@@ -439,8 +439,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
             val typeFqn = getFqnOrRespond("typeFqn", "Type FQN is required") ?: return@get
             val includeLibraries = call.request.queryParameters["includeLibraries"]?.toBoolean() ?: false
             val scopeImplementing = call.request.queryParameters["scopeImplementing"]?.takeUnless { it.isBlank() }
-            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
-            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 50
+            val (page, size) = pageParamsOrRespond() ?: return@get
             val kindParam = call.request.queryParameters["kind"]?.takeUnless { it.isBlank() }
 
             val kind =
@@ -482,10 +481,7 @@ fun Route.analysisRoutes(analysisService: AnalysisService) {
                 )
 
             val totalCount = sorted.size
-            val totalPages = if (totalCount == 0) 1 else (totalCount + size - 1) / size
-            val startIndex = page * size
-            val endIndex = minOf(startIndex + size, totalCount)
-            val pageSlice = if (startIndex < totalCount) sorted.subList(startIndex, endIndex) else emptyList()
+            val (pageSlice, totalPages) = sorted.pageOf(page, size)
 
             call.respond(
                 XrefResponse(
