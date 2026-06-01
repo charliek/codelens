@@ -1,5 +1,48 @@
 # Changelog
 
+## v0.0.6
+
+Features:
+- New `codelens-spring-web-analysis` skill (the Spring sibling of
+  `codelens-ratpack-analysis`): endpoint inventory, request tracing,
+  reactive-vs-blocking classification, `@Transactional` boundaries,
+  security posture, exception handling, config binding, and DTO↔entity
+  mapping — all composed from the existing framework-agnostic primitives.
+  The `sample-spring-boot-app` fixture gained WebFlux routing,
+  blocking-in-reactive handlers, `@RestControllerAdvice`,
+  `@Transactional` self-invocation, Spring Security, MapStruct, and
+  `@Valid`, with 10 new golden e2e cases (#46).
+- Typed annotation attribute values. `AnnotationInfo.parameters` is now a
+  typed `Map<String, AnnotationValue>` with an `AnnotationValueKind`
+  discriminator (`STRING`/`BOOLEAN`/…/`CLASS`/`ENUM`/`ANNOTATION`/`ARRAY`)
+  instead of a stringified map: arrays are real arrays, class literals
+  carry the dotted FQN with no `.class`, enums carry `{value, enumType}`,
+  and nested annotations recurse; sparse JSON omits absent fields. A route
+  path is now `.parameters.value.items[0].value`, no bracket parsing
+  (#41, #49). **Breaking wire-contract change** — all goldens regenerated.
+- `calls --in-methods-returning <fqn>` / `--in-methods-annotated <fqn>`:
+  keep only call-sites whose enclosing method returns a given type and/or
+  carries a given (meta-expanded) annotation, ANDed when both are set and
+  composable with `--method`. Adds `MethodInfo.descriptor` so overloads
+  disambiguate. Makes blocking-in-reactive a one-query view (#44, #49).
+- `annotations usages` is now scope-aware (`class`/`method`/`field`/`param`/`all`,
+  default `all`) and returns the matched annotation's typed attribute
+  values inline — every `@GetMapping` path, `@ExceptionHandler` type,
+  `@PreAuthorize` expression, `@Value` key — as a unified, paginated,
+  target-discriminated response (replaces the old class-only shape). Adds
+  a shared overflow-safe pagination helper across the classes/methods/
+  xref/annotations routes (#43).
+
+Docs:
+- Tag every bare code fence in `docs/reference/api.md` and `cli.md` with a
+  language (markdownlint MD040) so the reference examples render with
+  proper highlighting (#52).
+
+Release process:
+- CI: bump `actions/create-github-app-token` v2 → v3 (Node 24) and switch
+  the release-bot token mint from the deprecated `app-id` to `client-id`
+  (#48, #50).
+
 ## v0.0.5
 
 Features:
