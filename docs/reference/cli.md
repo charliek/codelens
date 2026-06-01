@@ -167,7 +167,7 @@ codelens status [OPTIONS]
 
 **Example Output:**
 
-```
+```text
 Project:  my-project
 Path:     /home/user/work/my-project
 Status:   READY
@@ -236,7 +236,7 @@ codelens list [OPTIONS]
 
 **Example Output:**
 
-```
+```text
 Project     Mode    Port   PID    Status
 my-project  gradle  61337  61340  READY
 other-proj  gradle  62001  62050  READY
@@ -327,7 +327,7 @@ codelens classes list -L
 
 **Example Output:**
 
-```
+```text
 Classes (1-3 of 3) | Filter: package=com.example.web.*
 
 ┌─────────────────────────┬───────────┬─────────┬─────────┬────────┐
@@ -371,7 +371,7 @@ codelens classes show com.example.web.ProductController
 
 **Example Output:**
 
-```
+```text
 com.example.web.ProductController
 
 Package:      com.example.web
@@ -411,7 +411,7 @@ codelens classes stats [OPTIONS]
 
 **Example Output:**
 
-```
+```text
 Scan Statistics
 
 Project Classes:      150
@@ -468,7 +468,7 @@ codelens classes implementations com.example.service.ProductService -L
 
 **Example Output:**
 
-```
+```text
 Implementations of com.example.service.ProductService
 Total: 1 (1 direct, 0 indirect)
 
@@ -508,7 +508,7 @@ codelens classes hierarchy com.example.web.ProductController
 
 **Example Output:**
 
-```
+```text
 Hierarchy for com.example.web.ProductController
 
 Parents:
@@ -556,7 +556,7 @@ codelens classes dependencies com.example.web.ProductController -L
 
 **Example Output:**
 
-```
+```text
 Dependencies for com.example.web.ProductController
 
 Outgoing (this class depends on) (3):
@@ -642,7 +642,7 @@ codelens annotations usages org.springframework.security.access.prepost.PreAutho
 
 **Example Output:**
 
-```
+```text
 Usages of @org.springframework.web.bind.annotation.GetMapping (2 total, scope=method)
 METHOD=2
 
@@ -701,7 +701,7 @@ codelens methods search --annotation org.springframework.web.bind.annotation.Get
 
 **Example Output:**
 
-```
+```text
 Methods (1-3 of 3)
 
 Class              Method   Return  Parameters
@@ -1185,7 +1185,7 @@ codelens lint check --include-tests=false
 
 **Example Output:**
 
-```
+```text
 Lint: /home/user/work/my-project
 Scanned 10 file(s); 1 with violations; 3 total.
 
@@ -1246,7 +1246,7 @@ codelens lint format --include-tests=false
 
 **Example Output (project):**
 
-```
+```text
 Format: /home/user/work/my-project
 Scanned 10 file(s); 2 with changes.
   src/main/kotlin/sample/BadFormatting.kt
@@ -1341,7 +1341,7 @@ codelens version
 
 **Example Output:**
 
-```
+```text
 codelens-cli 0.1.0
 ```
 
