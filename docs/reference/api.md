@@ -4,7 +4,7 @@ The CodeLens server exposes a REST API for bytecode analysis. All endpoints retu
 
 ## Base URL
 
-```
+```text
 http://127.0.0.1:{port}
 ```
 
@@ -163,7 +163,7 @@ List classes with optional filtering and pagination.
 | `size` | int | `50` | Page size |
 
 **Example:**
-```
+```http
 GET /api/v1/classes?package=com.example.web.*&annotation=org.springframework.web.bind.annotation.RestController
 ```
 
@@ -212,7 +212,7 @@ Get full details for a specific class.
 | `fqn` | Fully qualified class name (e.g., `com.example.web.ProductController`) |
 
 **Example:**
-```
+```http
 GET /api/v1/classes/com.example.web.ProductController
 ```
 
@@ -355,7 +355,7 @@ Find all implementations of an interface or subclasses of a class.
 | `includeLibraries` | boolean | `false` | Include library classes |
 
 **Example:**
-```
+```http
 GET /api/v1/implementations/com.example.service.ProductService
 ```
 
@@ -395,7 +395,7 @@ Get the class hierarchy for a class, including parent chain, interfaces, and chi
 | `fqn` | Fully qualified class name |
 
 **Example:**
-```
+```http
 GET /api/v1/hierarchy/com.example.web.ProductController
 ```
 
@@ -450,7 +450,7 @@ Get dependencies for a single class (both incoming and outgoing). For the whole-
 | `includeLibraries` | boolean | `false` | Include library classes |
 
 **Example:**
-```
+```http
 GET /api/v1/dependencies/com.example.web.ProductController
 ```
 
@@ -531,7 +531,7 @@ value-kind reference).
 - An unknown `scope`, or `page < 0` / `size < 1`, returns **400 Bad Request**.
 
 **Example:**
-```
+```http
 GET /api/v1/annotations/usages/org.springframework.web.bind.annotation.GetMapping?scope=method
 ```
 
@@ -585,7 +585,7 @@ Search methods across all classes.
 | `size` | int | `50` | Page size |
 
 **Example:**
-```
+```http
 GET /api/v1/methods?returnType=java.util.List&inPackage=com.example.*
 ```
 
@@ -643,7 +643,7 @@ Without `method`, methods that make no calls are omitted. With `method`, a match
 `inMethodsReturning` and `inMethodsAnnotated` are post-extraction filters: they keep only call-sites whose **enclosing** method matches, ANDed when both are set, and compose with `method`. They scope to direct call-sites in matching methods (by the enclosing method's declared signature) — they do not reach `lambda$…` bodies or transitive callees. Example: `?inMethodsReturning=reactor.core.publisher.Mono` surfaces blocking calls sitting directly inside `Mono`-returning reactive handlers.
 
 **Example:**
-```
+```http
 GET /api/v1/calls/com.example.web.ProductController?method=create
 ```
 
@@ -711,7 +711,7 @@ Find everything across the project that references a type — the inverse of `ca
 The signature-level kinds (`EXTENDS`, `IMPLEMENTS`, `FIELD`, `PARAM`, `RETURN`, `ANNOTATION`) honor `includeLibraries`. The bytecode-level kinds (`INSTANTIATION`, `CALL_RECEIVER`) always scan project classes only. An invalid `kind` returns `400`.
 
 **Example:**
-```
+```http
 GET /api/v1/xref/javax.sql.DataSource
 ```
 
@@ -788,7 +788,7 @@ The project-wide dependency graph: every project class as a node, and every proj
 With `format=dot`, the response is `text/plain` Graphviz DOT rather than JSON.
 
 **Example:**
-```
+```http
 GET /api/v1/graph
 ```
 
@@ -842,7 +842,7 @@ The "foundation" classes — the project classes the most other project classes 
 | `minDependents` | int | `2` | Minimum in-degree to qualify |
 
 **Example:**
-```
+```http
 GET /api/v1/graph/foundation?minDependents=3
 ```
 
@@ -903,7 +903,7 @@ Get source code for a class. Supports project classes, library classes (from sou
 | `javadoc` | Signatures + doc comments | Yes |
 
 **Example:**
-```
+```http
 GET /api/v1/source/com.example.web.ProductController
 ```
 
@@ -964,7 +964,7 @@ Get source code for a specific method.
 | `context` | int | `0` | Number of context lines before/after the method |
 
 **Example:**
-```
+```http
 GET /api/v1/source/com.example.web.ProductController/method/create
 ```
 
