@@ -50,6 +50,25 @@ sdk install java 21.0.9-amzn   # SDKMAN
 # or: brew install openjdk@21
 ```
 
+**Linux (apt)** — on Ubuntu/Pop!_OS 24.04+ (`amd64`, `arm64`):
+
+```bash
+# One-time: add the apt-charliek repo
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://apt.stridelabs.ai/pubkey.gpg | \
+  sudo tee /etc/apt/keyrings/apt-charliek.gpg > /dev/null
+echo 'deb [signed-by=/etc/apt/keyrings/apt-charliek.gpg] https://apt.stridelabs.ai noble main' | \
+  sudo tee /etc/apt/sources.list.d/apt-charliek.list
+sudo apt update
+
+sudo apt install codelens openjdk-21-jre-headless
+codelens version
+```
+
+codelens auto-discovers the server JDK from `/usr/lib/jvm`, SDKMAN, mise, or
+Linuxbrew. For a direct `.deb` download (no apt repo), see
+[apt-charliek](https://github.com/charliek/apt-charliek#direct-deb-download-no-apt-repo).
+
 ### 2. Install the skills
 
 The skills teach your agent to drive the codelens CLI, so install the CLI (step 1)

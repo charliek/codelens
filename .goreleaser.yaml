@@ -37,6 +37,38 @@ archives:
         dst: .
         strip_parent: true
 
+nfpms:
+  # .deb packaging for Linux (apt-charliek). The Go binary lands at
+  # /usr/local/bin/codelens (bindir); the server JAR lands at
+  # /usr/local/libexec/codelens-server-all.jar so the CLI's
+  # installedJARPath() discovery (jar.go) resolves it via
+  # <binary_dir>/../libexec/codelens-server-all.jar — the same layout the
+  # Homebrew formula uses (libexec.install). No Depends on a JDK: mirrors the
+  # Homebrew model where the user supplies JDK 21+; the CLI auto-discovers it
+  # from /usr/lib/jvm, SDKMAN, mise, or Linuxbrew (see javahome.go).
+  - id: codelens-deb
+    package_name: codelens
+    file_name_template: "codelens_{{ .Version }}_{{ .Arch }}"
+    vendor: charliek
+    homepage: "https://github.com/charliek/codelens"
+    maintainer: "Charlie Knudsen <charlie.knudsen@gmail.com>"
+    description: |
+      Analyze JVM codebases (Java & Kotlin) — classes, methods, handlers, and more.
+      Requires a JDK 21+ (install: sudo apt install openjdk-21-jre-headless, or use
+      SDKMAN/mise, or set CODELENS_JAVA_HOME / JAVA_HOME). Auto-discovers JDKs in
+      /usr/lib/jvm, SDKMAN, mise, and Linuxbrew.
+    license: "Apache-2.0"
+    formats:
+      - deb
+    bindir: /usr/local/bin
+    ids:
+      - codelens
+    contents:
+      # Platform-independent server JAR. Same source path as archives.files
+      # (built by the release workflow's Gradle step before GoReleaser runs).
+      - src: server/app/build/libs/codelens-server-all.jar
+        dst: /usr/local/libexec/codelens-server-all.jar
+
 brews:
   - name: codelens
     ids:
