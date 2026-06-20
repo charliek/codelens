@@ -15,9 +15,49 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Refuse to publish a release whose code didn't pass CI. Polls the aggregate
+  # 'ci-success' check on the tagged commit (produced by build.yml's ci-success
+  # job). The check name MUST stay exactly 'ci-success' — it is also queried by
+  # /release-workflows:release; renaming either side silently breaks this gate.
+  # Modeled on charliek/strix's release.yml ci-gate. Note: if a tag points at a
+  # commit that never ran build.yml, no ci-success check exists and this waits
+  # out the 45-min deadline then fails (deliberate — failing fast on an empty
+  # result would misfire while build.yml is still starting on a fresh push).
+  ci-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - name: Require ci-success green on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          deadline=$(( SECONDS + 2700 ))   # 45 min; releases aren't time-sensitive
+          while :; do
+            latest="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?check_name=ci-success" \
+              --jq '.check_runs | sort_by(.started_at) | last')"
+            status="$(echo "${latest}" | jq -r '.status // "missing"')"
+            conclusion="$(echo "${latest}" | jq -r '.conclusion // ""')"
+            echo "ci-success @ ${GITHUB_SHA}: status=${status} conclusion=${conclusion}"
+            if [ "${status}" = "completed" ]; then
+              [ "${conclusion}" = "success" ] && { echo "CI green — releasing."; exit 0; }
+              echo "::error::ci-success concluded '${conclusion}' for ${GITHUB_SHA} — not releasing."
+              exit 1
+            fi
+            if [ "${SECONDS}" -ge "${deadline}" ]; then
+              echo "::error::timed out waiting for ci-success on ${GITHUB_SHA} (status=${status}). Push to main and let CI finish before tagging."
+              exit 1
+            fi
+            sleep 20
+          done
+
   release:
     name: Build and Release
     runs-on: ubuntu-latest
+    needs: [ci-gate]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -100,7 +140,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
-          version: latest
+          version: '~> v2'
           # No --skip=validate: the local-bump flow keeps the tree clean
           # (version.txt and plugin.json are bumped before the tag, so the
           # workflow doesn't rewrite tracked files; `go generate` writes to
