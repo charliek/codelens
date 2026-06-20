@@ -13,8 +13,8 @@ That's it. Everything else is automatic.
 
 1. **`release-workflows:release`** (LLM, local):
    - Verifies branch (`main`) + clean tree + CI green on HEAD
-     (codelens has no `ci-success` aggregator; the skill reports "missing"
-     for that check, which is expected — treat as non-blocking)
+     (codelens's `build.yml` exposes a `ci-success` aggregate check; the
+     skill's CI-green gate matches it by name)
    - Asks/confirms version
    - Drafts a CHANGELOG entry from `git log v<previous>..HEAD`, commits as
      `docs(changelog): vX.Y.Z entry`
@@ -25,8 +25,11 @@ That's it. Everything else is automatic.
    - Tags `vX.Y.Z` (annotated) on the version commit
    - `git push --follow-tags` (admin bypasses the ruleset)
 
-2. **`release.yaml`** (CI, on tag push `v*`):
-   - **`release`** (single job):
+2. **`release.yaml`** (CI, on tag push `v*`) runs `ci-gate` → `release` → `apt-dispatch`:
+   - **`ci-gate`**: polls the `ci-success` aggregate check (from `build.yml`) on
+     the tagged commit and blocks the release until it is green — refusing to
+     publish code that didn't pass CI (modeled on charliek/strix).
+   - **`release`**:
      - Checks out, sets up JDK 21 + Gradle + Go
      - **Verifies `version.txt` and `.claude-plugin/plugin.json` both
        match the tag** (the safety net replacing the old `sync-version`
@@ -47,6 +50,9 @@ That's it. Everything else is automatic.
        - Pushes `Formula/codelens.rb` to `charliek/homebrew-tap` using
          the App-minted token (replaces the legacy `HOMEBREW_TAP_TOKEN`
          PAT)
+   - **`apt-dispatch`**: after `release` succeeds, fires a `repository_dispatch`
+     at `charliek/apt-charliek` so it republishes the apt index with the new
+     `.deb`s (skips prereleases; self-heals if a dispatch is missed)
 
 The maintainer runs step 1; everything else is automated.
 
@@ -174,10 +180,11 @@ in the framework repo.
   single job (Gradle + Go + GoReleaser need to share state), so the
   tag-vs-manifest check is inlined as a step rather than a `needs:`-
   gated separate job.
-- **No `ci-gate` job**: codelens's `build.yml` runs `kotlin` + `go` as
-  separate jobs with no single aggregator. The `release` job's inline
-  `Build server JAR` + `Run Go tests` steps serve as the inline gate at
-  tag time.
+- **`ci-gate` + `ci-success`**: `build.yml` exposes a `ci-success` aggregate
+  check over `kotlin` + `go` + `e2e` + `release-snapshot` (the .deb validation),
+  and `release.yaml`'s `ci-gate` job polls it on the tagged commit, blocking
+  `release` until it is green (modeled on charliek/strix). `main`'s branch
+  ruleset also requires `ci-success`, so a red PR can't merge.
 - **No `--skip=validate` on GoReleaser**: the legacy flow used it
   because the workflow rewrote tracked `version.txt` at build time
   (dirty tree). Under the local-bump flow, version files are bumped

@@ -118,8 +118,9 @@ jobs:
 
   # Aggregate gate consumed by the release-workflows convention: /release-workflows:release
   # (step 3) and release.yaml's ci-gate both query check_name=ci-success on the tagged
-  # commit. This job fans up green only after every CI job above succeeds, exposing a
-  # single required-check name for branch protection / the release skill to gate on.
+  # commit. This job fans up green only after every CI job (kotlin, go, e2e, and the
+  # release-snapshot deb validation) succeeds, exposing a single required-check name for
+  # branch protection / the release skill to gate on.
   ci-success:
     # The check-run name MUST be exactly "ci-success" — the release-workflows
     # convention's /release-workflows:release (step 3) and release.yaml's
@@ -128,7 +129,9 @@ jobs:
     # would stall at its step-3 gate. Don't rename.
     name: ci-success
     runs-on: ubuntu-latest
-    needs: [kotlin, go, e2e]
+    # release-snapshot is included so a broken nfpm/.deb config (red snapshot) also
+    # fails ci-success and is blocked from release via release.yaml's ci-gate.
+    needs: [kotlin, go, e2e, release-snapshot]
     if: always()
     steps:
       - name: Report aggregate result
@@ -178,7 +181,7 @@ jobs:
       - name: Run GoReleaser (snapshot)
         uses: goreleaser/goreleaser-action@v7
         with:
-          version: latest
+          version: '~> v2'
           args: release --snapshot --clean --skip=publish,announce,sign
 
       - name: Validate the deb artifacts
