@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.0.7
+
+Distribution:
+- Linux `.deb` packaging. codelens now publishes
+  `codelens_<version>_<arch>.deb` for `amd64` and `arm64`, installable on
+  Ubuntu/Pop!_OS 24.04+ via the apt-charliek repo (`sudo apt install codelens`)
+  alongside the existing Homebrew path. The deb places the CLI at
+  `/usr/local/bin/codelens` and the server JAR at
+  `/usr/local/libexec/codelens-server-all.jar` — the libexec layout the CLI's
+  JAR discovery already expects, matching Homebrew. No hard `Depends` on a JDK;
+  the user supplies JDK 21+ (auto-discovered from `/usr/lib/jvm`, SDKMAN, mise,
+  or Linuxbrew), as on macOS (#53).
+
+Release process:
+- Adopted the cc-plugins `release-workflows` release gate: a `ci-success`
+  aggregate check (named exactly `ci-success` so the convention's
+  `?check_name=ci-success` query matches) that `/release-workflows:release` and
+  the release workflow poll before publishing, plus a `release-snapshot` CI job
+  validating the deb artifacts on every PR. The release workflow now dispatches
+  `charliek/apt-charliek` to republish apt metadata after each release (#53, #54).
+
 ## v0.0.6
 
 Features:
