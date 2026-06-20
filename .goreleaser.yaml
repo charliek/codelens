@@ -55,7 +55,7 @@ nfpms:
     description: |
       Analyze JVM codebases (Java & Kotlin) — classes, methods, handlers, and more.
       Requires a JDK 21+ (install: sudo apt install openjdk-21-jre-headless, or use
-      SDKMAN/misen, or set CODELENS_JAVA_HOME / JAVA_HOME). Auto-discovers JDKs in
+      SDKMAN/mise, or set CODELENS_JAVA_HOME / JAVA_HOME). Auto-discovers JDKs in
       /usr/lib/jvm, SDKMAN, mise, and Linuxbrew.
     license: "Apache-2.0"
     formats:
