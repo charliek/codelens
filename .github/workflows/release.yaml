@@ -113,6 +113,64 @@ jobs:
           # App-minted token instead of a PAT.
           HOMEBREW_TAP_TOKEN: ${{ steps.tap.outputs.token }}
 
+  # apt-dispatch: notify apt-charliek to pick up the newly-published .debs and
+  # republish its apt metadata. Pasted from cc-plugins release-workflows
+  # references/workflows/job-apt-dispatch.yml (placeholders filled). Uses the
+  # release-bot App — the same App/credentials as the homebrew-tap mint above —
+  # scoped to apt-charliek alone. Skips on prereleases and if RELEASE_BOT_CLIENT_ID
+  # is unset (apt-charliek's publish self-heals on its next dispatch in either case).
+  apt-dispatch:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether to dispatch
+        id: guard
+        env:
+          CLIENT_ID: ${{ secrets.RELEASE_BOT_CLIENT_ID }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          case "${tag}" in
+            *-*)
+              echo "::notice::${tag} is a prerelease — skipping charliek/apt-charliek dispatch."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+          if [ -z "${CLIENT_ID}" ]; then
+            echo "::warning::RELEASE_BOT_CLIENT_ID not set — skipping dispatch. charliek/apt-charliek can self-heal on its next scheduled re-scan."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Mint an apt-charliek token
+        if: steps.guard.outputs.skip == 'false'
+        id: apt
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_APP_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: apt-charliek
+          # Defense-in-depth: POST /repos/.../dispatches needs contents:write;
+          # pinning the floor avoids silent widening if the App's install perms
+          # are ever expanded.
+          permission-contents: write
+
+      - name: Dispatch apt-charliek publish
+        if: steps.guard.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ steps.apt.outputs.token }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          gh api "repos/charliek/apt-charliek/dispatches" --method POST \
+            -f event_type=publish \
+            -F "client_payload[package]=codelens" \
+            -F "client_payload[tag]=${tag}"
+          echo "::notice::Dispatched charliek/apt-charliek publish for codelens ${tag}."
+
 # The earlier sync-version job that ran scripts/set-version.sh in CI and
 # pushed the bumped version.txt + .claude-plugin/plugin.json back to main
 # is removed. Version-file bumping is now LOCAL via
