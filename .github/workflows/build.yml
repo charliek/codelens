@@ -121,7 +121,12 @@ jobs:
   # commit. This job fans up green only after every CI job above succeeds, exposing a
   # single required-check name for branch protection / the release skill to gate on.
   ci-success:
-    name: ci-success (aggregate gate)
+    # The check-run name MUST be exactly "ci-success" — the release-workflows
+    # convention's /release-workflows:release (step 3) and release.yaml's
+    # ci-gate query check_name=ci-success (exact server-side match). A label
+    # like "ci-success (aggregate gate)" would not match and the release skill
+    # would stall at its step-3 gate. Don't rename.
+    name: ci-success
     runs-on: ubuntu-latest
     needs: [kotlin, go, e2e]
     if: always()
