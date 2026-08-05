@@ -71,7 +71,7 @@ NOT bumped:
 
 - `gradle.properties` — Gradle properties file; no version field. The
   Gradle build reads `version.txt` instead.
-- `pyproject.toml` — for the mkdocs docs site only; has its own version
+- `pyproject.toml` — for the docs site only; has its own version
   cadence.
 - `cli/internal/version/version.txt` — generated at build time by
   `go generate` (gitignored).

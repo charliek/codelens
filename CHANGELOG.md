@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased
+
+Documentation:
+- Migrated the docs site from Material for MkDocs to
+  [Zensical](https://zensical.org), the successor from the same team (Material
+  entered maintenance mode in November 2025 and now warns on every build that
+  MkDocs 2.0 will remove the plugin and theming systems with no migration
+  path). `mkdocs.yml` is replaced by a native `zensical.toml`; docs content is
+  unchanged.
+
+  The look now comes from the shared
+  [stridelabs-docs-theme](https://github.com/charliek/stridelabs-docs-theme)
+  package rather than per-repo config, so restyling the fleet is a version bump
+  instead of an edit in every repo. Fonts are self-hosted by the theme — the
+  site no longer requests anything from `fonts.googleapis.com` or
+  `fonts.gstatic.com`.
+
+  Verified against the pre-migration build: identical 12-page set and all 153
+  heading anchors preserved across the 11 content pages, so existing deep links
+  still resolve. Page `<title>` now derives from the page `<h1>` rather than the
+  nav label, which is the one intentional difference.
+
+- Added a `Docs PR Build` workflow. Docs previously built only on push to
+  `main`, and without `--strict` — a broken link or anchor could land on `main`
+  and was caught at deploy time or not at all. Both workflows now build
+  `--strict` and watch `uv.lock`.
+
 ## v0.0.7
 
 Distribution:

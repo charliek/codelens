@@ -66,6 +66,42 @@ UPDATE_GOLDEN=1 go test -run TestE2E ./test/e2e/...
 golangci-lint run ./...
 ```
 
+### Docs
+
+**Not part of the Kotlin or Go gates above.** The docs site has its own
+toolchain (uv/Python) and its own CI workflows; `./gradlew test` and
+`go test ./...` do not cover it, and it does not need to run for a change that
+touches neither. Run it for commits touching `docs/`, `zensical.toml`,
+`pyproject.toml`, `uv.lock`, or either docs workflow. Both workflows trigger on
+those shared inputs (and each additionally on its own file), because a
+dependency or lockfile change can break the build just as easily as a content
+change:
+
+```bash
+uv run --locked zensical build --strict
+```
+
+The site is [Zensical](https://zensical.org) (not MkDocs — migrated in plan
+001), configured in `zensical.toml`, built into `site-build/`. `--strict`
+fails on broken links and anchors and is what both CI workflows run, so run it
+locally before pushing docs changes. `uv run zensical serve` previews on
+`http://127.0.0.1:7071` (note `serve --strict` is unsupported — verify via
+`build`).
+
+The look comes from the shared
+[stridelabs-docs-theme](https://github.com/charliek/stridelabs-docs-theme)
+package, pinned by tag in `pyproject.toml`. Palette, fonts and feature toggles
+live there, not here — do not add `theme.palette`, `theme.features`, or a
+`[project.theme.font]` table to `zensical.toml`. The last one is the sharp
+edge: it re-enables Zensical's Google Fonts `<link>` on every page while the
+theme's self-hosted faces keep loading anyway.
+
+Two gotchas worth knowing: Zensical **silently ignores unknown config keys**
+even under `--strict`, so a green build does not prove a config edit did what
+you meant; and the `pymdownx.emoji` callables live in the
+`zensical.extensions.emoji` namespace — the Material for MkDocs
+`material.extensions.emoji` namespace aborts the build.
+
 ## Architecture
 
 ### Gradle Multi-Module Structure
@@ -116,7 +152,7 @@ The Claude Code plugin manifest `.claude-plugin/plugin.json` also hardcodes the 
 
 ## Releases
 
-Tag-driven via GoReleaser. `/release:release` pushes a `vX.Y.Z` tag → `.github/workflows/release.yaml` builds the server JAR (Gradle) and the Go binaries (darwin/linux × amd64/arm64), bundles the JAR into each archive, publishes a GitHub Release, and pushes a Homebrew formula to `charliek/homebrew-tap` (needs the `HOMEBREW_TAP_TOKEN` secret). A follow-up `sync-version` job then commits `version.txt` and `.claude-plugin/plugin.json` back to `main` from the tag so the committed (installer-facing) versions match the release. Config: `.goreleaser.yaml`. Docs deploy separately via `.github/workflows/docs.yml` (MkDocs → GitHub Pages).
+Tag-driven via GoReleaser. `/release:release` pushes a `vX.Y.Z` tag → `.github/workflows/release.yaml` builds the server JAR (Gradle) and the Go binaries (darwin/linux × amd64/arm64), bundles the JAR into each archive, publishes a GitHub Release, and pushes a Homebrew formula to `charliek/homebrew-tap` (needs the `HOMEBREW_TAP_TOKEN` secret). A follow-up `sync-version` job then commits `version.txt` and `.claude-plugin/plugin.json` back to `main` from the tag so the committed (installer-facing) versions match the release. Config: `.goreleaser.yaml`. Docs deploy separately via `.github/workflows/docs.yml` (Zensical → GitHub Pages).
 
 ## Server JAR discovery
 

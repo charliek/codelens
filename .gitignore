@@ -67,8 +67,12 @@ secrets/
 test-output/
 test-results/
 
-# MkDocs build output
+# Docs build output
 site-build/
+
+# Zensical differential-build cache (root only -- the anchor keeps this from
+# also swallowing a nested test-fixtures/**/.cache/)
+/.cache/
 
 # skill-creator ephemeral eval artifacts (not shipped)
 skills/*-workspace/
