@@ -71,10 +71,11 @@ golangci-lint run ./...
 **Not part of the Kotlin or Go gates above.** The docs site has its own
 toolchain (uv/Python) and its own CI workflows; `./gradlew test` and
 `go test ./...` do not cover it, and it does not need to run for a change that
-touches neither. Run it only for commits touching `docs/`, `zensical.toml`,
-`pyproject.toml`, `uv.lock`, or the docs workflows — the same set both docs
-workflows trigger on, since a dependency or lockfile change can break the
-build just as easily as a content change:
+touches neither. Run it for commits touching `docs/`, `zensical.toml`,
+`pyproject.toml`, `uv.lock`, or either docs workflow. Both workflows trigger on
+those shared inputs (and each additionally on its own file), because a
+dependency or lockfile change can break the build just as easily as a content
+change:
 
 ```bash
 uv run --locked zensical build --strict
